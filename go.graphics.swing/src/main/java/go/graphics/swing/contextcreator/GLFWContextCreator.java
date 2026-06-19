@@ -59,7 +59,7 @@ public class GLFWContextCreator extends AsyncContextCreator {
 
 		configureWindow();
 		synchronized (wnd_lock) {
-			glfw_wnd = GLFW.glfwCreateWindow(width, height, "lwjgl-offscreen", 0, 0);
+			glfw_wnd = GLFW.glfwCreateWindow(width, height, "JSettlers", 0, 0);
 			setupContext();
 			try {
 				parent.resizeContext(width, height);
