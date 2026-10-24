@@ -8,7 +8,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
     steps:
     - uses: actions/checkout@v4
@@ -20,6 +20,22 @@ jobs:
     - uses: gradle/gradle-build-action@v3
       with:
         arguments: release
+    - name: Create draft release with APK
+      if: success()
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        APK="jsettlers.main.android/build/outputs/apk/debug/jsettlers.main.android-debug.apk"
+        if [ ! -f "$APK" ]; then
+          echo "APK not found, skipping release"
+          exit 0
+        fi
+        TAG="android-${GITHUB_SHA::8}-$(date +%s)"
+        gh release create "$TAG" "$APK" \
+          --draft \
+          --title "JSettlers Android build (${GITHUB_SHA::8})" \
+          --notes "Automated Android build from commit ${GITHUB_SHA}." || echo "Release creation failed"
     - name: Debug gradle failure
       if: failure()
       shell: bash
