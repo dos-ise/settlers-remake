@@ -130,7 +130,10 @@ public class Settlers3Downloader {
 				// Manifest paths may use "/" or "\" as separators.
 				String relative = file.name.replace('\\', '/');
 				File targetPath = new File(targetDirectory, relative.replace('/', File.separatorChar));
-				targetPath.getParentFile().mkdirs();
+				File parent = targetPath.getParentFile();
+				if (parent != null) {
+					parent.mkdirs();
+				}
 
 				List<String> slicePaths = ManifestParser.getSlicePaths(manifest, file.slices);
 				List<List<String>> urls = download.getUrls(SETTLERS3_HISTORY_EDITION_PRODUCT_ID, slicePaths);

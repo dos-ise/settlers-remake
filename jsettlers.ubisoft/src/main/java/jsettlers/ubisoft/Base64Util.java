@@ -29,14 +29,16 @@ final class Base64Util {
 		StringBuilder result = new StringBuilder(((data.length + 2) / 3) * 4);
 		int i = 0;
 		while (i < data.length) {
+			int start = i;
 			int b0 = data[i++] & 0xFF;
 			int b1 = i < data.length ? data[i++] & 0xFF : 0;
 			int b2 = i < data.length ? data[i++] & 0xFF : 0;
+			int groupSize = i - start;
 
 			result.append(ALPHABET[b0 >>> 2]);
 			result.append(ALPHABET[((b0 & 0x03) << 4) | (b1 >>> 4)]);
-			result.append(i < data.length + 1 ? ALPHABET[((b1 & 0x0F) << 2) | (b2 >>> 6)] : '=');
-			result.append(i < data.length + 2 ? ALPHABET[b2 & 0x3F] : '=');
+			result.append(groupSize >= 2 ? ALPHABET[((b1 & 0x0F) << 2) | (b2 >>> 6)] : '=');
+			result.append(groupSize >= 3 ? ALPHABET[b2 & 0x3F] : '=');
 		}
 		return result.toString();
 	}
