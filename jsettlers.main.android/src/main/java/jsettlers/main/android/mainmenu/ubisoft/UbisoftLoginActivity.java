@@ -69,7 +69,7 @@ public class UbisoftLoginActivity extends AppCompatActivity {
 	private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
 	private WebView loginWebView;
-	private View loginLayout;
+	private ViewGroup loginLayout;
 	private LinearLayout progressLayout;
 	private ProgressBar progressBar;
 	private TextView statusText;
@@ -384,7 +384,7 @@ public class UbisoftLoginActivity extends AppCompatActivity {
 						}
 					}
 
-					mainHandler.postDelayed(this::checkForLogin, 500);
+					mainHandler.postDelayed(UbisoftWebViewClient.this::checkForLogin, 500);
 				}
 			});
 		}
