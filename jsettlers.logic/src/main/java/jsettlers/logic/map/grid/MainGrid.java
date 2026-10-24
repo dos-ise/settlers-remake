@@ -20,6 +20,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.BitSet;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
 

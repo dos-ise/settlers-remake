@@ -98,15 +98,6 @@ public class GeologistMovable extends AttackableHumanMovable {
 		return super.hasActiveMoveOrder() || currentTarget != null || goToTarget != null;
 	}
 
-	@Override
-	public boolean convertToBearer() {
-		if(!player.equals(grid.getPlayerAt(position))) return false;
-
-		createMovable(EMovableType.BEARER, player, position, grid, this);
-
-		return true;
-	}
-
 	protected static Node<GeologistMovable> findWorkablePosition() {
 		return selector(
 				condition(mov -> {
