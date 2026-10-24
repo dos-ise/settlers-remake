@@ -9,7 +9,7 @@ ext {
     androidBuildToolsVersion = '30.0.3'
     androidCompileSdkVersion = 30
     androidMinSdkVersion = 19
-    androidTargetSdkVersion = 26
+    androidTargetSdkVersion = 28
 
     lwjglVersion = "3.3.0"
 }
