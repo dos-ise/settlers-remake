@@ -48,11 +48,13 @@ import jsettlers.main.android.R;
 import jsettlers.main.android.core.ui.FragmentUtil;
 import jsettlers.main.android.mainmenu.navigation.MainMenuNavigator;
 import jsettlers.main.android.mainmenu.settings.SettingsActivity_;
+import jsettlers.main.android.mainmenu.ubisoft.UbisoftLoginActivity;
 
 @EFragment(R.layout.fragment_main_menu)
 @OptionsMenu(R.menu.fragment_mainmenu)
 public class MainMenuFragment extends Fragment {
 	private static final int REQUEST_CODE_PERMISSION_STORAGE = 10;
+	private static final int REQUEST_CODE_UBISOFT_LOGIN = 11;
 
 	private MainMenuViewModel viewModel;
 	private MainMenuNavigator mainMenuNavigator;
@@ -126,6 +128,13 @@ public class MainMenuFragment extends Fragment {
 		}
 	}
 
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == REQUEST_CODE_UBISOFT_LOGIN && resultCode == getActivity().RESULT_OK) {
+			viewModel.refreshResources();
+		}
+	}
+
 	private class HomeAdapter extends RecyclerView.Adapter {
 		private final LayoutInflater layoutInflater;
 		private final Fragment viewModelOwner;
@@ -179,6 +188,12 @@ public class MainMenuFragment extends Fragment {
 						expandDirectoryPicker(viewHolder);
 						// TODO save expanded state for rotation
 					}
+				});
+
+				Button ubisoftDownloadButton = view.findViewById(R.id.button_ubisoft_download);
+				ubisoftDownloadButton.setOnClickListener(v -> {
+					Intent intent = new Intent(getActivity(), UbisoftLoginActivity.class);
+					startActivityForResult(intent, REQUEST_CODE_UBISOFT_LOGIN);
 				});
 
 				return viewHolder;

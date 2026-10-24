@@ -94,6 +94,13 @@ public class MainMenuViewModel extends ViewModel {
 				});
 	}
 
+	/**
+	 * Re-runs the resource setup, e.g. after the Ubisoft download finished.
+	 */
+	public void refreshResources() {
+		areResourcesLoaded.setValue(androidResourcesLoader.setup());
+	}
+
 	public void quitSelected() {
 		if (gameManager.getGameMenu().getGameState().getValue() == GameMenu.GameState.CONFIRM_QUIT) {
 			gameManager.getGameMenu().quitConfirm();

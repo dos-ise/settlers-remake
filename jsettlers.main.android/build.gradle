@@ -87,6 +87,7 @@ dependencies {
     implementation project(':jsettlers.logic')
     implementation project(':jsettlers.common')
     implementation project(':jsettlers.network')
+    implementation project(':jsettlers.ubisoft')
 
     implementation "android.arch.lifecycle:extensions:1.1.1"
     implementation 'com.android.support:appcompat-v7:' + rootProject.ext.androidSupportLibraryVersion

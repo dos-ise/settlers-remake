@@ -111,6 +111,18 @@
 	<string name="resource_directory_info">JSettlers requires the GFX and SND folders from an original copy of Settlers 3. Install Settlers 3 on your computer and find those folders, then copy them to your Android device.</string>
 	<string name="resource_directory_button">Locate folders</string>
 
+	<string name="ubisoft_download_button">Download from Ubisoft</string>
+	<string name="ubisoft_login_title">Ubisoft Connect Login</string>
+	<string name="ubisoft_retry">Retry</string>
+	<string name="ubisoft_logging_in">Logging in...</string>
+	<string name="ubisoft_login_failed">Login failed.</string>
+	<string name="ubisoft_starting_download">Starting download...</string>
+	<string name="ubisoft_download_complete">Download complete (%1$d files).</string>
+	<string name="ubisoft_download_failed">Download failed:</string>
+	<string name="ubisoft_network_error">Cannot reach the Ubisoft login page.\nPlease check your internet connection.</string>
+	<string name="ubisoft_ssl_error">A secure connection to the Ubisoft login page could not be established.</string>
+	<string name="ubisoft_storage_permission_needed">All files access is required to download the game data to /storage/emulated/0/JSettlers. Please grant it in the system settings and try again.</string>
+
 	<string name="menu_single_player_title">Single-Player</string>
 	<string name="menu_single_player_info">Create a battle with computer opponents.</string>
 
