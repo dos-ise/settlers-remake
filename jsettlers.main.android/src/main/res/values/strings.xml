@@ -121,6 +121,7 @@
 	<string name="ubisoft_download_failed">Download failed:</string>
 	<string name="ubisoft_network_error">Cannot reach the Ubisoft login page.\nPlease check your internet connection.</string>
 	<string name="ubisoft_ssl_error">A secure connection to the Ubisoft login page could not be established.</string>
+	<string name="ubisoft_storage_permission_needed">All files access is required to download the game data to /storage/emulated/0/JSettlers. Please grant it in the system settings and try again.</string>
 
 	<string name="menu_single_player_title">Single-Player</string>
 	<string name="menu_single_player_info">Create a battle with computer opponents.</string>

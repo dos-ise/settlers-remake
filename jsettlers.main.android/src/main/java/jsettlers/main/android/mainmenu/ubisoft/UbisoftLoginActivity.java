@@ -19,11 +19,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
@@ -63,7 +68,7 @@ import jsettlers.ubisoft.UbisoftModels.UbisoftLoginResult;
 public class UbisoftLoginActivity extends AppCompatActivity {
 
 	private static final String TAG = "JSettlersUbisoft";
-	private static final String GAME_DATA_DIR = "gamedata";
+	private static final String GAME_DATA_DIR = "JSettlers";
 
 	private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 	private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -74,6 +79,7 @@ public class UbisoftLoginActivity extends AppCompatActivity {
 	private ProgressBar progressBar;
 	private TextView statusText;
 	private LinearLayout retryLayout;
+	private boolean pendingAllFilesAccessRequest;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -86,11 +92,35 @@ public class UbisoftLoginActivity extends AppCompatActivity {
 			return;
 		}
 
+		// Writing to /storage/emulated/0/JSettlers needs all-files access on Android 11+ (scoped storage).
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+			pendingAllFilesAccessRequest = true;
+			Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+			intent.setData(Uri.parse("package:" + getPackageName()));
+			startActivity(intent);
+			return;
+		}
+
 		showUbisoftLogin();
 	}
 
+	@Override
+	protected void onResume() {
+		super.onResume();
+		if (pendingAllFilesAccessRequest) {
+			pendingAllFilesAccessRequest = false;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && Environment.isExternalStorageManager()) {
+				showUbisoftLogin();
+			} else {
+				Toast.makeText(this, R.string.ubisoft_storage_permission_needed, Toast.LENGTH_LONG).show();
+				setResult(RESULT_CANCELED);
+				finish();
+			}
+		}
+	}
+
 	private String getGameDataPath() {
-		return new File(getExternalFilesDir(null), GAME_DATA_DIR).getAbsolutePath();
+		return new File(Environment.getExternalStorageDirectory(), GAME_DATA_DIR).getAbsolutePath();
 	}
 
 	/**
