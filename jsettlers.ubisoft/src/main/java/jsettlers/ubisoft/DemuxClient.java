@@ -275,11 +275,15 @@ public class DemuxClient implements AutoCloseable {
 	}
 
 	private void writeFramed(byte[] payload) throws IOException {
+		output.write(formatLengthPrefixed(payload));
+		output.flush();
+	}
+
+	private static byte[] formatLengthPrefixed(byte[] payload) {
 		byte[] framed = new byte[4 + payload.length];
 		writeBigEndianUInt32(framed, 0, payload.length);
 		System.arraycopy(payload, 0, framed, 4, payload.length);
-		output.write(framed);
-		output.flush();
+		return framed;
 	}
 
 	private void readExactly(byte[] buffer, int offset, int count) throws IOException {
