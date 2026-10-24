@@ -40,6 +40,11 @@
 		<activity
 			android:name=".mainmenu.settings.SettingsActivity_"
 			android:label="@string/settings"/>
+
+		<activity
+			android:name=".mainmenu.ubisoft.UbisoftLoginActivity"
+			android:label="@string/ubisoft_login_title"
+			android:theme="@style/SettlersTheme"/>
 	</application>
 
 </manifest>
