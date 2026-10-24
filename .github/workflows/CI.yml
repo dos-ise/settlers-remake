@@ -52,5 +52,5 @@ jobs:
     - uses: gradle/gradle-build-action@v3
       with:
         # hardShouldConquerEasy and testIfReplayIsEqualToOriginalPlay are known-broken on master
-        # (AI balance regression / replay determinism) and are excluded until fixed.
-        arguments: test --info --tests '!jsettlers.integration.ai.AiDifficultiesIT.hardShouldConquerEasy' --tests '!jsettlers.integration.replay.ReplayValidationIT.testIfReplayIsEqualToOriginalPlay'
+        # (AI balance regression / replay determinism) and are @Ignore'd until fixed.
+        arguments: test --info
