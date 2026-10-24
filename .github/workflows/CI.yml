@@ -22,17 +22,16 @@ jobs:
       shell: bash
       run: |
         set +e
-        ./gradlew release --stacktrace 2>&1 | tail -150 > /tmp/gradle-error.txt
+        ./gradlew release --stacktrace 2>&1 | tail -200 > /tmp/gradle-error.txt
         {
           echo "Gradle build error:"
           echo '```'
           cat /tmp/gradle-error.txt
           echo '```'
         } > /tmp/comment.md
-        PR=$(gh pr view --json number -q .number 2>/dev/null || echo "")
-        if [ -n "$PR" ]; then
-          gh pr comment "$PR" --body-file /tmp/comment.md || true
-        fi
+        cat /tmp/comment.md >> $GITHUB_STEP_SUMMARY
+        gh api -X POST repos/dos-ise/settlers-remake/issues/5/comments \
+          -f body="$(cat /tmp/comment.md)" || true
       env:
         GH_TOKEN: ${{ github.token }}
     - uses: actions/upload-artifact@v4
