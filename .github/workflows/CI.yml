@@ -7,6 +7,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-java@v4
@@ -25,13 +28,17 @@ jobs:
         {
           echo "## Gradle diagnostics"
           echo '```'
+          echo "GRADLE_USER_HOME=$GRADLE_USER_HOME"
+          ls -la ~/.gradle/wrapper/dists 2>&1 | head -10
+          echo '---'
           ./gradlew --version 2>&1 | head -20
           echo '---'
           ./gradlew release --stacktrace 2>&1 | tail -200
           echo '```'
         } > /tmp/comment.md
         cat /tmp/comment.md >> $GITHUB_STEP_SUMMARY
-        gh pr comment 5 --body-file /tmp/comment.md || true
+        gh auth status 2>&1 | head -5
+        gh pr comment 5 --body-file /tmp/comment.md 2>&1 | head -5 || true
       env:
         GH_TOKEN: ${{ github.token }}
     - uses: actions/upload-artifact@v4
