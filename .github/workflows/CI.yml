@@ -17,6 +17,24 @@ jobs:
     - uses: gradle/gradle-build-action@v3
       with:
         arguments: release
+    - name: Debug gradle failure
+      if: failure()
+      shell: bash
+      run: |
+        set +e
+        ./gradlew release --stacktrace 2>&1 | tail -150 > /tmp/gradle-error.txt
+        {
+          echo "Gradle build error:"
+          echo '```'
+          cat /tmp/gradle-error.txt
+          echo '```'
+        } > /tmp/comment.md
+        PR=$(gh pr view --json number -q .number 2>/dev/null || echo "")
+        if [ -n "$PR" ]; then
+          gh pr comment "$PR" --body-file /tmp/comment.md || true
+        fi
+      env:
+        GH_TOKEN: ${{ github.token }}
     - uses: actions/upload-artifact@v4
       with:
         name: Release
