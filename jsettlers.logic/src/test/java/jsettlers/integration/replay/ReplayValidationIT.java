@@ -52,6 +52,9 @@ public class ReplayValidationIT {
 		CommonConstants.CONTROL_ALL = true;
 		CommonConstants.USE_SAVEGAME_COMPRESSION = false;
 		Constants.FOG_OF_WAR_DEFAULT_ENABLED = false;
+		// The direct play and the replay must produce the identical random state, so the AI has to
+		// run sequentially in a fixed order (see CommonConstants.DETERMINISTIC_AI).
+		CommonConstants.DETERMINISTIC_AI = true;
 
 		TestUtils.setupTempResourceManager();
 	}
