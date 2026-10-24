@@ -14,7 +14,7 @@ jobs:
         distribution: 'temurin'
         java-version: '11'
     - uses: jonasb/android-problem-matchers-action@v1
-    - uses: gradle/gradle-build-action@v4
+    - uses: gradle/gradle-build-action@v3
       with:
         arguments: release
     - uses: actions/upload-artifact@v4
@@ -31,6 +31,6 @@ jobs:
         distribution: 'temurin'
         java-version: '11'
     - uses: jonasb/android-problem-matchers-action@v1
-    - uses: gradle/gradle-build-action@v4
+    - uses: gradle/gradle-build-action@v3
       with:
         arguments: test --info
