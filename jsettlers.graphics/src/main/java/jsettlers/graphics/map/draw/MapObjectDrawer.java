@@ -199,6 +199,7 @@ public class MapObjectDrawer {
 	private final float molten_metal_offset;
 	private final float tower_front_offset;
 	private final float movable_offset;
+	private final BuildingOcclusion buildingOcclusion;
 
 	private static final int SMOKE_HEIGHT = 30;
 
@@ -240,6 +241,7 @@ public class MapObjectDrawer {
 		// all images are batched per texture atlas, so equal depths are resolved by the atlas flush order instead of the draw order:
 		// lift movables slightly above the objects of their row (e.g. the stack a carrier is standing on)
 		movable_offset = z_per_y / 10;
+		buildingOcclusion = new BuildingOcclusion(context.getMap().getWidth(), context.getMap().getHeight());
 	}
 
 	public void setVisibleGrid(byte[][] visibleGrid) {
@@ -978,22 +980,45 @@ public class MapObjectDrawer {
 		}
 
 		image = this.imageMap.getImageForSettler(movable, moveProgress, isUndercover?movablePlayer.getCivilisation():null);
-		image.drawAt(context.getGl(), viewX, viewY, getMovableZ(y, movable.getAction(), movable.getDirection(), moveProgress), color, shade);
+		image.drawAt(context.getGl(), viewX, viewY, getMovableZ(movable, x, y), color, shade);
 
 		drawSettlerMark(viewX, viewY, movable);
 	}
 
 	/**
+	 * Registers a building for this frame, so the settlers around it are drawn in front of or behind it, see {@link BuildingOcclusion}. All buildings
+	 * that can overlap a visible settler have to be registered before the settlers are drawn.
+	 */
+	public void registerBuilding(int x, int y, IBuilding building) {
+		BuildingVariant variant = building.getBuildingVariant();
+		ImageLink[] images = variant.getImages();
+		// the stock is drawn in parts with own depths, the market place lies on the ground
+		if (images.length == 0 || building.getStateProgress() < .01f || variant.isVariantOf(EBuildingType.STOCK) || variant.isVariantOf(EBuildingType.MARKET_PLACE)) {
+			return;
+		}
+		buildingOcclusion.addBuilding(x, y, variant, () -> imageProvider.getImage(images[0]));
+	}
+
+	/**
 	 * The depth of a movable. While walking, the movable's position is already its destination tile, so the depth is interpolated from the row
 	 * of the tile it comes from like the drawing position. Otherwise it would be drawn behind the objects of the row it is still standing in
-	 * when walking north and in front of the objects of the next row too early when walking south.
+	 * when walking north and in front of the objects of the next row too early when walking south. Next to buildings, the depth is corrected by
+	 * {@link BuildingOcclusion}.
 	 */
-	private float getMovableZ(int y, EMovableAction action, EDirection direction, float moveProgress) {
+	private float getMovableZ(IGraphicsMovable movable, int x, int y) {
 		float row = y;
-		if (action == EMovableAction.WALKING) {
-			row += (1 - moveProgress) * direction.getInverseDirection().gridDeltaY;
+		int tileX = x;
+		int tileY = y;
+		if (movable.getAction() == EMovableAction.WALKING) {
+			EDirection direction = movable.getDirection();
+			float remainingStep = 1 - movable.getMoveProgress();
+			row -= remainingStep * direction.gridDeltaY;
+			if (remainingStep > .5f) { // the feet are still closer to the last position
+				tileX -= direction.gridDeltaX;
+				tileY -= direction.gridDeltaY;
+			}
 		}
-		return getZ(movable_offset, row);
+		return getZ(movable_offset, buildingOcclusion.correctRow(tileX, tileY, row));
 	}
 
 	private float betweenTilesX(int startX, int startY, EDirection direction, float progress) {
@@ -1296,6 +1321,7 @@ public class MapObjectDrawer {
 
 		imageMap = SettlerImageMap.getInstance();
 		imageProvider = ImageProvider.getInstance();
+		buildingOcclusion.clear();
 
 		playerBorderObjectImage = imageProvider.getSettlerSequence(FILE_BORDER_POST, 65).getImageSafe(0, () -> "border-indicator");
 
