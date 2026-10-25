@@ -37,8 +37,14 @@ public class StatisticsRecorder implements IScheduledTimerable, Serializable {
 	private static final long serialVersionUID = 1L;
 
 	static final int SAMPLE_INTERVAL_MS = 60 * 1000;
+	/**
+	 * The {@link RescheduleTimer} can only schedule up to {@code FUTURE_TIME} ms ahead, so the recorder ticks more often and only records a
+	 * sample when a full {@link #SAMPLE_INTERVAL_MS} has passed since the last one.
+	 */
+	private static final int TIMER_INTERVAL_MS = 30 * 1000;
 
 	private final PartitionsGrid partitionsGrid;
+	private int lastSampleTimeMs = Integer.MIN_VALUE;
 
 	public StatisticsRecorder(PartitionsGrid partitionsGrid) {
 		this.partitionsGrid = partitionsGrid;
@@ -49,13 +55,16 @@ public class StatisticsRecorder implements IScheduledTimerable, Serializable {
 	 */
 	public void start() {
 		recordSample(false);
-		RescheduleTimer.add(this, SAMPLE_INTERVAL_MS);
+		RescheduleTimer.add(this, TIMER_INTERVAL_MS);
 	}
 
 	@Override
 	public int timerEvent() {
-		recordSample(false);
-		return SAMPLE_INTERVAL_MS;
+		int time = MatchConstants.clock().getTime();
+		if (lastSampleTimeMs < 0 || time - lastSampleTimeMs >= SAMPLE_INTERVAL_MS) {
+			recordSample(false);
+		}
+		return TIMER_INTERVAL_MS;
 	}
 
 	@Override
@@ -90,6 +99,7 @@ public class StatisticsRecorder implements IScheduledTimerable, Serializable {
 
 			player.getStatisticsHistory().addSample(time, playerValues, force);
 		}
+		lastSampleTimeMs = time;
 	}
 
 	private static void countMovables(int[][] values) {
