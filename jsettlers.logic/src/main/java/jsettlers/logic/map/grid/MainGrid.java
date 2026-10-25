@@ -368,18 +368,22 @@ public final class MainGrid implements Serializable {
 	public void save(Byte playerId, UIState uiState, String description) throws IOException {
 		boolean savedPausingState = MatchConstants.clock().isPausing();
 		MatchConstants.clock().setPausing(true);
-		try {
-			Thread.sleep(300L); // FIXME @Andreas serializer should wait until threads did their work!
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		// the fog of war is written into the savegame, but updated by its own threads
+		FogOfWar pausedFogOfWar = fogOfWar;
+		if (pausedFogOfWar != null) {
+			pausedFogOfWar.pauseThreads();
 		}
-
-		PlayerState[] playerStates = calculatePlayerStates(playerId, uiState);
-		MapFileHeader header = generateSaveHeader(playerId, description);
-		MapList list = MapList.getDefaultList();
-		list.saveMap(playerStates, header, MainGrid.this);
-
-		MatchConstants.clock().setPausing(savedPausingState);
+		try {
+			PlayerState[] playerStates = calculatePlayerStates(playerId, uiState);
+			MapFileHeader header = generateSaveHeader(playerId, description);
+			MapList list = MapList.getDefaultList();
+			list.saveMap(playerStates, header, MainGrid.this);
+		} finally {
+			if (pausedFogOfWar != null) {
+				pausedFogOfWar.resumeThreads();
+			}
+			MatchConstants.clock().setPausing(savedPausingState);
+		}
 	}
 
 	private PlayerState[] calculatePlayerStates(Byte playerId, UIState uiState) {
@@ -938,6 +942,11 @@ public final class MainGrid implements Serializable {
 		@Override
 		public final byte getVisibleStatus(int x, int y) {
 			return fogOfWar.getVisibleStatus(x, y);
+		}
+
+		@Override
+		public int getResourceAmountAt(int x, int y) {
+			return landscapeGrid.getResourceAmountAt(x, y);
 		}
 
 		@Override

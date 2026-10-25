@@ -197,6 +197,7 @@ public class MapObjectDrawer {
 	private final float construction_offset;
 	private final float molten_metal_offset;
 	private final float tower_front_offset;
+	private final float movable_offset;
 
 	private static final int SMOKE_HEIGHT = 30;
 
@@ -235,6 +236,9 @@ public class MapObjectDrawer {
 		construction_offset = z_per_y;
 		molten_metal_offset = z_per_y;
 		tower_front_offset = z_per_y / 2;
+		// all images are batched per texture atlas, so equal depths are resolved by the atlas flush order instead of the draw order:
+		// lift movables slightly above the objects of their row (e.g. the stack a carrier is standing on)
+		movable_offset = z_per_y / 10;
 	}
 
 	public void setVisibleGrid(byte[][] visibleGrid) {
@@ -797,8 +801,9 @@ public class MapObjectDrawer {
 							soundNumber = 21;
 						}
 						break;
-					case GEOLOGIST: // TODO: should also check grid.getResourceAmountAt(x, y)
-						if (sound.random.nextInt(256) == 0) {
+					case GEOLOGIST:
+						ShortPoint2D geologistPosition = movable.getPosition();
+						if (sound.random.nextInt(256) == 0 && context.getMap().getResourceAmountAt(geologistPosition.x, geologistPosition.y) > 0) {
 							soundNumber = 24;
 						}
 						break;
@@ -959,9 +964,22 @@ public class MapObjectDrawer {
 		}
 
 		image = this.imageMap.getImageForSettler(movable, moveProgress, isUndercover?movablePlayer.getCivilisation():null);
-		image.drawAt(context.getGl(), viewX, viewY, getZ(0, y), color, shade);
+		image.drawAt(context.getGl(), viewX, viewY, getMovableZ(y, movable.getAction(), movable.getDirection(), moveProgress), color, shade);
 
 		drawSettlerMark(viewX, viewY, movable);
+	}
+
+	/**
+	 * The depth of a movable. While walking, the movable's position is already its destination tile, so the depth is interpolated from the row
+	 * of the tile it comes from like the drawing position. Otherwise it would be drawn behind the objects of the row it is still standing in
+	 * when walking north and in front of the objects of the next row too early when walking south.
+	 */
+	private float getMovableZ(int y, EMovableAction action, EDirection direction, float moveProgress) {
+		float row = y;
+		if (action == EMovableAction.WALKING) {
+			row += (1 - moveProgress) * direction.getInverseDirection().gridDeltaY;
+		}
+		return getZ(movable_offset, row);
 	}
 
 	private float betweenTilesX(int startX, int startY, EDirection direction, float progress) {
