@@ -57,6 +57,7 @@ public enum EGuiAction {
 	CAST_SPELL,
 	CHANGE_MOVABLE_SETTINGS,
 	SET_MOVABLE_LIMIT_TYPE,
+	CONVERT_AT_POSITION,
 	;
 
 	public static final EGuiAction[] VALUES = values();

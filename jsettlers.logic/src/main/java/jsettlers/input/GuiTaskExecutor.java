@@ -34,6 +34,7 @@ import jsettlers.input.tasks.CastSpellGuiTask;
 import jsettlers.input.tasks.ChangeTowerSoldiersGuiTask;
 import jsettlers.input.tasks.ChangeTradingRequestGuiTask;
 import jsettlers.input.tasks.ConstructBuildingTask;
+import jsettlers.input.tasks.ConvertAtPositionGuiTask;
 import jsettlers.input.tasks.ConvertGuiTask;
 import jsettlers.input.tasks.EGuiAction;
 import jsettlers.input.tasks.MovableGuiTask;
@@ -67,7 +68,7 @@ import jsettlers.logic.movable.interfaces.IBearerMovable;
 import jsettlers.logic.movable.interfaces.IFerryMovable;
 import jsettlers.logic.movable.interfaces.ILogicMovable;
 import jsettlers.logic.movable.interfaces.IMageMovable;
-import jsettlers.logic.movable.interfaces.IPioneerMovable;
+import jsettlers.logic.movable.interfaces.ISpecialistMovable;
 import jsettlers.network.client.task.packets.TaskPacket;
 import jsettlers.network.synchronic.timer.ITaskExecutor;
 
@@ -111,6 +112,12 @@ class GuiTaskExecutor implements ITaskExecutor {
 			case CAST_SPELL:
 				castSpell((CastSpellGuiTask) guiTask);
 				break;
+
+			case CONVERT_AT_POSITION: {
+				ConvertAtPositionGuiTask task = (ConvertAtPositionGuiTask) guiTask;
+				grid.convertAtPosition(task.getPlayerId(), task.getPosition(), task.getSourceType(), task.getTargetType(), task.getAmount());
+				break;
+			}
 
 			case BUILD: {
 				ConstructBuildingTask task = (ConstructBuildingTask) guiTask;
@@ -316,8 +323,8 @@ class GuiTaskExecutor implements ITaskExecutor {
 					}
 					break;
 				case BEARER:
-					if(movable instanceof IPioneerMovable) {
-						((IPioneerMovable)movable).convertToBearer();
+					if(movable instanceof ISpecialistMovable) {
+						((ISpecialistMovable)movable).convertToBearer();
 					}
 					break;
 				default:

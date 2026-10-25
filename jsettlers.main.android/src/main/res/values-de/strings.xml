@@ -68,6 +68,12 @@
 	<string name="convert_all">Alle umwandeln</string>
 	<string name="convert_one">Einen umwandeln</string>
 	<string name="convert_to_carriers">Konvertiere zu Trägern</string>
+	<string name="specialists_carriers">Träger: %d</string>
+	<string name="specialists_add_one">+1</string>
+	<string name="specialists_add_five">+5</string>
+	<string name="specialists_add_all">+Alle</string>
+	<string name="specialists_remove_one">-1</string>
+	<string name="specialists_remove_all">-Alle</string>
 	<string name="empty_directory">Dieses Verzeichnis ist leer</string>
 	<string name="game_menu_pause">Pause</string>
 	<string name="game_menu_paused">Pausiert</string>
@@ -76,6 +82,8 @@
 	<string name="game_menu_save">Speichern</string>
 	<string name="game_menu_saved">Spiel gespeichert</string>
 	<string name="game_menu_title">Menü</string>
+	<string name="minimap_show">Minimap einblenden</string>
+	<string name="minimap_hide">Minimap ausblenden</string>
 	<string name="game_menu_unpause">Weiter</string>
 	<string name="halt">Stopp</string>
 	<string name="join_multi_player_game">Multiplayer Spiel beitreten</string>
@@ -120,6 +128,8 @@
 	<string name="dock">Steg</string>
 	<string name="destination">Ziel</string>
 	<string name="global_stock_message">Die globalen Lagereinstellungen können nur in einer eigenen Siedlung gesetzt werden.</string>
+	<string name="own_territory_message">Bewege die Ansicht über eine eigene Siedlung, um diese Einstellungen zu ändern.</string>
+	<string name="settlers_statistics_total">Gesamt</string>
 	<string name="goods_stock_title">Globale Lagereinstellungen</string>
 
 	<string name="game_menu_skip_minute">Eine Minute vorspulen</string>

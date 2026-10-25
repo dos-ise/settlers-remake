@@ -75,6 +75,14 @@
 	<string name="convert_all">Convert all</string>
 	<string name="convert_one">Convert one</string>
 
+	<!-- Settlers Menu: Specialists -->
+	<string name="specialists_carriers">Carriers: %d</string>
+	<string name="specialists_add_one">+1</string>
+	<string name="specialists_add_five">+5</string>
+	<string name="specialists_add_all">+All</string>
+	<string name="specialists_remove_one">-1</string>
+	<string name="specialists_remove_all">-All</string>
+
 	<!-- Specialists Selection -->
 	<string name="convert_to_carriers">Convert to carriers</string>
 	<string name="work_here">Work here</string>
@@ -137,6 +145,8 @@
 	<string name="start_game">Start game</string>
 
 	<string name="game_menu_title">Menu</string>
+	<string name="minimap_show">Show minimap</string>
+	<string name="minimap_hide">Hide minimap</string>
 	<string name="game_menu_quit">Quit</string>
 	<string name="game_menu_quit_confirm">Sure?</string>
 	<string name="game_menu_save">Save</string>
@@ -167,6 +177,8 @@
 	<string name="destination">Dest.</string>
 	<string name="goods_stock_title">Global storage</string>
 	<string name="global_stock_message">Global storage settings must be set in one of your own settlements.</string>
+	<string name="own_territory_message">Move the view over one of your own settlements to change these settings.</string>
+	<string name="settlers_statistics_total">Total</string>
 	<string name="goods_inventory_title">Inventory</string>
 	<string name="good_distribution_title">Distribution</string>
 	<string name="confirm_destory_ships">Destroy ships?</string>

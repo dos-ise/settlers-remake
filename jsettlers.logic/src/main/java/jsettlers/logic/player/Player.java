@@ -53,7 +53,6 @@ public class Player implements Serializable, IMessenger, IInGamePlayer, IOffersC
 
 	private EWinState winState;
 	private ECivilisation civilisation;
-
 	/**
 	 * Not final to be able to create it for old savegames.
 	 */
