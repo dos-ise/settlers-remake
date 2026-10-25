@@ -29,10 +29,13 @@ import java.util.function.IntConsumer;
 
 import jsettlers.main.android.R;
 import jsettlers.main.android.databinding.DialogGameMenuBinding;
-import jsettlers.main.android.mainmenu.MainActivity_;
+import jsettlers.main.android.gameplay.statistics.EndgameStatisticsActivity_;
+import jsettlers.main.android.gameplay.statistics.StatisticsDialog;
 
 public class GameMenuDialog extends DialogFragment {
 	private static final String TAG_PLAYERS_DIALOG = "players_dialog";
+
+	private static final String TAG_STATISTICS_DIALOG = "statistics_dialog";
 
 	private GameMenuViewModel viewModel;
 
@@ -46,7 +49,7 @@ public class GameMenuDialog extends DialogFragment {
 		GameMenuViewModelFactory gameMenuViewModelFactory = new GameMenuViewModelFactory(requireActivity().getApplication());
 		viewModel = gameMenuViewModelFactory.get(this);
 
-		viewModel.getGameQuitted().observe(this, x -> MainActivity_.intent(this).start());
+		viewModel.getGameQuitted().observe(this, x -> EndgameStatisticsActivity_.intent(this).start());
 	}
 
 	@NonNull
@@ -57,6 +60,7 @@ public class GameMenuDialog extends DialogFragment {
 		binding.setLifecycleOwner(this);
 		binding.setViewmodel(viewModel);
 		binding.seekBar.setOnSeekBarChangeListener(gameSpeedSeekBarListener);
+		binding.buttonStatistics.setOnClickListener(view -> showStatistics());
 		binding.switchMusic.setOnCheckedChangeListener((button, checked) -> viewModel.musicEnabledChanged(checked));
 		binding.seekBarMusicVolume.setOnSeekBarChangeListener(new VolumeSeekBarListener(viewModel::musicVolumeMoved));
 		binding.seekBarSoundVolume.setOnSeekBarChangeListener(new VolumeSeekBarListener(viewModel::soundVolumeMoved));
@@ -75,6 +79,11 @@ public class GameMenuDialog extends DialogFragment {
 
 	private void showPlayers() {
 		PlayersDialog.create().show(requireFragmentManager(), TAG_PLAYERS_DIALOG);
+		dismiss();
+	}
+
+	private void showStatistics() {
+		StatisticsDialog.create().show(requireFragmentManager(), TAG_STATISTICS_DIALOG);
 		dismiss();
 	}
 
