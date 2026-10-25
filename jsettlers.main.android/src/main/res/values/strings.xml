@@ -184,4 +184,9 @@
 	<string name="move_to_forced">Forced</string>
 	<string name="move_to_waypoint">Waypoint</string>
 	<string name="move_to_patrol">Patrol</string>
+	<string name="settings_audio">Audio</string>
+	<string name="settings_music_enabled">Play music</string>
+	<string name="settings_music_volume">Music volume</string>
+	<string name="settings_sound_volume">Sound effects volume</string>
+	<string name="settings_volume_percent">%d %%</string>
 </resources>
