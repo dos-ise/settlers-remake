@@ -91,6 +91,10 @@ public class PacketSerializationTest {
 				{ new MatchInfoUpdatePacket(ENetworkMessage.NO_LISTENER_FOUND, new PlayerInfoPacket("IDBLA82348-#�l�34r",
 						"NameBKUIH893428())/\"�/", true), createMatchInfoPacket()), d(MatchInfoUpdatePacket.class) },
 				{ new TimeSyncPacket(23424), d(TimeSyncPacket.class) },
+				{ new PlayerStatusPacket((byte) 3, "Name\"�/", true, 42, 123400, 250), d(PlayerStatusPacket.class) },
+				{ new PlayerStatusesPacket(new PlayerStatusPacket[0]), d(PlayerStatusesPacket.class) },
+				{ new PlayerStatusesPacket(new PlayerStatusPacket[] { new PlayerStatusPacket((byte) 0, "host", true, 1, 5000, 0),
+						new PlayerStatusPacket((byte) 2, "client", false, -1, 4800, 0) }), d(PlayerStatusesPacket.class) },
 
 				{ new ServersideTaskPacket("sdfsfsdf".getBytes()), d(ServersideTaskPacket.class) },
 				{ new ServersideSyncTasksPacket(23, Arrays.asList(new ServersideTaskPacket("dsfjsfj".getBytes()),
@@ -122,7 +126,7 @@ public class PacketSerializationTest {
 				new SlotInfoPacket((byte) 4, (byte) 42, (byte) 3, (byte) 1),
 				new SlotInfoPacket((byte) 0, (byte) 42, (byte) 3, (byte) 2),
 		};
-		return new MatchInfoPacket("id28948298fedkj", "KHDHifuh(&/%T", (byte) 3, mapInfo, players, slots);
+		return new MatchInfoPacket("id28948298fedkj", "KHDHifuh(&/%T", (byte) 3, mapInfo, players, slots, 1, 45);
 	}
 
 	private static <T extends Packet> Object d(Class<T> classType) {

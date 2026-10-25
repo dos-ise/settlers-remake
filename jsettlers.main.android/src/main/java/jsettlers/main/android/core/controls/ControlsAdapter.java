@@ -42,8 +42,8 @@ import jsettlers.network.client.interfaces.IGameClock;
 public class ControlsAdapter implements ActionControls, DrawControls, SelectionControls, TaskControls, PositionControls, MoveToControls, MinimapControls {
 	private static final int SOUND_THREADS = 6;
 
-	private final IInGamePlayer player;
 	private final IStartedGame game;
+	private final IInGamePlayer player;
 	private final AndroidControls androidControls;
 	private final MapContent mapContent;
 	private final GameMenu gameMenu;

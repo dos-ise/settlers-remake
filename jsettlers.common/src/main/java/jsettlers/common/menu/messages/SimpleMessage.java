@@ -14,9 +14,12 @@
  */
 package jsettlers.common.menu.messages;
 
+import jsettlers.common.Color;
 import jsettlers.common.buildings.IBuilding;
 import jsettlers.common.material.EMaterialType;
 import jsettlers.common.position.ShortPoint2D;
+
+import java.util.Objects;
 
 /**
  * This is a messageLabel that states that the user was attacked by an other player.
@@ -24,10 +27,17 @@ import jsettlers.common.position.ShortPoint2D;
  * @author Michael Zangl
  */
 public class SimpleMessage implements IMessage {
+	/**
+	 * Status messages are only shown for a short time.
+	 */
+	public static final long PLAYER_STATUS_TTL = 20000;
+
 	private final byte sender;
 	private final ShortPoint2D pos;
 	private final String messageLabel;
 	private final EMessageType type;
+	private final Color indicatorColor;
+	private final long timeToLive;
 	private int age;
 
 	/**
@@ -43,10 +53,16 @@ public class SimpleMessage implements IMessage {
 	 * 		The position the messageLabel was sent from.
 	 */
 	private SimpleMessage(EMessageType type, String messageLabel, byte sender, ShortPoint2D pos) {
+		this(type, messageLabel, sender, pos, null, MESSAGE_TTL);
+	}
+
+	private SimpleMessage(EMessageType type, String messageLabel, byte sender, ShortPoint2D pos, Color indicatorColor, long timeToLive) {
 		this.type = type;
 		this.messageLabel = messageLabel;
 		this.sender = sender;
 		this.pos = pos;
+		this.indicatorColor = indicatorColor;
+		this.timeToLive = timeToLive;
 		this.age = 0;
 	}
 
@@ -82,7 +98,20 @@ public class SimpleMessage implements IMessage {
 	}
 
 	@Override
+	public long getTimeToLive() {
+		return timeToLive;
+	}
+
+	@Override
+	public Color getIndicatorColor() {
+		return indicatorColor;
+	}
+
+	@Override
 	public boolean duplicates(IMessage m) {
+		if (this.type == EMessageType.PLAYER_STATUS) {
+			return false; // status messages are only sent when the status changes
+		}
 		if ((m.getSender() == this.sender)
 				&& m.getMessageLabel().equals(this.messageLabel)
 				&& m.getType() == this.type) {
@@ -91,7 +120,7 @@ public class SimpleMessage implements IMessage {
 					return this.pos.getOnGridDistTo(m.getPosition()) < MESSAGE_DIST_THRESHOLD;
 				}
 			} else {
-				return this.pos.equals(m.getPosition());
+				return Objects.equals(this.pos, m.getPosition());
 			}
 		}
 		return false;
@@ -149,5 +178,30 @@ public class SimpleMessage implements IMessage {
 	 */
 	public static IMessage castFailed(ShortPoint2D at, String messageLabel) {
 		return new SimpleMessage(EMessageType.NOTHING_FOUND_IN_SEARCH_AREA, messageLabel, (byte)-1, at);
+	}
+
+	/**
+	 * Creates a short message about the state of a player, e.g. a network problem.
+	 *
+	 * @param messageLabel
+	 *            The label of the message text.
+	 * @param player
+	 *            The player the message is about or -1 if it is not about a specific player.
+	 * @param indicatorColor
+	 *            The color of the status dot shown in front of the message.
+	 */
+	public static IMessage playerStatus(String messageLabel, byte player, Color indicatorColor) {
+		return new SimpleMessage(EMessageType.PLAYER_STATUS, messageLabel, player, null, indicatorColor, PLAYER_STATUS_TTL);
+	}
+
+	/**
+	 * Creates a general information message that is not bound to a position on the map.
+	 *
+	 * @param messageLabel
+	 * 		The translation key of the text that will be shown
+	 * @return The messageLabel object
+	 */
+	public static IMessage info(String messageLabel) {
+		return new SimpleMessage(EMessageType.INFO, messageLabel, (byte) -1, null);
 	}
 }

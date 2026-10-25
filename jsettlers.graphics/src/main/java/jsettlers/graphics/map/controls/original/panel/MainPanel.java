@@ -41,6 +41,7 @@ import jsettlers.graphics.map.controls.original.panel.content.AbstractContentPro
 import jsettlers.graphics.map.controls.original.panel.content.ContentType;
 import jsettlers.graphics.map.controls.original.panel.content.ESecondaryTabType;
 import jsettlers.graphics.map.controls.original.panel.content.MessageContent;
+import jsettlers.graphics.map.controls.original.panel.content.PlayersContent;
 import jsettlers.graphics.ui.Button;
 import jsettlers.graphics.ui.CountArrows;
 import jsettlers.graphics.ui.Label;
@@ -111,7 +112,16 @@ public class MainPanel extends UIPanel {
 
 	private final CountArrows changeMusicVolumeArrows = new CountArrows(() -> new Action(EActionType.MUSIC_VOLUME_UP), () -> new Action(EActionType.MUSIC_VOLUME_DOWN));
 
-	private final LabeledButton exitButton = new LabeledButton(Labels.getString("game-menu-quit"), new Action(EActionType.EXIT));
+	private final LabeledButton playersButton = new LabeledButton(Labels.getString("game-menu-players"), new ExecutableAction() {
+		public void execute() {
+			setContent(new PlayersContent(game, new ExecutableAction() {
+				public void execute() {
+					setContent(gamePanelACP);
+				}
+			}));
+		}
+	});
+	private final LabeledButton exitButton = new LabeledButton(Labels.getString("game-menu-quit"), new Action(EActionType.ASK_EXIT));
 	private final LabeledButton saveButton = new LabeledButton(Labels.getString("game-menu-save"), new SaveAction(null));
 	private final LabeledButton cancelButton = new LabeledButton(Labels.getString("game-menu-cancel"), new ExecutableAction() {
 		public void execute() {
@@ -128,6 +138,7 @@ public class MainPanel extends UIPanel {
 		gamePanel.addChild(musicOnOff, .25f, .75f, .9f, .85f);
 		gamePanel.addChild(changeMusicVolumeArrows, .1f, .75f, .25f, .85f);
 
+		gamePanel.addChild(playersButton, .1f, .52f, .9f, .62f);
 		gamePanel.addChild(saveButton, .1f, .34f, .9f, .44f);
 		gamePanel.addChild(exitButton, .1f, .22f, .9f, .32f);
 		gamePanel.addChild(cancelButton, .1f, .1f, .9f, .2f);
@@ -393,6 +404,15 @@ public class MainPanel extends UIPanel {
 					return true;
 				}
 			});
+			return null;
+		case ASK_EXIT:
+			goBackContent = activeContent;
+			setContent(new MessageContent(
+					Labels.getString("really_quit_game"),
+					Labels.getString("game-menu-quit"),
+					new Action(EActionType.EXIT),
+					Labels.getString("abort"),
+					new Action(EActionType.ABORT)));
 			return null;
 		case ABORT:
 			goBack();

@@ -669,7 +669,8 @@ public final class MainGrid implements Serializable {
 			switch (searchType) {
 
 				case UNENFORCED_FOREIGN_GROUND:
-					return !objectsGrid.isBuildingAt(x, y) && !hasSameTeam(x, y, pathCalculable) && !partitionsGrid.isEnforcedByTower(x, y);
+					return !objectsGrid.isBuildingAt(x, y) && !hasSameTeam(x, y, pathCalculable) && !partitionsGrid.isEnforcedByTower(x, y)
+							&& !isForeignGroundInPeaceTime(x, y, pathCalculable);
 
 				case VALID_FREE_POSITION:
 					return isValidPosition(pathCalculable, x, y) && movableGrid.hasNoMovableAt(x, y);
@@ -731,7 +732,8 @@ public final class MainGrid implements Serializable {
 					return isInBounds(x, y) && !flagsGrid.isProtected(x, y) && !flagsGrid.isMarked(x, y) && canAddResourceSign(x, y);
 
 				case FOREIGN_MATERIAL:
-					return isInBounds(x, y) && !hasSamePlayer(x, y, pathCalculable) && mapObjectsManager.hasStealableMaterial(x, y);
+					return isInBounds(x, y) && !hasSamePlayer(x, y, pathCalculable) && mapObjectsManager.hasStealableMaterial(x, y)
+							&& !isForeignGroundInPeaceTime(x, y, pathCalculable);
 
 				case ENEMY: {
 					ILogicMovable movable = movableGrid.getMovableAt(x, y);
@@ -821,6 +823,11 @@ public final class MainGrid implements Serializable {
 		private boolean hasSameTeam(int x, int y, IPathCalculatable requester) {
 			Player player = partitionsGrid.getPlayerAt(x, y);
 			return player != null && player.getTeamId() == requester.getPlayer().getTeamId();
+		}
+
+		private boolean isForeignGroundInPeaceTime(int x, int y, IPathCalculatable requester) {
+			Player player = partitionsGrid.getPlayerAt(x, y);
+			return player != null && MovableGrid.isPeaceTimeBetween(player, requester.getPlayer());
 		}
 
 		private boolean isRiver(int x, int y) {
