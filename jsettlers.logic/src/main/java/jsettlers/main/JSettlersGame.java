@@ -22,7 +22,9 @@ import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import java.util.function.Consumer;
@@ -30,6 +32,7 @@ import java.util.function.Consumer;
 import jsettlers.ai.highlevel.AiExecutor;
 import jsettlers.common.CommitInfo;
 import jsettlers.common.CommonConstants;
+import jsettlers.common.ai.EPlayerType;
 import jsettlers.common.logging.MultiplexingOutputStream;
 import jsettlers.common.map.IGraphicsGrid;
 import jsettlers.common.menu.EGameError;
@@ -38,12 +41,14 @@ import jsettlers.common.menu.IMapInterfaceConnector;
 import jsettlers.common.menu.IStartedGame;
 import jsettlers.common.menu.IStartingGame;
 import jsettlers.common.menu.IStartingGameListener;
+import jsettlers.common.menu.InGamePlayerStatus;
 import jsettlers.common.player.IInGamePlayer;
 import jsettlers.common.resources.ResourceManager;
 import jsettlers.common.statistics.IGameTimeProvider;
 import jsettlers.input.GuiInterface;
 import jsettlers.input.IGameStoppable;
 import jsettlers.input.PlayerState;
+import jsettlers.input.PlayerStatusController;
 import jsettlers.logic.buildings.Building;
 import jsettlers.logic.buildings.trading.HarborBuilding;
 import jsettlers.logic.buildings.trading.MarketBuilding;
@@ -55,6 +60,7 @@ import jsettlers.logic.map.loading.MapLoadException;
 import jsettlers.logic.map.loading.MapLoader;
 import jsettlers.logic.movable.MovableManager;
 import jsettlers.logic.player.InitialGameState;
+import jsettlers.logic.player.Player;
 import jsettlers.logic.player.PlayerSetting;
 import jsettlers.logic.timer.RescheduleTimer;
 import jsettlers.main.replay.ReplayUtils;
@@ -178,6 +184,7 @@ public class JSettlersGame {
 		private Consumer<IStartedGame> exitListener;
 		private boolean gameRunning;
 		private AiExecutor aiExecutor;
+		private volatile PlayerStatusController playerStatusController;
 
 		@Override
 		public void run() {
@@ -231,11 +238,16 @@ public class JSettlersGame {
 				aiExecutor = new AiExecutor(initialGameState.getPlayerSettings(), mainGrid, networkConnector.getTaskScheduler());
 				networkConnector.getGameClock().schedule(aiExecutor, (short) 1000);
 
+				Player localPlayer = mainGrid.getPartitionsGrid().getPlayer(initialGameState.getPlayerId());
+				playerStatusController = createPlayerStatusController(localPlayer);
+				networkConnector.setPlayerStatusListener(playerStatusController::playerStatusReceived);
+
 				MatchConstants.clock().startExecution(); // WARNING: GAME CLOCK IS STARTED!
 				// NO CONFIGURATION AFTER THIS POINT! =================================
 				gameRunning = true;
 
 				startingGameListener.startFinished();
+				playerStatusController.start();
 
 				synchronized (stopMutex) {
 					while (!stopped) {
@@ -246,6 +258,8 @@ public class JSettlersGame {
 					}
 				}
 
+				playerStatusController.shutdown();
+				networkConnector.setPlayerStatusListener(null);
 				networkConnector.shutdown();
 				mainGrid.stopThreads();
 				connector.shutdown();
@@ -272,6 +286,17 @@ public class JSettlersGame {
 
 		public AiExecutor getAiExecutor() {
 			return aiExecutor;
+		}
+
+		private PlayerStatusController createPlayerStatusController(Player localPlayer) {
+			PlayerSetting[] playerSettings = initialGameState.getPlayerSettings();
+			Player[] players = mainGrid.getPartitionsGrid().getPlayers();
+			EPlayerType[] playerTypes = new EPlayerType[players.length];
+			for (int i = 0; i < playerTypes.length && i < playerSettings.length; i++) {
+				playerTypes[i] = playerSettings[i].isAvailable() ? playerSettings[i].getPlayerType() : null;
+			}
+			return new PlayerStatusController(MatchConstants.clock(), networkConnector, multiplayer, initialGameState.getPlayerId(), playerTypes,
+					players, localPlayer);
 		}
 
 		private DataOutputStream createReplayFileStream() throws IOException {
@@ -358,6 +383,18 @@ public class JSettlersGame {
 		@Override
 		public boolean isMultiplayerGame() {
 			return multiplayer;
+		}
+
+		@Override
+		public List<InGamePlayerStatus> getPlayerStatuses() {
+			PlayerStatusController controller = playerStatusController;
+			return controller != null ? controller.getPlayerStatuses() : Collections.emptyList();
+		}
+
+		@Override
+		public String getPlayerName(byte playerId) {
+			PlayerStatusController controller = playerStatusController;
+			return controller != null ? controller.getPlayerName(playerId) : null;
 		}
 
 		@Override

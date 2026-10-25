@@ -78,6 +78,7 @@ public class Label extends UIPanel {
 	private double lineBottom;
 	private final EHorizontalAlignment horizontalAlignment;
 	private final EVerticalAlignment verticalAlignment;
+	private Color textColor = null;
 
 	/**
 	 * Constructs a new Label with center alignment.
@@ -126,6 +127,14 @@ public class Label extends UIPanel {
 	}
 
 	/**
+	 * @param textColor
+	 *            The color of the text or null to use the default color.
+	 */
+	public synchronized void setTextColor(Color textColor) {
+		this.textColor = textColor;
+	}
+
+	/**
 	 * Sets the text to display on the label.
 	 * 
 	 * @param text
@@ -150,7 +159,7 @@ public class Label extends UIPanel {
 		super.drawAt(gl);
 
 		TextDrawer drawer = gl.getTextDrawer(size);
-		Color color = new Color(intensity, intensity, intensity, 1);
+		Color color = textColor != null ? textColor : new Color(intensity, intensity, intensity, 1);
 
 		if (Double.isNaN(spaceWidth)) {
 			spaceWidth = drawer.getWidth(" ");
