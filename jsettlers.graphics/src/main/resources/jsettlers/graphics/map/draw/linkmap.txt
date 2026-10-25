@@ -52,6 +52,16 @@ clone GARRISON_RIGHT, SWORDSMAN_L2 to GARRISON_RIGHT, PIKEMAN_L2
 clone GARRISON_RIGHT, SWORDSMAN_L3 to GARRISON_RIGHT, PIKEMAN_L3
 
 
+# header icon of the soldier column in the settler statistics
+# TODO: find the matching EGYPTIAN and ASIAN images
+STATISTIC_SOLDIERS, SWORDSMAN_L1 {
+    ROMAN: original_14_GUI_111
+    EGYPTIAN: original_14_GUI_111
+    ASIAN: original_14_GUI_111
+    AMAZON: original_44_GUI_120
+}
+
+
 SETTLER_GUI, SWORDSMAN_L1 {
     ROMAN: original_14_GUI_207
     EGYPTIAN: original_24_GUI_201

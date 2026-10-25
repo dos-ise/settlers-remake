@@ -101,11 +101,6 @@ public class GOSurfaceView extends GLSurfaceView implements RedrawListener, GOEv
 			return modifiers.get();
 		}
 
-		/**
-		 * The pan start center, in GO space
-		 */
-		private UIPoint panStart = new UIPoint(0, 0);
-
 		private final GestureDetector longPressDetector;
 		private final GestureDetector.SimpleOnGestureListener longPressListener = new GestureDetector.SimpleOnGestureListener() {
 			@Override
@@ -133,10 +128,10 @@ public class GOSurfaceView extends GLSurfaceView implements RedrawListener, GOEv
 				if (drawStarted()) {
 					updateDrawPosition(currentPoint(e2));
 				} else if (panStarted()) {
-					updatePanPosition(relativePanPoint(e2));
+					updatePanPosition(currentPoint(e2));
 				} else {
-					panStart = currentPoint(e2);
-					startPan(new UIPoint(0, 0));
+					// start at the current finger position so the pan center tells where the gesture started
+					startPan(currentPoint(e2));
 				}
 
 				return true;
@@ -177,7 +172,7 @@ public class GOSurfaceView extends GLSurfaceView implements RedrawListener, GOEv
 				}
 
 				if (panStarted()) {
-					endPan(relativePanPoint(e));
+					endPan(currentPoint(e));
 				}
 			}
 
@@ -187,13 +182,9 @@ public class GOSurfaceView extends GLSurfaceView implements RedrawListener, GOEv
 				}
 
 				if (panStarted()) {
-					endPan(relativePanPoint(e));
+					endPan(currentPoint(e));
 				}
 			}
-		}
-
-		private UIPoint relativePanPoint(MotionEvent e) {
-			return new UIPoint(e.getX() - panStart.getX(), getHeight() - e.getY() - panStart.getY());
 		}
 
 		private UIPoint currentPoint(MotionEvent e) {
