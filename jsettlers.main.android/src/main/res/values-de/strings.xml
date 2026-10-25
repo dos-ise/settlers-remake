@@ -141,4 +141,9 @@
 	<string name="statistics_game_ended">Spiel nach %s beendet</string>
 	<string name="statistics_game_ended_no_time">Spiel beendet</string>
 	<string name="players_close">Schließen</string>
+	<string name="settings_audio">Audio</string>
+	<string name="settings_music_enabled">Musik abspielen</string>
+	<string name="settings_music_volume">Musiklautstärke</string>
+	<string name="settings_sound_volume">Soundeffekte-Lautstärke</string>
+	<string name="settings_volume_percent">%d %%</string>
 </resources>
