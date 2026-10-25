@@ -14,11 +14,10 @@ jobs:
     - uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '11'
+        java-version: '21'
     - uses: jonasb/android-problem-matchers-action@v1
-    - uses: gradle/gradle-build-action@v3
-      with:
-        arguments: release
+    - uses: gradle/actions/setup-gradle@v4
+    - run: ./gradlew release
     - name: Create draft release with APK
       if: success() && github.event_name == 'push'
       shell: bash
@@ -47,10 +46,9 @@ jobs:
     - uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '11'
+        java-version: '21'
     - uses: jonasb/android-problem-matchers-action@v1
-    - uses: gradle/gradle-build-action@v3
-      with:
-        # hardShouldConquerEasy and testIfReplayIsEqualToOriginalPlay are known-broken on master
-        # (AI balance regression / replay determinism) and are @Ignore'd until fixed.
-        arguments: test --info
+    - uses: gradle/actions/setup-gradle@v4
+    # hardShouldConquerEasy and testIfReplayIsEqualToOriginalPlay are known-broken on master
+    # (AI balance regression / replay determinism) and are @Ignore'd until fixed.
+    - run: ./gradlew test --info
