@@ -1,7 +1,7 @@
 # Local build on a corporate network
 
-This documents how to build the project locally behind the Rheinmetall corporate
-proxy (`proxy-rde:8080`). The Gradle wrapper cannot download its distribution
+This documents how to build the project locally behind a corporate proxy that
+requires authentication. The Gradle wrapper cannot download its distribution
 through the proxy by itself, and a few other environment quirks need workarounds.
 
 ## 1. Gradle distribution
@@ -14,11 +14,10 @@ Download the distribution manually with `curl` (which handles the proxy auth)
 and place it where the wrapper expects it:
 
 ```powershell
-# credentials are stored in the Windows Credential Manager under "proxy-rde"
-# (read them with: cmdkey /list, or a CredRead helper)
+# credentials are usually stored in the OS credential store (e.g. Windows Credential Manager)
 $dest = "$env:USERPROFILE\.gradle\wrapper\dists\gradle-8.14.3-bin"
 New-Item -ItemType Directory -Force -Path $dest | Out-Null
-curl.exe -x "http://<user>%40<domain>:<password>@proxy-rde:8080" `
+curl.exe -x "http://<user>%40<domain>:<password>@<proxy-host>:<proxy-port>" `
   -L -o "$dest\gradle-8.14.3-bin.zip" `
   "https://services.gradle.org/distributions/gradle-8.14.3-bin.zip"
 ```
@@ -36,8 +35,8 @@ Gradle's dependency resolution also needs the proxy. Pass the credentials as
 JVM system properties (the `@` in the user name is fine here):
 
 ```powershell
-$env:JAVA_OPTS = '-Dhttp.proxyHost=proxy-rde -Dhttp.proxyPort=8080 ' +
-  '-Dhttps.proxyHost=proxy-rde -Dhttps.proxyPort=8080 ' +
+$env:JAVA_OPTS = '-Dhttp.proxyHost=<proxy-host> -Dhttp.proxyPort=<proxy-port> ' +
+  '-Dhttps.proxyHost=<proxy-host> -Dhttps.proxyPort=<proxy-port> ' +
   '-Dhttp.proxyUser=<user>@<domain> -Dhttp.proxyPassword=<password> ' +
   '-Dhttps.proxyUser=<user>@<domain> -Dhttps.proxyPassword=<password>'
 ```
