@@ -58,6 +58,10 @@ public class ControlsResolver {
 		return controlsAdapter.getGameMenu();
 	}
 
+	public IStartedGame getGame() {
+		return controlsAdapter.getGame();
+	}
+
 	public PositionControls getPositionControls() {
 		return controlsAdapter;
 	}
@@ -72,9 +76,5 @@ public class ControlsResolver {
 
 	public IInGamePlayer getPlayer() {
 		return controlsAdapter.getPlayer();
-	}
-
-	public IStartedGame getGame() {
-		return controlsAdapter.getGame();
 	}
 }
