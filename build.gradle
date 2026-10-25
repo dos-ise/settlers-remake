@@ -9,7 +9,7 @@ ext {
     androidBuildToolsVersion = '30.0.3'
     androidCompileSdkVersion = 30
     androidMinSdkVersion = 19
-    androidTargetSdkVersion = 26
+    androidTargetSdkVersion = 28
 
     lwjglVersion = "3.3.0"
 }
@@ -21,6 +21,7 @@ buildscript {
     }
     dependencies {
         classpath 'org.eclipse.jgit:org.eclipse.jgit:6.1.0.202203080745-r'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.9.4'
         if (findProject(':jsettlers.main.android')) {
             classpath 'com.android.tools.build:gradle:7.0.0'
         }
