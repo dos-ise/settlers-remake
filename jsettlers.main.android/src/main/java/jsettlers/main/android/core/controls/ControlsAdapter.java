@@ -42,6 +42,7 @@ public class ControlsAdapter implements ActionControls, DrawControls, SelectionC
 	private static final int SOUND_THREADS = 6;
 
 	private final IInGamePlayer player;
+	private final IStartedGame game;
 	private final AndroidControls androidControls;
 	private final MapContent mapContent;
 	private final GameMenu gameMenu;
@@ -62,6 +63,7 @@ public class ControlsAdapter implements ActionControls, DrawControls, SelectionC
 	private static final AndroidSoundPlayer SOUND_PLAYER = new AndroidSoundPlayer(SOUND_THREADS);
 
 	public ControlsAdapter(Context context, IStartedGame game, IGameClock gameClock) {
+		this.game = game;
 		this.player = game.getInGamePlayer();
 
 		androidControls = new AndroidControls(this);
@@ -80,6 +82,10 @@ public class ControlsAdapter implements ActionControls, DrawControls, SelectionC
 
 	public GameMenu getGameMenu() {
 		return gameMenu;
+	}
+
+	public IStartedGame getGame() {
+		return game;
 	}
 
 	@Override

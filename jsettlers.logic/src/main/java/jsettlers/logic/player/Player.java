@@ -54,6 +54,15 @@ public class Player implements Serializable, IMessenger, IInGamePlayer, IOffersC
 	private EWinState winState;
 	private ECivilisation civilisation;
 
+	/**
+	 * Not final to be able to create it for old savegames.
+	 */
+	private ProductionStatistic productionStatistic = new ProductionStatistic();
+	/**
+	 * Not final to be able to create it for old savegames.
+	 */
+	private StatisticsHistory statisticsHistory = new StatisticsHistory();
+
 	private transient EPlayerType               playerType;
 	private transient CombatStrengthInformation combatStrengthInfo = new CombatStrengthInformation();
 	private transient IMessenger                messenger;
@@ -72,6 +81,12 @@ public class Player implements Serializable, IMessenger, IInGamePlayer, IOffersC
 
 	private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
 		ois.defaultReadObject();
+		if (productionStatistic == null) {
+			productionStatistic = new ProductionStatistic();
+		}
+		if (statisticsHistory == null) {
+			statisticsHistory = new StatisticsHistory();
+		}
 		combatStrengthInfo = new CombatStrengthInformation();
 		updateCombatStrengths();
 	}
@@ -110,6 +125,16 @@ public class Player implements Serializable, IMessenger, IInGamePlayer, IOffersC
 	@Override
 	public EndgameStatistic getEndgameStatistic() {
 		return endgameStatistic;
+	}
+
+	@Override
+	public ProductionStatistic getProductionStatistic() {
+		return productionStatistic;
+	}
+
+	@Override
+	public StatisticsHistory getStatisticsHistory() {
+		return statisticsHistory;
 	}
 
 	public TradeManager getLandTradeManager() {

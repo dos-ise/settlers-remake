@@ -27,9 +27,12 @@ import android.widget.SeekBar;
 
 import jsettlers.main.android.R;
 import jsettlers.main.android.databinding.DialogGameMenuBinding;
-import jsettlers.main.android.mainmenu.MainActivity_;
+import jsettlers.main.android.gameplay.statistics.EndgameStatisticsActivity_;
+import jsettlers.main.android.gameplay.statistics.StatisticsDialog;
 
 public class GameMenuDialog extends DialogFragment {
+
+	private static final String TAG_STATISTICS_DIALOG = "statistics_dialog";
 
 	private GameMenuViewModel viewModel;
 
@@ -43,7 +46,7 @@ public class GameMenuDialog extends DialogFragment {
 		GameMenuViewModelFactory gameMenuViewModelFactory = new GameMenuViewModelFactory(requireActivity().getApplication());
 		viewModel = gameMenuViewModelFactory.get(this);
 
-		viewModel.getGameQuitted().observe(this, x -> MainActivity_.intent(this).start());
+		viewModel.getGameQuitted().observe(this, x -> EndgameStatisticsActivity_.intent(this).start());
 	}
 
 	@NonNull
@@ -54,6 +57,7 @@ public class GameMenuDialog extends DialogFragment {
 		binding.setLifecycleOwner(this);
 		binding.setViewmodel(viewModel);
 		binding.seekBar.setOnSeekBarChangeListener(gameSpeedSeekBarListener);
+		binding.buttonStatistics.setOnClickListener(view -> showStatistics());
 
 		AlertDialog dialog = new AlertDialog.Builder(requireActivity(), R.style.GameMenuDialogTheme)
 				.setView(binding.getRoot())
@@ -64,6 +68,11 @@ public class GameMenuDialog extends DialogFragment {
 		applyFullscreenWorkaround(dialog);
 
 		return dialog;
+	}
+
+	private void showStatistics() {
+		StatisticsDialog.create().show(requireFragmentManager(), TAG_STATISTICS_DIALOG);
+		dismiss();
 	}
 
 	private SeekBar.OnSeekBarChangeListener gameSpeedSeekBarListener = new SeekBar.OnSeekBarChangeListener() {
