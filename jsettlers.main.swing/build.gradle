@@ -153,21 +153,69 @@ tasks.register('generateWindowsIcon') {
 	}
 }
 
+// jpackage needs an .icns on macOS; the repo only ships a .png, so build one from it.
+tasks.register('generateMacIcon') {
+	def pngFile = rootProject.file('jsettlers.main.swing/src/main/resources/jsettlers/main/swing/icon.png')
+	def icnsFile = layout.buildDirectory.file('jpackage/icon.icns')
+	inputs.file(pngFile)
+	outputs.file(icnsFile)
+	doLast {
+		def source = javax.imageio.ImageIO.read(pngFile)
+		def types = [
+			[size: 16,   type: 'icp4'],
+			[size: 32,   type: 'icp5'],
+			[size: 64,   type: 'icp6'],
+			[size: 128,  type: 'ic07'],
+			[size: 256,  type: 'ic08'],
+			[size: 512,  type: 'ic09'],
+			[size: 1024, type: 'ic10'],
+		]
+		def entries = []
+		types.each { t ->
+			def scaled = new java.awt.image.BufferedImage(t.size, t.size, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+			def g = scaled.createGraphics()
+			g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+			g.drawImage(source, 0, 0, t.size, t.size, null)
+			g.dispose()
+			def pngOut = new ByteArrayOutputStream()
+			javax.imageio.ImageIO.write(scaled, 'png', pngOut)
+			entries << [type: t.type, data: pngOut.toByteArray()]
+		}
+
+		def totalSize = 8
+		entries.each { totalSize += 8 + it.data.length }
+
+		def icns = new ByteArrayOutputStream()
+		def out = new DataOutputStream(icns)
+		out.writeBytes('icns')
+		out.writeInt(totalSize)
+		entries.each { e ->
+			out.writeBytes(e.type)
+			out.writeInt(8 + e.data.length)
+			out.write(e.data)
+		}
+		out.flush()
+		icnsFile.get().asFile.parentFile.mkdirs()
+		icnsFile.get().asFile.bytes = icns.toByteArray()
+	}
+}
+
 tasks.register('nativePackage', Exec) {
 	group = 'distribution'
-	description = 'Builds a native installer (Windows .exe / Linux .deb) with jpackage.'
+	description = 'Builds a native installer (Windows .exe / Linux .deb / macOS .dmg) with jpackage.'
 	dependsOn tasks.named('prepareJpackageInput')
 
 	def osName = System.getProperty('os.name').toLowerCase(Locale.ENGLISH)
 	def isWindows = osName.contains('windows')
 	def isLinux = osName.contains('linux')
+	def isMac = osName.contains('mac') || osName.contains('darwin')
 	def jpackageBin = new File(System.getProperty('java.home'), 'bin/jpackage' + (isWindows ? '.exe' : '')).absolutePath
 	def version = project.findProperty('releaseVersion') ?: '0.7.0.0'
 	def destDir = layout.buildDirectory.dir('jpackage')
 
 	def jpackageArgs = [
 		jpackageBin,
-		'--type', isWindows ? 'exe' : (isLinux ? 'deb' : 'app-image'),
+		'--type', isWindows ? 'exe' : (isLinux ? 'deb' : (isMac ? 'dmg' : 'app-image')),
 		'--name', 'JSettlers',
 		'--app-version', version,
 		'--vendor', 'JSettlers',
@@ -185,6 +233,10 @@ tasks.register('nativePackage', Exec) {
 		jpackageArgs += ['--icon', rootProject.file('jsettlers.main.swing/src/main/resources/jsettlers/main/swing/icon.png').absolutePath]
 		jpackageArgs += ['--linux-deb-maintainer', 'jsettlers@users.noreply.github.com']
 		jpackageArgs += ['--linux-app-category', 'Game']
+	} else if (isMac) {
+		dependsOn tasks.named('generateMacIcon')
+		jpackageArgs += ['--icon', layout.buildDirectory.file('jpackage/icon.icns').get().asFile.absolutePath]
+		jpackageArgs += ['--mac-package-identifier', 'org.jsettlers.JSettlers']
 	}
 	commandLine jpackageArgs
 }

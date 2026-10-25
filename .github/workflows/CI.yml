@@ -37,6 +37,9 @@ jobs:
           - os: ubuntu-latest
             artifact: JSettlers-linux
             glob: '*.deb'
+          - os: macos-latest
+            artifact: JSettlers-macos
+            glob: '*.dmg'
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -72,6 +75,10 @@ jobs:
     - uses: actions/download-artifact@v4
       with:
         name: JSettlers-linux
+        path: release
+    - uses: actions/download-artifact@v4
+      with:
+        name: JSettlers-macos
         path: release
     - name: Create GitHub release
       env:
