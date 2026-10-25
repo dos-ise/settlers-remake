@@ -21,6 +21,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.HeadlessException;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
+import java.util.function.Consumer;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -42,6 +43,7 @@ import jsettlers.common.menu.IMapInterfaceConnector;
 import jsettlers.common.menu.IMultiplayerConnector;
 import jsettlers.common.menu.IStartedGame;
 import jsettlers.common.menu.IStartingGame;
+import jsettlers.graphics.localization.Labels;
 import jsettlers.graphics.map.ETextDrawPosition;
 import jsettlers.graphics.map.MapContent;
 import jsettlers.logic.map.loading.MapLoader;
@@ -65,6 +67,7 @@ public class JSettlersFrame extends JFrame {
 
 	private Timer redrawTimer;
 	private boolean fullScreen = false;
+	private boolean textInputDialogOpen = false;
 	private AreaContainer areaContainer;
 
 	JSettlersFrame() throws HeadlessException {
@@ -205,8 +208,26 @@ public class JSettlersFrame extends JFrame {
 		setNewContentPane(endgameStatsPanel);
 	}
 
+	private void showTextInputDialog(String title, Consumer<String> onEntered) {
+		SwingUtilities.invokeLater(() -> {
+			if (textInputDialogOpen) {
+				return;
+			}
+			textInputDialogOpen = true;
+			try {
+				String text = JOptionPane.showInputDialog(this, title, Labels.getString("chat_title"), JOptionPane.PLAIN_MESSAGE);
+				if (text != null && !text.trim().isEmpty()) {
+					onEntered.accept(text);
+				}
+			} finally {
+				textInputDialogOpen = false;
+			}
+		});
+	}
+
 	public IMapInterfaceConnector showStartedGame(IStartedGame startedGame) {
 		MapContent content = new MapContent(startedGame, soundPlayer, ETextDrawPosition.DESKTOP);
+		content.setTextInputProvider(this::showTextInputDialog);
 		SwingUtilities.invokeLater(() -> setContent(content));
 		startedGame.setGameExitListener(exitGame -> SwingUtilities.invokeLater(() -> showEndgameStatistics(exitGame)));
 		IMapInterfaceConnector connector = content.getInterfaceConnector();
