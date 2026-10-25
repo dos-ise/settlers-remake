@@ -9,6 +9,7 @@ def shaderResOutputDir = 'src/generated/resources'
 android {
     namespace = 'go.graphics.android'
     compileSdk = rootProject.ext.androidCompileSdkVersion
+    buildToolsVersion = "36.0.0"
 
     defaultConfig {
         minSdk = rootProject.ext.androidMinSdkVersion
