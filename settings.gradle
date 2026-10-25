@@ -15,6 +15,7 @@ include ':jsettlers.tests'
 include ':jsettlers.testutils'
 include ':jsettlers.tools'
 include ':jsettlers.ubisoft'
+include ':jsettlers.gog'
 
 // Android projects
 // Android is automatically disabled if SDK is not set.
