@@ -5,6 +5,8 @@ The first release of the dos-ise fork, building on v0.6.0.9-alpha. It focuses on
 ## Assets
 
 - **JSettlers.zip** – desktop game for Windows/Linux (includes the Map Editor and tools)
+- **JSettlers-0.7.0.0.exe** – Windows installer (bundled JRE, no Java installation needed)
+- **jsettlers_0.7.0.0_amd64.deb** – Linux Debian/Ubuntu package (bundled JRE, no Java installation needed)
 - **JSettlers-Android.apk** – Android app
 - **DedicatedJSettlersServer.jar** – dedicated multiplayer server
 
@@ -62,5 +64,6 @@ The computer players have been reworked into much more capable opponents:
 
 - Build with **Gradle 8 on JDK 21**, still producing Java 11 bytecode.
 - Updated deprecated GitHub Actions.
-- **Automated release workflow** – pushing a `v*` tag now builds and publishes the release with all three assets.
+- **Automated release workflow** – pushing a `v*` tag now builds and publishes the release with all five assets.
+- **Native packages** – the desktop game is also packaged with `jpackage` as a Windows `.exe` installer and a Linux `.deb` package, each bundling its own JRE.
 - Fixes ported from the BotGGias fork (fog-of-war save sync, movable draw order, geologist resource sound).
