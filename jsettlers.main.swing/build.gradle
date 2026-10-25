@@ -212,11 +212,16 @@ tasks.register('nativePackage', Exec) {
 	def jpackageBin = new File(System.getProperty('java.home'), 'bin/jpackage' + (isWindows ? '.exe' : '')).absolutePath
 	def version = project.findProperty('releaseVersion') ?: '0.7.0.0'
 	if (isMac) {
-		// macOS jpackage only accepts 1-3 version components (e.g. 0.7.0, not 0.7.0.0).
+		// macOS jpackage only accepts 1-3 version components and the first
+		// number must not be zero (e.g. 0.7.0.0 -> 1.7.0).
 		def parts = version.tokenize('.')
 		if (parts.size() > 3) {
-			version = parts.take(3).join('.')
+			parts = parts.take(3)
 		}
+		if (parts[0] == '0') {
+			parts[0] = '1'
+		}
+		version = parts.join('.')
 	}
 	def destDir = layout.buildDirectory.dir('jpackage')
 
