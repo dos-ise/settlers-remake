@@ -121,7 +121,7 @@ public class MainPanel extends UIPanel {
 			}));
 		}
 	});
-	private final LabeledButton exitButton = new LabeledButton(Labels.getString("game-menu-quit"), new Action(EActionType.EXIT));
+	private final LabeledButton exitButton = new LabeledButton(Labels.getString("game-menu-quit"), new Action(EActionType.ASK_EXIT));
 	private final LabeledButton saveButton = new LabeledButton(Labels.getString("game-menu-save"), new SaveAction(null));
 	private final LabeledButton cancelButton = new LabeledButton(Labels.getString("game-menu-cancel"), new ExecutableAction() {
 		public void execute() {
@@ -404,6 +404,15 @@ public class MainPanel extends UIPanel {
 					return true;
 				}
 			});
+			return null;
+		case ASK_EXIT:
+			goBackContent = activeContent;
+			setContent(new MessageContent(
+					Labels.getString("really_quit_game"),
+					Labels.getString("game-menu-quit"),
+					new Action(EActionType.EXIT),
+					Labels.getString("abort"),
+					new Action(EActionType.ABORT)));
 			return null;
 		case ABORT:
 			goBack();
