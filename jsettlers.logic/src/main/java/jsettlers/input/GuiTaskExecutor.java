@@ -50,6 +50,7 @@ import jsettlers.input.tasks.ChangeMovableSettingsTask;
 import jsettlers.input.tasks.SetMovableLimitTypeTask;
 import jsettlers.input.tasks.SetTradingWaypointGuiTask;
 import jsettlers.input.tasks.SimpleBuildingGuiTask;
+import jsettlers.input.tasks.SetAmmoProductionGuiTask;
 import jsettlers.input.tasks.SimpleGuiTask;
 import jsettlers.input.tasks.UpgradeSoldiersGuiTask;
 import jsettlers.input.tasks.WorkAreaGuiTask;
@@ -235,6 +236,10 @@ class GuiTaskExecutor implements ITaskExecutor {
 
 			case ORDER_SIEGE_WEAPON:
 				orderSiegeWeapon((SimpleBuildingGuiTask) guiTask);
+				break;
+
+			case SET_AMMO_PRODUCTION:
+				setAmmoProduction((SetAmmoProductionGuiTask) guiTask);
 				break;
 
 			case UNLOAD_FERRY:
@@ -456,6 +461,15 @@ class GuiTaskExecutor implements ITaskExecutor {
 
 		if (building instanceof SiegeWorkshopBuilding && building.getPlayer().getPlayerId() == task.getPlayerId()) {
 			((SiegeWorkshopBuilding) building).orderSiegeWeapon();
+		}
+	}
+
+	private void setAmmoProduction(SetAmmoProductionGuiTask task) {
+		ShortPoint2D buildingPos = task.getBuildingPos();
+		IBuilding building = grid.getBuildingAt(buildingPos.x, buildingPos.y);
+
+		if (building instanceof SiegeWorkshopBuilding && building.getPlayer().getPlayerId() == task.getPlayerId()) {
+			((SiegeWorkshopBuilding) building).setAmmoProduction(task.isEnabled());
 		}
 	}
 

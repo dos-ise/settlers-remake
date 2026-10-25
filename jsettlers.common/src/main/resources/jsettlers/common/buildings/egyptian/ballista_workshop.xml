@@ -101,6 +101,7 @@
 	
 	<requestStack dx="2" dy="3" material="IRON" />
 	<requestStack dx="-2" dy="3" material="PLANK" />
+	<requestStack dx="-1" dy="4" material="TRUNK" />
 	<offerStack dx="0" dy="4" material="BALLISTA_AMMO" />
 
 	<bricklayer dx="1" dy="2" direction="NORTH_EAST" />

@@ -114,6 +114,7 @@
 	
 	<requestStack dx="2" dy="4" material="GOLD" />
 	<requestStack dx="-3" dy="2" material="PLANK" />
+	<requestStack dx="-1" dy="4" material="IRON" />
 
 	<bricklayer dx="-4" dy="1" direction="NORTH_EAST" />
 	<bricklayer dx="5" dy="1" direction="NORTH_WEST" />
