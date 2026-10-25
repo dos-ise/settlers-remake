@@ -58,6 +58,8 @@ public enum EGuiAction {
 	CHANGE_MOVABLE_SETTINGS,
 	SET_MOVABLE_LIMIT_TYPE,
 	CONVERT_AT_POSITION,
+	ORDER_SIEGE_WEAPON,
+	SET_AMMO_PRODUCTION,
 	;
 
 	public static final EGuiAction[] VALUES = values();
