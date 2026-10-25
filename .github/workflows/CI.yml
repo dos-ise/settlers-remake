@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-java@v4
@@ -20,24 +19,6 @@ jobs:
     - uses: gradle/gradle-build-action@v3
       with:
         arguments: release
-    - name: Debug gradle failure
-      if: failure()
-      shell: bash
-      run: |
-        set +e
-        ./gradlew release --stacktrace > /tmp/gradle-full.txt 2>&1
-        {
-          echo "## Gradle diagnostics"
-          echo '```'
-          grep -n -B 2 -A 8 "error:\|FAILED\|What went wrong\|Caused by" /tmp/gradle-full.txt | head -120
-          echo '--- tail ---'
-          tail -30 /tmp/gradle-full.txt
-          echo '```'
-        } > /tmp/comment.md
-        cat /tmp/comment.md >> $GITHUB_STEP_SUMMARY
-        gh pr comment 11 --body-file /tmp/comment.md 2>&1 | head -5 || true
-      env:
-        GH_TOKEN: ${{ github.token }}
     - name: Create draft release with APK
       if: success() && github.event_name == 'push'
       shell: bash
