@@ -60,12 +60,31 @@ and in the `doLast` block:
 localRev.length() >= 8 ? localRev.substring(0, 8) : localRev
 ```
 
+The Android modules run a similar JGit `describe` in their `build.gradle`
+(version name of the APK). In a linked worktree it fails with
+`Missing commit <sha>` because JGit does not resolve the worktree's
+`commondir`. Point `GIT_DIR` at the common git directory of the main
+checkout for the build (local-only, do not commit):
+
+```powershell
+$env:GIT_DIR = "C:/git/settlers-remake/.git"
+```
+
 ## 4. Android modules
 
 The Android modules are only included when `ANDROID_HOME` (or a
-`local.properties` with `sdk.dir`) is present. The project targets
-`compileSdk 30`, which is no longer available in current SDK repositories
-(only 35/36 are installable), so the Android modules cannot be built locally.
+`local.properties` with `sdk.dir`) is present. The project builds with
+`compileSdk 35` and `buildToolsVersion 36.0.0` (see `build.gradle`), the
+newest combination the Android Gradle Plugin 8.7.3 supports.
+
+On this machine the SDK lives at `C:\Users\ostermann_d\android-sdk`
+(platforms 35/36/37, build-tools 36.0.0). To build the Android modules:
+
+```powershell
+$env:ANDROID_HOME = "C:\Users\ostermann_d\android-sdk"
+$env:ANDROID_SDK_ROOT = "C:\Users\ostermann_d\android-sdk"
+.\gradlew.bat :jsettlers.main.android:assembleDebug --no-daemon
+```
 
 To build the desktop/logic modules only, unset the SDK variables:
 
