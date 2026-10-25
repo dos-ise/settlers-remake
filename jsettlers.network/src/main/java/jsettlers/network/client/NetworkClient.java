@@ -22,6 +22,7 @@ import jsettlers.network.NetworkConstants.ENetworkKey;
 import jsettlers.network.client.interfaces.IGameClock;
 import jsettlers.network.client.interfaces.INetworkClient;
 import jsettlers.network.client.interfaces.INetworkConnector;
+import jsettlers.network.client.interfaces.IPlayerStatusListener;
 import jsettlers.network.client.interfaces.ITaskScheduler;
 import jsettlers.network.client.receiver.IPacketReceiver;
 import jsettlers.network.client.task.TaskPacketListener;
@@ -41,6 +42,7 @@ import jsettlers.network.common.packets.MatchInfoUpdatePacket;
 import jsettlers.network.common.packets.MatchStartPacket;
 import jsettlers.network.common.packets.OpenNewMatchPacket;
 import jsettlers.network.common.packets.PlayerInfoPacket;
+import jsettlers.network.common.packets.PlayerStatusesPacket;
 import jsettlers.network.infrastructure.channel.AsyncChannel;
 import jsettlers.network.infrastructure.channel.GenericDeserializer;
 import jsettlers.network.infrastructure.channel.IChannelClosedListener;
@@ -63,10 +65,11 @@ public class NetworkClient implements ITaskScheduler, INetworkConnector, INetwor
 	private final Timer timer;
 	private final INetworkClientClock clock;
 
-	private EPlayerState state = EPlayerState.CHANNEL_CONNECTED;
+	private volatile EPlayerState state = EPlayerState.CHANNEL_CONNECTED;
 	private PlayerInfoPacket playerInfo;
 
 	private MatchInfoPacket matchInfo;
+	private volatile IPlayerStatusListener playerStatusListener;
 
 	/**
 	 * 
@@ -267,6 +270,7 @@ public class NetworkClient implements ITaskScheduler, INetworkConnector, INetwor
 		channel.removeListener(NetworkConstants.ENetworkKey.MATCH_STARTED);
 
 		startTimeSynchronization(clock);
+		channel.registerListener(generateDefaultListener(ENetworkKey.PLAYER_STATUS, PlayerStatusesPacket.class, this::playerStatusReceived));
 		channel.initPinging();
 	}
 
@@ -291,6 +295,23 @@ public class NetworkClient implements ITaskScheduler, INetworkConnector, INetwor
 		}
 
 		matchInfo = matchInfoUpdate.getMatchInfo();
+	}
+
+	@Override
+	public void setPlayerStatusListener(IPlayerStatusListener listener) {
+		this.playerStatusListener = listener;
+	}
+
+	private void playerStatusReceived(PlayerStatusesPacket packet) {
+		IPlayerStatusListener listener = playerStatusListener;
+		if (listener != null) {
+			listener.playerStatusReceived(packet);
+		}
+	}
+
+	@Override
+	public boolean isConnected() {
+		return state != EPlayerState.DISCONNECTED;
 	}
 
 	/**

@@ -168,12 +168,26 @@
 
 		<Button
 			style="?attr/buttonBarButtonStyle"
+			android:id="@+id/button_players"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/game_menu_players"/>
+
+		<Button
+			style="?attr/buttonBarButtonStyle"
 			android:id="@+id/button_skip_minute"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:text="@string/game_menu_skip_minute"
 			android:onClick="@{() -> viewmodel.skipMinuteClicked()}"
 			android:visibility="@{viewmodel.getShowSkipMinute()}"/>
+
+		<Button
+			style="?attr/buttonBarButtonStyle"
+			android:id="@+id/button_statistics"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="@string/game_menu_statistics"/>
 
 	</LinearLayout>
 

@@ -18,6 +18,7 @@ package jsettlers.main.android.core.controls;
 import android.app.Activity;
 import android.app.Application;
 
+import jsettlers.common.menu.IStartedGame;
 import jsettlers.common.player.IInGamePlayer;
 import jsettlers.graphics.map.MapContent;
 import jsettlers.main.android.core.GameManager;
@@ -55,6 +56,10 @@ public class ControlsResolver {
 
 	public GameMenu getGameMenu() {
 		return controlsAdapter.getGameMenu();
+	}
+
+	public IStartedGame getGame() {
+		return controlsAdapter.getGame();
 	}
 
 	public PositionControls getPositionControls() {
