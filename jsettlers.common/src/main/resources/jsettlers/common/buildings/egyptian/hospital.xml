@@ -113,7 +113,7 @@
 
 	<healspot dx="-1" dy="5" />
 
-	<image file="24" for="GUI" type="GUI" sequence="72" image="0" />
+	<image file="24" for="GUI" type="GUI" sequence="87" image="0" />
 	<image file="23" for="FINAL" type="SETTLER" sequence="29" image="0" />
 	<image file="23" for="BUILD" type="SETTLER" sequence="29" image="1" />
 
