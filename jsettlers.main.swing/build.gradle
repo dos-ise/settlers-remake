@@ -66,3 +66,177 @@ shadowJar {
 
 	dependsOn copyDependencies
 }
+
+// --- Native packaging with jpackage (Windows .exe / Linux .deb) ---
+def jpackageInputDir = layout.buildDirectory.dir('jpackage/input')
+
+tasks.register('prepareJpackageInput', Sync) {
+	dependsOn tasks.named('shadowJar')
+	from tasks.named('shadowJar')
+	from configurations.lgplDeps
+	from(rootProject.file('maps/release')) {
+		into 'maps'
+	}
+	into jpackageInputDir
+}
+
+// jpackage needs a .ico on Windows; the repo only ships a .png, so build a multi-size ICO from it.
+tasks.register('generateWindowsIcon') {
+	def pngFile = rootProject.file('jsettlers.main.swing/src/main/resources/jsettlers/main/swing/icon.png')
+	def icoFile = layout.buildDirectory.file('jpackage/icon.ico')
+	inputs.file(pngFile)
+	outputs.file(icoFile)
+	doLast {
+		def source = javax.imageio.ImageIO.read(pngFile)
+		def sizes = [16, 24, 32, 48, 64, 128, 256]
+		def entries = []
+		def imageData = []
+		def offset = 6 + 16 * sizes.size()
+
+		sizes.each { size ->
+			def scaled = new java.awt.image.BufferedImage(size, size, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+			def g = scaled.createGraphics()
+			g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+			g.drawImage(source, 0, 0, size, size, null)
+			g.dispose()
+
+			def pixels = new int[size * size]
+			scaled.getRGB(0, 0, size, size, pixels, 0, size)
+
+			def bmp = java.nio.ByteBuffer.allocate((40 + size * size * 4 + size * size / 8) as int).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+			bmp.putInt(40)                   // biSize
+			bmp.putInt(size)                 // biWidth
+			bmp.putInt(size * 2)             // biHeight (double for AND mask)
+			bmp.putShort((short) 1)                  // biPlanes
+			bmp.putShort((short) 32)                 // biBitCount
+			bmp.putInt(0)                    // biCompression
+			bmp.putInt((size * size * 4 + size * size / 8) as int)  // biSizeImage
+			bmp.putInt(0)                    // biXPelsPerMeter
+			bmp.putInt(0)                    // biYPelsPerMeter
+			bmp.putInt(0)                    // biClrUsed
+			bmp.putInt(0)                    // biClrImportant
+			// Pixel data bottom-up, BGRA order
+			for (int y = size - 1; y >= 0; y--) {
+				for (int x = 0; x < size; x++) {
+					int argb = pixels[y * size + x]
+					bmp.put((byte) (argb & 0xFF))          // B
+					bmp.put((byte) ((argb >> 8) & 0xFF))   // G
+					bmp.put((byte) ((argb >> 16) & 0xFF))  // R
+					bmp.put((byte) ((argb >> 24) & 0xFF))  // A
+				}
+			}
+			bmp.put(new byte[(size * size / 8) as int])  // AND mask (all zeros for 32bpp)
+			def dataBytes = bmp.array()
+
+			entries << [size: size, length: dataBytes.length, offset: offset]
+			offset += dataBytes.length
+			imageData << dataBytes
+		}
+
+		def ico = java.nio.ByteBuffer.allocate(offset).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+		ico.putShort((short) 0)              // reserved
+		ico.putShort((short) 1)              // type: icon
+		ico.putShort((short) sizes.size())   // image count
+		entries.each { e ->
+			ico.put((byte) (e.size >= 256 ? 0 : e.size))  // width
+			ico.put((byte) (e.size >= 256 ? 0 : e.size))  // height
+			ico.put((byte) 0)        // color count
+			ico.put((byte) 0)        // reserved
+			ico.putShort((short) 1)  // color planes
+			ico.putShort((short) 32) // bits per pixel
+			ico.putInt(e.length)     // size of image data
+			ico.putInt(e.offset)     // offset of image data
+		}
+		imageData.each { ico.put(it) }
+		icoFile.get().asFile.parentFile.mkdirs()
+		icoFile.get().asFile.bytes = ico.array()
+	}
+}
+
+// jpackage needs an .icns on macOS; the repo only ships a .png, so build one from it.
+tasks.register('generateMacIcon') {
+	def pngFile = rootProject.file('jsettlers.main.swing/src/main/resources/jsettlers/main/swing/icon.png')
+	def icnsFile = layout.buildDirectory.file('jpackage/icon.icns')
+	inputs.file(pngFile)
+	outputs.file(icnsFile)
+	doLast {
+		def source = javax.imageio.ImageIO.read(pngFile)
+		def types = [
+			[size: 16,   type: 'icp4'],
+			[size: 32,   type: 'icp5'],
+			[size: 64,   type: 'icp6'],
+			[size: 128,  type: 'ic07'],
+			[size: 256,  type: 'ic08'],
+			[size: 512,  type: 'ic09'],
+			[size: 1024, type: 'ic10'],
+		]
+		def entries = []
+		types.each { t ->
+			def scaled = new java.awt.image.BufferedImage(t.size, t.size, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+			def g = scaled.createGraphics()
+			g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+			g.drawImage(source, 0, 0, t.size, t.size, null)
+			g.dispose()
+			def pngOut = new ByteArrayOutputStream()
+			javax.imageio.ImageIO.write(scaled, 'png', pngOut)
+			entries << [type: t.type, data: pngOut.toByteArray()]
+		}
+
+		def totalSize = 8
+		entries.each { totalSize += 8 + it.data.length }
+
+		def icns = new ByteArrayOutputStream()
+		def out = new DataOutputStream(icns)
+		out.writeBytes('icns')
+		out.writeInt(totalSize)
+		entries.each { e ->
+			out.writeBytes(e.type)
+			out.writeInt(8 + e.data.length)
+			out.write(e.data)
+		}
+		out.flush()
+		icnsFile.get().asFile.parentFile.mkdirs()
+		icnsFile.get().asFile.bytes = icns.toByteArray()
+	}
+}
+
+tasks.register('nativePackage', Exec) {
+	group = 'distribution'
+	description = 'Builds a native installer (Windows .exe / Linux .deb / macOS .dmg) with jpackage.'
+	dependsOn tasks.named('prepareJpackageInput')
+
+	def osName = System.getProperty('os.name').toLowerCase(Locale.ENGLISH)
+	def isWindows = osName.contains('windows')
+	def isLinux = osName.contains('linux')
+	def isMac = osName.contains('mac') || osName.contains('darwin')
+	def jpackageBin = new File(System.getProperty('java.home'), 'bin/jpackage' + (isWindows ? '.exe' : '')).absolutePath
+	def version = project.findProperty('releaseVersion') ?: '0.7.0.0'
+	def destDir = layout.buildDirectory.dir('jpackage')
+
+	def jpackageArgs = [
+		jpackageBin,
+		'--type', isWindows ? 'exe' : (isLinux ? 'deb' : (isMac ? 'dmg' : 'app-image')),
+		'--name', 'JSettlers',
+		'--app-version', version,
+		'--vendor', 'JSettlers',
+		'--input', jpackageInputDir.get().asFile.absolutePath,
+		'--main-jar', 'JSettlers.jar',
+		'--main-class', 'jsettlers.main.swing.SwingManagedJSettlers',
+		'--java-options', '-Xmx2G',
+		'--java-options', '-Duser.dir=$APPDIR',
+		'--dest', destDir.get().asFile.absolutePath,
+	]
+	if (isWindows) {
+		dependsOn tasks.named('generateWindowsIcon')
+		jpackageArgs += ['--icon', layout.buildDirectory.file('jpackage/icon.ico').get().asFile.absolutePath]
+	} else if (isLinux) {
+		jpackageArgs += ['--icon', rootProject.file('jsettlers.main.swing/src/main/resources/jsettlers/main/swing/icon.png').absolutePath]
+		jpackageArgs += ['--linux-deb-maintainer', 'jsettlers@users.noreply.github.com']
+		jpackageArgs += ['--linux-app-category', 'Game']
+	} else if (isMac) {
+		dependsOn tasks.named('generateMacIcon')
+		jpackageArgs += ['--icon', layout.buildDirectory.file('jpackage/icon.icns').get().asFile.absolutePath]
+		jpackageArgs += ['--mac-package-identifier', 'org.jsettlers.JSettlers']
+	}
+	commandLine jpackageArgs
+}
