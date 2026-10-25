@@ -36,6 +36,7 @@ import jsettlers.common.ai.EPlayerType;
 import jsettlers.common.logging.MultiplexingOutputStream;
 import jsettlers.common.map.IGraphicsGrid;
 import jsettlers.common.menu.EGameError;
+import jsettlers.common.menu.EPeaceTime;
 import jsettlers.common.menu.EProgressState;
 import jsettlers.common.menu.IMapInterfaceConnector;
 import jsettlers.common.menu.IStartedGame;
@@ -60,6 +61,7 @@ import jsettlers.logic.map.loading.MapLoadException;
 import jsettlers.logic.map.loading.MapLoader;
 import jsettlers.logic.movable.MovableManager;
 import jsettlers.logic.player.InitialGameState;
+import jsettlers.logic.player.PeaceTimeNotifier;
 import jsettlers.logic.player.Player;
 import jsettlers.logic.player.PlayerSetting;
 import jsettlers.logic.timer.RescheduleTimer;
@@ -195,7 +197,7 @@ public class JSettlersGame {
 				updateProgressListener(EProgressState.LOADING, 0.1f);
 
 				clearState();
-				MatchConstants.init(networkConnector.getGameClock(), initialGameState.getRandomSeed(), initialGameState.getPeaceTime().getEndTimeMs());
+				MatchConstants.init(networkConnector.getGameClock(), initialGameState.getRandomSeed());
 				try {
 					MatchConstants.clock().setReplayLogStream(createReplayFileStream());
 				} catch (IOException e) {
@@ -207,6 +209,7 @@ public class JSettlersGame {
 				MainGridWithUiSettings gridWithUiState = mapCreator.loadMainGrid(initialGameState.getPlayerSettings(), initialGameState.getStartResources());
 				mainGrid = gridWithUiState.getMainGrid();
 				PlayerState playerState = gridWithUiState.getPlayerState(initialGameState.getPlayerId());
+				startPeaceTime(initialGameState.getPeaceTime());
 
 				RescheduleTimer.schedule(MatchConstants.clock()); // schedule timer
 
@@ -236,6 +239,7 @@ public class JSettlersGame {
 
 				aiExecutor = new AiExecutor(initialGameState.getPlayerSettings(), mainGrid, networkConnector.getTaskScheduler());
 				networkConnector.getGameClock().schedule(aiExecutor, (short) 1000);
+				schedulePeaceTimeNotifier();
 
 				Player localPlayer = mainGrid.getPartitionsGrid().getPlayer(initialGameState.getPlayerId());
 				playerStatusController = createPlayerStatusController(localPlayer);
@@ -284,6 +288,26 @@ public class JSettlersGame {
 
 		public AiExecutor getAiExecutor() {
 			return aiExecutor;
+		}
+
+		private void startPeaceTime(EPeaceTime peaceTime) {
+			if (peaceTime.getDurationMs() <= 0) {
+				return; // keep the peace time stored in a savegame
+			}
+
+			int peaceTimeEnd = MatchConstants.clock().getTime() + peaceTime.getDurationMs();
+			for (Player player : mainGrid.getPartitionsGrid().getPlayers()) {
+				if (player != null) {
+					player.setPeaceTimeEnd(peaceTimeEnd);
+				}
+			}
+		}
+
+		private void schedulePeaceTimeNotifier() {
+			Player localPlayer = mainGrid.getPartitionsGrid().getPlayer(initialGameState.getPlayerId());
+			if (localPlayer != null && localPlayer.isInPeaceTime()) {
+				networkConnector.getGameClock().schedule(new PeaceTimeNotifier(localPlayer), (short) 1000);
+			}
 		}
 
 		private PlayerStatusController createPlayerStatusController(Player localPlayer) {

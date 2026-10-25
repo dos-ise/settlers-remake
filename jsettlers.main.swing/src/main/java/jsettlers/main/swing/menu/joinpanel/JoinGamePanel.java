@@ -40,6 +40,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 import jsettlers.common.menu.ENetworkMessage;
+import jsettlers.common.menu.EPeaceTime;
 import jsettlers.common.menu.EProgressState;
 import jsettlers.common.menu.IChatMessageListener;
 import jsettlers.common.menu.IJoinPhaseMultiplayerGameConnector;
@@ -54,7 +55,6 @@ import jsettlers.common.utils.collections.ChangingList;
 import jsettlers.graphics.localization.Labels;
 import jsettlers.logic.map.loading.EMapStartResources;
 import jsettlers.logic.map.loading.MapLoader;
-import jsettlers.logic.player.EPeaceTime;
 import jsettlers.logic.player.InitialGameState;
 import jsettlers.logic.player.PlayerSetting;
 import jsettlers.main.JSettlersGame;
@@ -101,6 +101,9 @@ public class JoinGamePanel extends BackgroundPanel {
 	private final JComboBox<PeaceTimeUIWrapper> peaceTimeComboBox = new JComboBox<>();
 	private final JLabel startResourcesLabel = new JLabel();
 	private final JComboBox<MapStartResourcesUIWrapper> startResourcesComboBox = new JComboBox<>();
+	private boolean updatingSettingsFromNetwork = false;
+	private ActionListener startResourcesListener;
+	private ActionListener peaceTimeListener;
 	private final JPanel playerSlotsPanel = new JPanel();
 	private final JButton cancelButton = new JButton();
 	private final JButton startGameButton = new JButton();
@@ -254,8 +257,8 @@ public class JoinGamePanel extends BackgroundPanel {
 	public void setNewMultiPlayerMap(MapLoader mapLoader, IMultiplayerConnector connector) {
 		this.playerSlotFactory = new HostOfMultiplayerPlayerSlotFactory(connector);
 		titleLabel.setText(Labels.getString("join-game-panel-new-multi-player-game-title"));
-		peaceTimeComboBox.setEnabled(false);
-		startResourcesComboBox.setEnabled(false);
+		peaceTimeComboBox.setEnabled(true);
+		startResourcesComboBox.setEnabled(true);
 		startGameButton.setVisible(true);
 		setChatVisible(true);
 		setStartButtonActionListener(e -> {
@@ -273,6 +276,7 @@ public class JoinGamePanel extends BackgroundPanel {
 				SwingUtilities.invokeLater(() -> {
 					initializeChatFor(connector);
 					setStartButtonActionListener(e -> connector.startGame());
+					informGameAboutSettingsChanges(connector);
 					connector.getSlots().setListener(changingSlots -> onSlotsChanged(changingSlots, connector, myId, true));
 					connector.setMultiplayerListener(new IMultiplayerListener() {
 						@Override
@@ -363,8 +367,52 @@ public class JoinGamePanel extends BackgroundPanel {
 		chatInputField.setText("");
 	}
 
+	private void informGameAboutSettingsChanges(IJoinPhaseMultiplayerGameConnector connector) {
+		removeSettingsListeners();
+		startResourcesListener = e -> {
+			MapStartResourcesUIWrapper selected = (MapStartResourcesUIWrapper) startResourcesComboBox.getSelectedItem();
+			if (!updatingSettingsFromNetwork && selected != null) {
+				connector.setStartResources(selected.getStartResources().value);
+			}
+		};
+		peaceTimeListener = e -> {
+			PeaceTimeUIWrapper selected = (PeaceTimeUIWrapper) peaceTimeComboBox.getSelectedItem();
+			if (!updatingSettingsFromNetwork && selected != null) {
+				connector.setPeaceTime(selected.getPeaceTime());
+			}
+		};
+		startResourcesComboBox.addActionListener(startResourcesListener);
+		peaceTimeComboBox.addActionListener(peaceTimeListener);
+	}
+
+	private void removeSettingsListeners() {
+		startResourcesComboBox.removeActionListener(startResourcesListener);
+		peaceTimeComboBox.removeActionListener(peaceTimeListener);
+		startResourcesListener = null;
+		peaceTimeListener = null;
+	}
+
+	private void updateSettingsFromNetwork(IJoinPhaseMultiplayerGameConnector connector) {
+		updatingSettingsFromNetwork = true;
+		try {
+			for (int i = 0; i < startResourcesComboBox.getItemCount(); i++) {
+				if (startResourcesComboBox.getItemAt(i).getStartResources().value == connector.getStartResourcesValue()) {
+					startResourcesComboBox.setSelectedIndex(i);
+				}
+			}
+			for (int i = 0; i < peaceTimeComboBox.getItemCount(); i++) {
+				if (peaceTimeComboBox.getItemAt(i).getPeaceTime() == connector.getPeaceTime()) {
+					peaceTimeComboBox.setSelectedIndex(i);
+				}
+			}
+		} finally {
+			updatingSettingsFromNetwork = false;
+		}
+	}
+
 	private void onSlotsChanged(ChangingList<? extends IMultiplayerSlot> changingSlots, IJoinPhaseMultiplayerGameConnector joinMultiPlayerMap, String myId, boolean iAmTheHost) {
 		SwingUtilities.invokeLater(() -> {
+			updateSettingsFromNetwork(joinMultiPlayerMap);
 			Iterator<? extends IMultiplayerSlot> slots = changingSlots.getItems().iterator();
 			numberOfPlayersComboBox.setPlayerCount(changingSlots.getItems().size());
 
@@ -407,7 +455,7 @@ public class JoinGamePanel extends BackgroundPanel {
 		mapNameLabel.setText(mapLoader.getMapName());
 		mapImage.setIcon(new ImageIcon(JSettlersSwingUtil.createBufferedImageFrom(mapLoader)));
 		peaceTimeComboBox.removeAllItems();
-		Arrays.stream(EPeaceTime.values())
+		Arrays.stream(EPeaceTime.VALUES)
 				.map(PeaceTimeUIWrapper::new)
 				.forEach(peaceTimeComboBox::addItem);
 		peaceTimeComboBox.setSelectedIndex(EPeaceTime.WITHOUT.ordinal());

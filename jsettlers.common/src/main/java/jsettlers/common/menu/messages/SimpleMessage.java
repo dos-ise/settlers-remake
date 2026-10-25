@@ -19,6 +19,8 @@ import jsettlers.common.buildings.IBuilding;
 import jsettlers.common.material.EMaterialType;
 import jsettlers.common.position.ShortPoint2D;
 
+import java.util.Objects;
+
 /**
  * This is a messageLabel that states that the user was attacked by an other player.
  *
@@ -118,7 +120,7 @@ public class SimpleMessage implements IMessage {
 					return this.pos.getOnGridDistTo(m.getPosition()) < MESSAGE_DIST_THRESHOLD;
 				}
 			} else {
-				return this.pos.equals(m.getPosition());
+				return Objects.equals(this.pos, m.getPosition());
 			}
 		}
 		return false;
@@ -190,5 +192,16 @@ public class SimpleMessage implements IMessage {
 	 */
 	public static IMessage playerStatus(String messageLabel, byte player, Color indicatorColor) {
 		return new SimpleMessage(EMessageType.PLAYER_STATUS, messageLabel, player, null, indicatorColor, PLAYER_STATUS_TTL);
+	}
+
+	/**
+	 * Creates a general information message that is not bound to a position on the map.
+	 *
+	 * @param messageLabel
+	 * 		The translation key of the text that will be shown
+	 * @return The messageLabel object
+	 */
+	public static IMessage info(String messageLabel) {
+		return new SimpleMessage(EMessageType.INFO, messageLabel, (byte) -1, null);
 	}
 }
