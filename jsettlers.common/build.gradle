@@ -24,7 +24,7 @@ task findGitRevision {
     FileRepositoryBuilder builder = new FileRepositoryBuilder()
     Repository repository = builder.readEnvironment().findGitDir(file('.')).build()
     def headRef = repository.exactRef("HEAD")
-    def localRev = headRef != null && headRef.objectId != null ? headRef.objectId.name : "unknown"
+    def localRev = headRef.objectId.name
     repository.close()
 
     onlyIf {
@@ -42,7 +42,7 @@ public final class CommitInfo {
 	public static final String BUILD_TIME = "%s";
 	private CommitInfo() {
 	}
-}""", localRev.length() >= 8 ? localRev.substring(0, 8) : localRev, localRev, (new Date()).format('yyyy-MM-dd-HH-mm-ss'))
+}""", localRev.substring(0, 8), localRev, (new Date()).format('yyyy-MM-dd-HH-mm-ss'))
     }
 }
 
