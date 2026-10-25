@@ -32,6 +32,7 @@ import jsettlers.main.android.databinding.DialogGameMenuBinding;
 import jsettlers.main.android.mainmenu.MainActivity_;
 
 public class GameMenuDialog extends DialogFragment {
+	private static final String TAG_PLAYERS_DIALOG = "players_dialog";
 
 	private GameMenuViewModel viewModel;
 
@@ -59,6 +60,7 @@ public class GameMenuDialog extends DialogFragment {
 		binding.switchMusic.setOnCheckedChangeListener((button, checked) -> viewModel.musicEnabledChanged(checked));
 		binding.seekBarMusicVolume.setOnSeekBarChangeListener(new VolumeSeekBarListener(viewModel::musicVolumeMoved));
 		binding.seekBarSoundVolume.setOnSeekBarChangeListener(new VolumeSeekBarListener(viewModel::soundVolumeMoved));
+		binding.buttonPlayers.setOnClickListener(view -> showPlayers());
 
 		AlertDialog dialog = new AlertDialog.Builder(requireActivity(), R.style.GameMenuDialogTheme)
 				.setView(binding.getRoot())
@@ -69,6 +71,11 @@ public class GameMenuDialog extends DialogFragment {
 		applyFullscreenWorkaround(dialog);
 
 		return dialog;
+	}
+
+	private void showPlayers() {
+		PlayersDialog.create().show(requireFragmentManager(), TAG_PLAYERS_DIALOG);
+		dismiss();
 	}
 
 	private SeekBar.OnSeekBarChangeListener gameSpeedSeekBarListener = new SeekBar.OnSeekBarChangeListener() {
