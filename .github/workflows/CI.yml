@@ -7,6 +7,12 @@ on:
       - '**'
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: 'Version for the native packages (e.g. 0.7.0.0)'
+        required: false
+        default: '0.7.0.0'
 
 jobs:
   build:
@@ -26,7 +32,7 @@ jobs:
         path: 'release/*'
 
   native:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
@@ -50,7 +56,12 @@ jobs:
     - uses: gradle/actions/setup-gradle@v4
     - name: Build native package
       shell: bash
-      run: ./gradlew :jsettlers.main.swing:nativePackage -PreleaseVersion=${GITHUB_REF_NAME#v} --no-daemon
+      run: |
+        VERSION="${{ github.event.inputs.releaseVersion }}"
+        if [ -z "$VERSION" ]; then
+          VERSION="${GITHUB_REF_NAME#v}"
+        fi
+        ./gradlew :jsettlers.main.swing:nativePackage -PreleaseVersion="$VERSION" --no-daemon
     - uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.artifact }}

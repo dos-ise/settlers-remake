@@ -67,4 +67,5 @@ The computer players have been reworked into much more capable opponents:
 - Updated deprecated GitHub Actions.
 - **Automated release workflow** – pushing a `v*` tag now builds and publishes the release with all six assets.
 - **Native packages** – the desktop game is also packaged with `jpackage` as a Windows `.exe` installer, a Linux `.deb` package and a macOS `.dmg`, each bundling its own JRE.
+- **Manual CI trigger** – the workflow can be run manually (Actions → CI → Run workflow) to build and inspect the native packages without creating a release.
 - Fixes ported from the BotGGias fork (fog-of-war save sync, movable draw order, geologist resource sound).
