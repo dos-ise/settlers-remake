@@ -30,7 +30,7 @@ import go.graphics.swing.event.swingInterpreter.GOSwingEventConverter;
 
 public abstract class AsyncContextCreator extends ContextCreator implements Runnable,DrawmodeListener {
 
-	protected boolean offscreen = true;
+	protected boolean offscreen = false;
 	protected boolean async_resized = false;
 	protected boolean clear_offscreen = true;
 	private boolean continue_run = true;

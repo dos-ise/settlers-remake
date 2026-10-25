@@ -136,6 +136,11 @@ public class JSettlersFrame extends JFrame {
 
 	private void setNewContentPane(Container newContent) {
 		abortRedrawTimerIfPresent();
+		// The game runs in its own (GLFW) window, so this menu window is hidden during a match
+		// (see setContent). Whenever we switch back to a menu/stats panel, show it again.
+		if (isDisplayable() && !isVisible()) {
+			setVisible(true);
+		}
 		setContentPane(newContent);
 		revalidate();
 		repaint();
@@ -169,6 +174,9 @@ public class JSettlersFrame extends JFrame {
 			areaContainer.updateFPSLimit(fpsLimit);
 			revalidate();
 			repaint();
+			// The game is rendered in its own (GLFW) window. Hide this menu window so only the
+			// game window is visible during the match; it is shown again in setNewContentPane.
+			setVisible(false);
 		});
 	}
 
