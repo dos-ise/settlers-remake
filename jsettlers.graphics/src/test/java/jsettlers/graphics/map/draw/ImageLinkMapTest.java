@@ -24,6 +24,13 @@ import jsettlers.common.player.ECivilisation;
 public class ImageLinkMapTest {
 
 	@Test
+	public void testStatisticSoldierIconExistsForAllCivilisations() {
+		for (ECivilisation civilisation : ECivilisation.VALUES) {
+			assertNotNull(civilisation.toString(), ImageLinkMap.get(civilisation, ECommonLinkType.STATISTIC_SOLDIERS, EMovableType.SWORDSMAN_L1));
+		}
+	}
+
+	@Test
 	public void testSiegeWeaponIconsExistForAllCivilisations() {
 		for (EMovableType weapon : EMovableType.SIEGE_WEAPONS) {
 			for (ECivilisation civilisation : ECivilisation.VALUES) {
