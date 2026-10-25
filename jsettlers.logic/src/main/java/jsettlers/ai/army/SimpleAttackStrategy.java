@@ -53,8 +53,8 @@ public class SimpleAttackStrategy extends SimpleStrategy {
 			return; // while an attack is in progress this module does nothing else; the commitment ends inside updateCommittedAttack
 		}
 
-		if (isWithinAttackGracePeriod()) {
-			return; // do not launch offensive attacks during the opening grace period (defence still runs in SimpleDefenseStrategy)
+		if (isWithinAttackGracePeriod() || parent.getPlayer().isInPeaceTime()) {
+			return; // do not launch offensive attacks during the opening grace period or the peace time (defence still runs in SimpleDefenseStrategy)
 		}
 		if (parent.existsAliveEnemy()) {
 			// only consider enemies reachable by land; across-water enemies are handled by the naval invasion logic.

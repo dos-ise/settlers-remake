@@ -41,5 +41,10 @@ public enum EMessageType {
 	/**
 	 * A short notice about the state of a player, e.g. a network problem. It is shown with a colored status dot.
 	 */
-	PLAYER_STATUS
+	PLAYER_STATUS,
+
+	/**
+	 * A general information about the game, e.g. about the peace time.
+	 */
+	INFO
 }

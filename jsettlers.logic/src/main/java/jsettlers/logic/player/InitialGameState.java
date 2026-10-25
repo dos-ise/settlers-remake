@@ -1,6 +1,7 @@
 package jsettlers.logic.player;
 
 import jsettlers.common.ai.EPlayerType;
+import jsettlers.common.menu.EPeaceTime;
 import jsettlers.logic.map.loading.EMapStartResources;
 
 import java.io.DataInputStream;
@@ -15,10 +16,11 @@ public class InitialGameState implements Cloneable, Serializable {
 	private final PlayerSetting[] playerSettings;
 	private final long randomSeed;
 	private final EMapStartResources startResources;
-	/** The peacetime this match was created with. Part of the deterministic match state; never null. */
 	private final EPeaceTime peaceTime;
 
-	private static final byte VERSION_PEACE_TIME_INTRODUCED = 2;
+	/**
+	 * Version 2 added the peace time.
+	 */
 	private static final byte VERSION = 2;
 
 	public InitialGameState(byte playerId, PlayerSetting[] playerSettings, long randomSeed, EMapStartResources startResources, EPeaceTime peaceTime) {
@@ -44,13 +46,17 @@ public class InitialGameState implements Cloneable, Serializable {
 		randomSeed = dis.readLong();
 		playerId = dis.readByte();
 		startResources = EMapStartResources.values()[dis.readByte()];
-		peaceTime = readVersion >= VERSION_PEACE_TIME_INTRODUCED ? EPeaceTime.values()[dis.readByte()] : EPeaceTime.WITHOUT;
 
 		playerSettings = new PlayerSetting[dis.readInt()];
 		for (int i = 0; i < playerSettings.length; i++) {
 			playerSettings[i] = PlayerSetting.readFromStream(dis);
 		}
 
+		if (readVersion >= 2) {
+			peaceTime = EPeaceTime.fromMinutes(dis.readInt());
+		} else {
+			peaceTime = EPeaceTime.WITHOUT;
+		}
 	}
 
 	public byte getPlayerId() {
@@ -69,11 +75,8 @@ public class InitialGameState implements Cloneable, Serializable {
 		return startResources;
 	}
 
-	/**
-	 * @return the peacetime this match was created with; never null.
-	 */
 	public EPeaceTime getPeaceTime() {
-		return peaceTime;
+		return peaceTime != null ? peaceTime : EPeaceTime.WITHOUT;
 	}
 
 	public PlayerSetting[] getReplayablePlayerSettings() {
@@ -90,17 +93,18 @@ public class InitialGameState implements Cloneable, Serializable {
 		dos.writeLong(randomSeed);
 		dos.writeByte(playerId);
 		dos.writeByte(startResources.ordinal());
-		dos.writeByte(peaceTime.ordinal());
 
 		dos.writeInt(playerSettings.length);
 		for (PlayerSetting playerSetting : playerSettings) {
 			playerSetting.writeTo(dos);
 		}
+
+		dos.writeInt(getPeaceTime().minutes);
 	}
 
 	@Override
 	public InitialGameState clone() {
-		return new InitialGameState(playerId, getReplayablePlayerSettings(), randomSeed, startResources, peaceTime);
+		return new InitialGameState(playerId, getReplayablePlayerSettings(), randomSeed, startResources, getPeaceTime());
 	}
 
 	@Override
