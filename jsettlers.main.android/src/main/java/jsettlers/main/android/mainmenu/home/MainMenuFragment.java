@@ -25,8 +25,13 @@ import org.androidannotations.annotations.ViewById;
 
 import android.Manifest;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -43,15 +48,18 @@ import jsettlers.main.android.R;
 import jsettlers.main.android.core.ui.FragmentUtil;
 import jsettlers.main.android.mainmenu.navigation.MainMenuNavigator;
 import jsettlers.main.android.mainmenu.settings.SettingsActivity_;
+import jsettlers.main.android.mainmenu.ubisoft.UbisoftLoginActivity;
 
 @EFragment(R.layout.fragment_main_menu)
 @OptionsMenu(R.menu.fragment_mainmenu)
 public class MainMenuFragment extends Fragment {
 	private static final int REQUEST_CODE_PERMISSION_STORAGE = 10;
+	private static final int REQUEST_CODE_UBISOFT_LOGIN = 11;
 
 	private MainMenuViewModel viewModel;
 	private MainMenuNavigator mainMenuNavigator;
 	private HomeAdapter homeAdapter;
+	private boolean pendingAllFilesAccessRequest;
 
 	@ViewById(R.id.toolbar)
 	Toolbar toolbar;
@@ -87,6 +95,16 @@ public class MainMenuFragment extends Fragment {
 	}
 
 	@Override
+	public void onResume() {
+		super.onResume();
+		if (pendingAllFilesAccessRequest && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && Environment.isExternalStorageManager()) {
+			pendingAllFilesAccessRequest = false;
+			DirectoryPickerViewHolder directoryPickerViewHolder = (DirectoryPickerViewHolder) recyclerView.findViewHolderForItemId(R.layout.vh_directory_picker);
+			homeAdapter.expandDirectoryPicker(directoryPickerViewHolder);
+		}
+	}
+
+	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.menu_item_settings:
@@ -107,6 +125,13 @@ public class MainMenuFragment extends Fragment {
 				homeAdapter.expandDirectoryPicker(directoryPickerViewHolder);
 			}
 			break;
+		}
+	}
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == REQUEST_CODE_UBISOFT_LOGIN && resultCode == getActivity().RESULT_OK) {
+			viewModel.refreshResources();
 		}
 	}
 
@@ -152,12 +177,23 @@ public class MainMenuFragment extends Fragment {
 
 				Button chooseDirectoryButton = view.findViewById(R.id.button_resources);
 				chooseDirectoryButton.setOnClickListener(v -> {
-					if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+						pendingAllFilesAccessRequest = true;
+						Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+						intent.setData(Uri.parse("package:" + getActivity().getPackageName()));
+						startActivity(intent);
+					} else if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 						requestPermissions(new String[] { Manifest.permission.READ_EXTERNAL_STORAGE }, REQUEST_CODE_PERMISSION_STORAGE);
 					} else {
 						expandDirectoryPicker(viewHolder);
 						// TODO save expanded state for rotation
 					}
+				});
+
+				Button ubisoftDownloadButton = view.findViewById(R.id.button_ubisoft_download);
+				ubisoftDownloadButton.setOnClickListener(v -> {
+					Intent intent = new Intent(getActivity(), UbisoftLoginActivity.class);
+					startActivityForResult(intent, REQUEST_CODE_UBISOFT_LOGIN);
 				});
 
 				return viewHolder;

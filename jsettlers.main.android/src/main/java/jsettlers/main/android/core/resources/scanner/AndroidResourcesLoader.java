@@ -38,7 +38,7 @@ import jsettlers.main.android.core.resources.AndroidResourceProvider;
 
 @EBean
 public class AndroidResourcesLoader {
-	private static final String ORIGINAL_SETTLERS_FILES_PATH_SETTING_KEY = "external-files-path";
+	public static final String ORIGINAL_SETTLERS_FILES_PATH_SETTING_KEY = "external-files-path";
 	private static final String ORIGINAL_SETTLERS_FILES_VERSION_ID = "external-files-version-id";
 
 	private final Context context;
