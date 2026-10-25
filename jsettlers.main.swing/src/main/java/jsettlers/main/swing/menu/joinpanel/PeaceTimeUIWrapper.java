@@ -14,8 +14,8 @@
  *******************************************************************************/
 package jsettlers.main.swing.menu.joinpanel;
 
+import jsettlers.common.menu.EPeaceTime;
 import jsettlers.graphics.localization.Labels;
-import jsettlers.logic.player.EPeaceTime;
 
 /**
  * Wraps an {@link EPeaceTime} for display in the peacetime combo box of the {@link JoinGamePanel}.

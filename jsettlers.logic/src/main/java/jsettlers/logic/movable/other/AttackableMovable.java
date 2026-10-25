@@ -6,7 +6,6 @@ import jsettlers.common.movable.EEffectType;
 import jsettlers.common.movable.EMovableType;
 import jsettlers.common.player.IPlayer;
 import jsettlers.common.position.ShortPoint2D;
-import jsettlers.logic.constants.MatchConstants;
 import jsettlers.logic.movable.Movable;
 import jsettlers.logic.movable.interfaces.AbstractMovableGrid;
 import jsettlers.logic.movable.interfaces.IAttackable;
@@ -26,10 +25,6 @@ public class AttackableMovable extends Movable implements IAttackableMovable {
 
 	@Override
 	public void receiveHit(float hitStrength, ShortPoint2D attackerPos, IPlayer attackingPlayer) {
-		if (MatchConstants.isPeaceTime()) {
-			return; // hard truce: nobody can do any combat damage while the peacetime of the match is running
-		}
-
 		if(hasEffect(EEffectType.SHIELDED)) hitStrength *= EEffectType.SHIELDED_DAMAGE_FACTOR;
 
 		this.health -= hitStrength;

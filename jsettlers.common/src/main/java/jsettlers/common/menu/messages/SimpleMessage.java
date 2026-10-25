@@ -19,6 +19,8 @@ import jsettlers.common.buildings.IBuilding;
 import jsettlers.common.material.EMaterialType;
 import jsettlers.common.position.ShortPoint2D;
 
+import java.util.Objects;
+
 /**
  * This is a messageLabel that states that the user was attacked by an other player.
  *
@@ -110,6 +112,9 @@ public class SimpleMessage implements IMessage {
 		if (this.type == EMessageType.PLAYER_STATUS) {
 			return false; // status messages are only sent when the status changes
 		}
+		if (this.type == EMessageType.CHAT) {
+			return false; // a player may send the same text more than once
+		}
 		if ((m.getSender() == this.sender)
 				&& m.getMessageLabel().equals(this.messageLabel)
 				&& m.getType() == this.type) {
@@ -118,7 +123,7 @@ public class SimpleMessage implements IMessage {
 					return this.pos.getOnGridDistTo(m.getPosition()) < MESSAGE_DIST_THRESHOLD;
 				}
 			} else {
-				return this.pos.equals(m.getPosition());
+				return Objects.equals(this.pos, m.getPosition());
 			}
 		}
 		return false;
@@ -190,5 +195,28 @@ public class SimpleMessage implements IMessage {
 	 */
 	public static IMessage playerStatus(String messageLabel, byte player, Color indicatorColor) {
 		return new SimpleMessage(EMessageType.PLAYER_STATUS, messageLabel, player, null, indicatorColor, PLAYER_STATUS_TTL);
+	}
+
+	/**
+	 * Creates a general information message that is not bound to a position on the map.
+	 *
+	 * @param messageLabel
+	 * 		The translation key of the text that will be shown
+	 * @return The messageLabel object
+	 */
+	public static IMessage info(String messageLabel) {
+		return new SimpleMessage(EMessageType.INFO, messageLabel, (byte) -1, null);
+	}
+
+	/**
+	 * Creates a chat message a player sent to the other players of a multiplayer game.
+	 *
+	 * @param player
+	 *            The player that wrote the message.
+	 * @param text
+	 *            The text of the message. It is shown as it is and not translated.
+	 */
+	public static IMessage chat(byte player, String text) {
+		return new SimpleMessage(EMessageType.CHAT, text, player, null);
 	}
 }

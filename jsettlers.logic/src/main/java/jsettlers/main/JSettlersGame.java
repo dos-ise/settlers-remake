@@ -36,12 +36,14 @@ import jsettlers.common.ai.EPlayerType;
 import jsettlers.common.logging.MultiplexingOutputStream;
 import jsettlers.common.map.IGraphicsGrid;
 import jsettlers.common.menu.EGameError;
+import jsettlers.common.menu.EPeaceTime;
 import jsettlers.common.menu.EProgressState;
 import jsettlers.common.menu.IMapInterfaceConnector;
 import jsettlers.common.menu.IStartedGame;
 import jsettlers.common.menu.IStartingGame;
 import jsettlers.common.menu.IStartingGameListener;
 import jsettlers.common.menu.InGamePlayerStatus;
+import jsettlers.common.menu.messages.SimpleMessage;
 import jsettlers.common.player.IInGamePlayer;
 import jsettlers.common.resources.ResourceManager;
 import jsettlers.common.statistics.IGameTimeProvider;
@@ -60,6 +62,7 @@ import jsettlers.logic.map.loading.MapLoadException;
 import jsettlers.logic.map.loading.MapLoader;
 import jsettlers.logic.movable.MovableManager;
 import jsettlers.logic.player.InitialGameState;
+import jsettlers.logic.player.PeaceTimeNotifier;
 import jsettlers.logic.player.Player;
 import jsettlers.logic.player.PlayerSetting;
 import jsettlers.logic.timer.RescheduleTimer;
@@ -73,6 +76,11 @@ import jsettlers.network.client.interfaces.INetworkConnector;
  * @author Andreas Eberle
  */
 public class JSettlersGame {
+	/**
+	 * Longer chat messages are cut off, so that they fit on the screen.
+	 */
+	public static final int MAX_CHAT_MESSAGE_LENGTH = 200;
+
 	private static final SimpleDateFormat LOG_DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US);
 	private final Object stopMutex = new Object();
 
@@ -85,6 +93,8 @@ public class JSettlersGame {
 
 	private final GameRunner gameRunner;
 	private final InitialGameState initialGameState;
+
+	private volatile Consumer<String> chatSender;
 
 	private boolean started = false;
 	private boolean stopped = false;
@@ -166,6 +176,28 @@ public class JSettlersGame {
 		return gameRunner;
 	}
 
+	/**
+	 * Enables the in-game chat.
+	 *
+	 * @param chatSender
+	 *            Sends a chat message to all players of the game.
+	 */
+	public void setChatSender(Consumer<String> chatSender) {
+		this.chatSender = chatSender;
+	}
+
+	/**
+	 * Shows a chat message that was received from the network to the local player.
+	 *
+	 * @param senderId
+	 *            The in-game id of the player that wrote the message.
+	 * @param message
+	 *            The text of the message.
+	 */
+	public void receiveChatMessage(byte senderId, String message) {
+		gameRunner.chatMessageReceived(senderId, message);
+	}
+
 	public void stop() {
 		synchronized (stopMutex) {
 			stopped = true;
@@ -188,6 +220,7 @@ public class JSettlersGame {
 		private boolean gameRunning;
 		private AiExecutor aiExecutor;
 		private volatile PlayerStatusController playerStatusController;
+		private volatile Player localPlayer;
 
 		@Override
 		public void run() {
@@ -198,7 +231,7 @@ public class JSettlersGame {
 				updateProgressListener(EProgressState.LOADING, 0.1f);
 
 				clearState();
-				MatchConstants.init(networkConnector.getGameClock(), initialGameState.getRandomSeed(), initialGameState.getPeaceTime().getEndTimeMs());
+				MatchConstants.init(networkConnector.getGameClock(), initialGameState.getRandomSeed());
 				try {
 					MatchConstants.clock().setReplayLogStream(createReplayFileStream());
 				} catch (IOException e) {
@@ -211,6 +244,7 @@ public class JSettlersGame {
 				mainGrid = gridWithUiState.getMainGrid();
 				mainGrid.startStatisticsRecording();
 				PlayerState playerState = gridWithUiState.getPlayerState(initialGameState.getPlayerId());
+				startPeaceTime(initialGameState.getPeaceTime());
 
 				RescheduleTimer.schedule(MatchConstants.clock()); // schedule timer
 
@@ -240,11 +274,11 @@ public class JSettlersGame {
 
 				aiExecutor = new AiExecutor(initialGameState.getPlayerSettings(), mainGrid, networkConnector.getTaskScheduler(), replayMode);
 				networkConnector.getGameClock().schedule(aiExecutor, (short) 1000);
+				schedulePeaceTimeNotifier();
 
-				Player localPlayer = mainGrid.getPartitionsGrid().getPlayer(initialGameState.getPlayerId());
+				localPlayer = mainGrid.getPartitionsGrid().getPlayer(initialGameState.getPlayerId());
 				playerStatusController = createPlayerStatusController(localPlayer);
 				networkConnector.setPlayerStatusListener(playerStatusController::playerStatusReceived);
-
 				MatchConstants.clock().startExecution(); // WARNING: GAME CLOCK IS STARTED!
 				// NO CONFIGURATION AFTER THIS POINT! =================================
 				gameRunning = true;
@@ -289,6 +323,26 @@ public class JSettlersGame {
 
 		public AiExecutor getAiExecutor() {
 			return aiExecutor;
+		}
+
+		private void startPeaceTime(EPeaceTime peaceTime) {
+			if (peaceTime.getDurationMs() <= 0) {
+				return; // keep the peace time stored in a savegame
+			}
+
+			int peaceTimeEnd = MatchConstants.clock().getTime() + peaceTime.getDurationMs();
+			for (Player player : mainGrid.getPartitionsGrid().getPlayers()) {
+				if (player != null) {
+					player.setPeaceTimeEnd(peaceTimeEnd);
+				}
+			}
+		}
+
+		private void schedulePeaceTimeNotifier() {
+			Player localPlayer = mainGrid.getPartitionsGrid().getPlayer(initialGameState.getPlayerId());
+			if (localPlayer != null && localPlayer.isInPeaceTime()) {
+				networkConnector.getGameClock().schedule(new PeaceTimeNotifier(localPlayer), (short) 1000);
+			}
 		}
 
 		private PlayerStatusController createPlayerStatusController(Player localPlayer) {
@@ -398,6 +452,42 @@ public class JSettlersGame {
 		public String getPlayerName(byte playerId) {
 			PlayerStatusController controller = playerStatusController;
 			return controller != null ? controller.getPlayerName(playerId) : null;
+		}
+
+		@Override
+		public boolean isChatAvailable() {
+			return multiplayer && chatSender != null;
+		}
+
+		@Override
+		public void sendChatMessage(String message) {
+			Consumer<String> sender = chatSender;
+			if (!multiplayer || sender == null || message == null) {
+				return;
+			}
+
+			String text = shortenChatMessage(message);
+			if (text.isEmpty()) {
+				return;
+			}
+
+			try {
+				sender.accept(text);
+			} catch (IllegalStateException e) {
+				System.err.println("Could not send chat message: " + e.getMessage());
+			}
+		}
+
+		void chatMessageReceived(byte senderId, String message) {
+			Player player = localPlayer;
+			if (player != null && message != null) {
+				player.showMessage(SimpleMessage.chat(senderId, shortenChatMessage(message)));
+			}
+		}
+
+		private String shortenChatMessage(String message) {
+			String text = message.trim();
+			return text.length() > MAX_CHAT_MESSAGE_LENGTH ? text.substring(0, MAX_CHAT_MESSAGE_LENGTH) : text;
 		}
 
 		@Override

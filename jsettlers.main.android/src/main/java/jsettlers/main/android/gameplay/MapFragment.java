@@ -60,6 +60,7 @@ import jsettlers.main.android.core.controls.SelectionListener;
 import jsettlers.main.android.core.controls.TaskControls;
 import jsettlers.main.android.core.navigation.BackPressedListener;
 import jsettlers.main.android.core.ui.FragmentUtil;
+import jsettlers.main.android.core.ui.dialogs.EditTextDialog;
 import jsettlers.main.android.gameplay.controlsmenu.buildings.BuildingsMenuFragment;
 import jsettlers.main.android.gameplay.controlsmenu.goods.GoodsMenuFragment;
 import jsettlers.main.android.gameplay.controlsmenu.selection.BuildingSelectionFragment;
@@ -76,7 +77,8 @@ import jsettlers.main.android.gameplay.navigation.MenuNavigator;
 
 @EFragment(R.layout.fragment_map)
 @OptionsMenu(R.menu.game)
-public class MapFragment extends Fragment implements SelectionListener, BackPressedListener, MenuNavigator, MoveToTypeListener {
+public class MapFragment extends Fragment implements SelectionListener, BackPressedListener, MenuNavigator, MoveToTypeListener,
+		EditTextDialog.Listener {
 	private static final String TAG_GAME_MENU_DIALOG = "com.jsettlers.gamemenufragment";
 	private static final String TAG_MOVE_TO_TYPE_DIALOG = "com.jsettlers.movetotypedialog";
 	private static final String TAG_FRAGMENT_SELECTION_MENU = "com.jsettlers.selectionmenufragment";
@@ -165,6 +167,7 @@ public class MapFragment extends Fragment implements SelectionListener, BackPres
 			gameMenu.unMute();
 		}
 		gameMenu.onGameVisible();
+		getActivity().invalidateOptionsMenu(); // the chat button depends on the game
 	}
 
 	@Override
@@ -329,6 +332,10 @@ public class MapFragment extends Fragment implements SelectionListener, BackPres
 				minimapItem.getIcon().mutate().setAlpha(visible ? MINIMAP_ICON_ALPHA_VISIBLE : MINIMAP_ICON_ALPHA_HIDDEN);
 			}
 		}
+		MenuItem chatItem = menu.findItem(R.id.menu_item_chat);
+		if (chatItem != null) {
+			chatItem.setVisible(gameMenu != null && gameMenu.isChatAvailable());
+		}
 	}
 
 	@OptionsItem(R.id.menu_item_toggle_minimap)
@@ -337,12 +344,29 @@ public class MapFragment extends Fragment implements SelectionListener, BackPres
 		getActivity().invalidateOptionsMenu();
 	}
 
+	@OptionsItem(R.id.menu_item_chat)
+	void showChat() {
+		dismissMenu();
+
+		if (gameMenu.isChatAvailable() && getChildFragmentManager().findFragmentByTag(GameMenuDialog.TAG_CHAT_DIALOG) == null) {
+			EditTextDialog.create(GameMenuDialog.REQUEST_CODE_CHAT, R.string.network_chat, R.string.chat_hint, "")
+					.show(getChildFragmentManager(), GameMenuDialog.TAG_CHAT_DIALOG);
+		}
+	}
+
 	@OptionsItem(R.id.menu_item_show_game_menu)
 	void showGameMenu() {
 		dismissMenu();
 
 		if (getChildFragmentManager().findFragmentByTag(TAG_GAME_MENU_DIALOG) == null) {
 			GameMenuDialog.create().show(getChildFragmentManager(), TAG_GAME_MENU_DIALOG);
+		}
+	}
+
+	@Override
+	public void saveEditTextDialog(int requestCode, String text) {
+		if (requestCode == GameMenuDialog.REQUEST_CODE_CHAT) {
+			gameMenu.sendChatMessage(text);
 		}
 	}
 

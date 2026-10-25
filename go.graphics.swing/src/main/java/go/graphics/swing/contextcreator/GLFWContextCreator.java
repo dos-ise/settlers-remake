@@ -59,7 +59,7 @@ public class GLFWContextCreator extends AsyncContextCreator {
 
 		configureWindow();
 		synchronized (wnd_lock) {
-			glfw_wnd = GLFW.glfwCreateWindow(width, height, "lwjgl-offscreen", 0, 0);
+			glfw_wnd = GLFW.glfwCreateWindow(width, height, "JSettlers", 0, 0);
 			setupContext();
 			try {
 				parent.resizeContext(width, height);
@@ -144,6 +144,8 @@ public class GLFWContextCreator extends AsyncContextCreator {
 		keys.put(GLFW.GLFW_KEY_ESCAPE, "ESCAPE");
 		keys.put(GLFW.GLFW_KEY_BACKSPACE, "BACK_SPACE");
 		keys.put(GLFW.GLFW_KEY_SPACE, " ");
+		keys.put(GLFW.GLFW_KEY_ENTER, "ENTER");
+		keys.put(GLFW.GLFW_KEY_KP_ENTER, "ENTER");
 
 		mods.put(GLFW.GLFW_KEY_LEFT_SHIFT, EModifier.SHIFT);
 		mods.put(GLFW.GLFW_KEY_RIGHT_SHIFT, EModifier.SHIFT);

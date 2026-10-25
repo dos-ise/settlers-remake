@@ -15,6 +15,7 @@
 package jsettlers.main;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.stream.IntStream;
 
 import jsettlers.common.ai.EPlayerType;
 import jsettlers.common.menu.ENetworkMessage;
+import jsettlers.common.menu.EPeaceTime;
 import jsettlers.common.menu.IChatMessageListener;
 import jsettlers.common.menu.IJoinPhaseMultiplayerGameConnector;
 import jsettlers.common.menu.IJoiningGame;
@@ -35,6 +37,7 @@ import jsettlers.common.menu.IMultiplayerSlot;
 import jsettlers.common.menu.IOpenMultiplayerGameInfo;
 import jsettlers.common.player.ECivilisation;
 import jsettlers.common.utils.collections.ChangingList;
+import jsettlers.logic.map.loading.EMapStartResources;
 import jsettlers.logic.map.loading.MapLoader;
 import jsettlers.logic.map.loading.list.MapList;
 import jsettlers.logic.player.InitialGameState;
@@ -67,9 +70,11 @@ public class MultiplayerGame {
 
 	private IJoiningGameListener joiningGameListener;
 	private IMultiplayerListener multiplayerListener;
-	private IChatMessageListener chatMessageListener;
+	private volatile IChatMessageListener chatMessageListener;
 	private boolean iAmTheHost = false;
 	private int maxPlayers;
+	private int startResourcesValue = EMapStartResources.HIGH_GOODS.value;
+	private EPeaceTime peaceTime = EPeaceTime.WITHOUT;
 
 	public MultiplayerGame(AsyncNetworkClientConnector networkClientFactory) {
 		this.networkClientFactory = networkClientFactory;
@@ -136,15 +141,50 @@ public class MultiplayerGame {
 			long randomSeed = packet.getRandomSeed();
 			PlayerSetting[] playerSettings = determinePlayerSettings();
 			byte ownPlayerId = calculateOwnPlayerId();
-			// TODO start resources and peace time: neither setting is transmitted by the network protocol yet (it would need to travel
-			// with the match info, e.g. an extended MatchInfoPacket/MatchStartPacket). Until then multiplayer matches always use the
-			// defaults (HIGH_GOODS, EPeaceTime.WITHOUT) and the lobby UI keeps both combo boxes disabled for multiplayer games.
-			InitialGameState initialGameState = new InitialGameState(ownPlayerId, playerSettings, randomSeed);
+			InitialGameState initialGameState = new InitialGameState(ownPlayerId, playerSettings, randomSeed,
+					EMapStartResources.fromMapValue(startResourcesValue), peaceTime);
 
 			JSettlersGame game = new JSettlersGame(mapLoader, networkClient.getNetworkConnector(), initialGameState);
+			enableInGameChat(game);
 
 			multiplayerListener.gameIsStarting(game.start());
 		};
+	}
+
+	/**
+	 * Forwards the chat messages of the running game to the given game instead of the lobby.
+	 */
+	private void enableInGameChat(JSettlersGame game) {
+		// The players are mapped to their slots now, because the mapping changes when a player leaves the running game.
+		Map<String, Byte> inGamePlayerIds = getInGamePlayerIds();
+		game.setChatSender(networkClient::sendChatMessage);
+		chatMessageListener = new IChatMessageListener() {
+			@Override
+			public void chatMessageReceived(String authorId, String message) {
+				Byte senderId = inGamePlayerIds.get(authorId);
+				if (senderId != null) {
+					game.receiveChatMessage(senderId, message);
+				}
+			}
+
+			@Override
+			public void systemMessageReceived(IMultiplayerPlayer author, ENetworkMessage message) {
+				// the lobby messages are not shown in the running game
+			}
+		};
+	}
+
+	/**
+	 * @return The in-game player id of every player in the match, mapped by the network id of the player.
+	 */
+	private Map<String, Byte> getInGamePlayerIds() {
+		Map<String, Byte> inGamePlayerIds = new HashMap<>();
+		for (IMultiplayerSlot currSlot : slotList.getItems()) {
+			if (currSlot.getPlayer() != null) {
+				inGamePlayerIds.put(currSlot.getPlayer().getId(), currSlot.getPosition());
+			}
+		}
+		return inGamePlayerIds;
 	}
 
 	private PlayerSetting[] determinePlayerSettings() {
@@ -164,12 +204,11 @@ public class MultiplayerGame {
 
 	private byte calculateOwnPlayerId() {
 		String myId = networkClient.getPlayerInfo().getId();
-		for (IMultiplayerSlot currSlot : slotList.getItems()) {
-			if(currSlot.getPlayer() != null && currSlot.getPlayer().getId().equals(myId)) {
-				return currSlot.getPosition();
-			}
+		Byte ownPlayerId = getInGamePlayerIds().get(myId);
+		if (ownPlayerId == null) {
+			throw new RuntimeException("Wasn't able to find my id!");
 		}
-		throw new RuntimeException("Wasn't able to find my id!");
+		return ownPlayerId;
 	}
 
 	private IPacketReceiver<MatchInfoUpdatePacket> generateMatchInfoUpdatedListener() {
@@ -188,6 +227,9 @@ public class MultiplayerGame {
 
 	void updateLists(MatchInfoPacket matchInfo) {
 		maxPlayers = matchInfo.getMaxPlayers();
+		// must be updated before the lists, because their listeners update the UI
+		startResourcesValue = matchInfo.getStartResources();
+		peaceTime = EPeaceTime.fromMinutes(matchInfo.getPeaceTimeMinutes());
 		List<IMultiplayerPlayer> players = new LinkedList<>();
 		for (PlayerInfoPacket playerInfoPacket : matchInfo.getPlayers()) {
 			players.add(new MultiplayerPlayer(playerInfoPacket));
@@ -283,6 +325,26 @@ public class MultiplayerGame {
 			@Override
 			public void setPlayerCount(int playerCount) {
 				networkClient.setPlayerCount(playerCount);
+			}
+
+			@Override
+			public void setStartResources(int startResourcesValue) {
+				networkClient.setStartResources(startResourcesValue);
+			}
+
+			@Override
+			public int getStartResourcesValue() {
+				return startResourcesValue;
+			}
+
+			@Override
+			public void setPeaceTime(EPeaceTime peaceTime) {
+				networkClient.setPeaceTime(peaceTime.minutes);
+			}
+
+			@Override
+			public EPeaceTime getPeaceTime() {
+				return peaceTime;
 			}
 
 			@Override

@@ -118,6 +118,7 @@ public final class NetworkConstants {
 		POSITION_CHANGED,
 		TYPE_CHANGED,
 		PLAYER_COUNT_CHANGED,
+		MATCH_SETTINGS_CHANGED,
 		;
 
 		private static final ENetworkMessage[] values = ENetworkMessage.values();
@@ -175,6 +176,8 @@ public final class NetworkConstants {
 		CHANGE_POSITION,
 		CHANGE_PLAYER_COUNT,
 		PLAYER_STATUS,
+		CHANGE_START_RESOURCES,
+		CHANGE_PEACE_TIME,
 		;
 
 		private static final ENetworkKey[] values = ENetworkKey.values();
