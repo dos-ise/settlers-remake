@@ -60,7 +60,6 @@ public class ReplayValidationIT {
 	}
 
 	@Test
-	@org.junit.Ignore("Excluded from CI: replay does not reproduce the direct play's random state (replay determinism, see PR #5). Re-enable once fixed.")
 	public void testIfReplayIsEqualToOriginalPlay() throws IOException, MapLoadException, ClassNotFoundException {
 		final byte playerId = 0;
 
