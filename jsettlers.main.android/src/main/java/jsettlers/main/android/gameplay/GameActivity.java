@@ -19,6 +19,9 @@ import java.util.List;
 
 import org.androidannotations.annotations.EActivity;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 
@@ -34,6 +37,7 @@ import jsettlers.main.android.mainmenu.navigation.Actions;
 public class GameActivity extends FullScreenAppCompatActivity implements GameNavigator, MenuNavigatorProvider {
 	private static final String TAG_FRAGMENT_MAP = "map_fragment";
 	private static final String TAG_FRAGMENT_LOADING = "loading_fragment";
+	private static final int REQUEST_CODE_NOTIFICATIONS = 1;
 
 	private GameStarter gameStarter;
 
@@ -41,6 +45,12 @@ public class GameActivity extends FullScreenAppCompatActivity implements GameNav
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		gameStarter = (GameStarter) getApplication();
+
+		// Android 13+ requires the POST_NOTIFICATIONS runtime permission for the game notification.
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+				&& checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+			requestPermissions(new String[] { Manifest.permission.POST_NOTIFICATIONS }, REQUEST_CODE_NOTIFICATIONS);
+		}
 
 		if (savedInstanceState != null) {
 			return;

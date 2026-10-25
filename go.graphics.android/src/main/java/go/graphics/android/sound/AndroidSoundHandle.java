@@ -21,7 +21,11 @@ public class AndroidSoundHandle implements SoundHandle {
 		MediaMetadataRetriever mdr  = new MediaMetadataRetriever();
 		mdr.setDataSource(source.getPath());
 		String lengthString = mdr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-		mdr.release();
+		try {
+			mdr.release();
+		} catch (IOException e) {
+			// ignore, the retriever is released anyway
+		}
 
 		// something went wrong
 		if(lengthString == null) {
