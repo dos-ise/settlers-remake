@@ -87,7 +87,8 @@ public class InitialGameStateTest {
 		assertEquals(EMapStartResources.LOW_GOODS, clone.getStartResources());
 		assertEquals(EPeaceTime.MIN_60, clone.getPeaceTime());
 		assertEquals(42L, clone.getRandomSeed());
-		assertEquals(EPlayerType.HUMAN, clone.getPlayerSettings()[1].getPlayerType());
+		// the clone (used for replaying) preserves the original player types so the game logic behaves identically to the direct play
+		assertEquals(EPlayerType.AI_HARD, clone.getPlayerSettings()[1].getPlayerType());
 	}
 
 	@Test
