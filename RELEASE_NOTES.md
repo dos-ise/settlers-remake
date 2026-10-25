@@ -7,7 +7,7 @@ The first release of the dos-ise fork, building on v0.6.0.9-alpha. It focuses on
 - **JSettlers.zip** – desktop game for Windows/Linux (includes the Map Editor and tools)
 - **JSettlers-0.7.0.0.exe** – Windows installer (bundled JRE, no Java installation needed)
 - **jsettlers_0.7.0.0_amd64.deb** – Linux Debian/Ubuntu package (bundled JRE, no Java installation needed)
-- **JSettlers-0.7.0.dmg** – macOS installer (bundled JRE, no Java installation needed)
+- **JSettlers-1.7.0.dmg** – macOS installer (bundled JRE, no Java installation needed; macOS requires a version that does not start with 0, so 0.7.0.0 is reported as 1.7.0)
 - **JSettlers-Android.apk** – Android app
 - **DedicatedJSettlersServer.jar** – dedicated multiplayer server
 
