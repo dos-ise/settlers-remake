@@ -126,6 +126,10 @@
 	<string name="ask_workarea">Arbeitsbereich auswählen</string>
 	<string name="ask_dock">Stegposition auswählen</string>
 	<string name="ask_spell">Zauberstelle auswählen</string>
-	<string name="force_move">Zielpunkt erzwingen</string>
 	<string name="settings_play_all_music">Alle Musikdateien abspielen</string>
+	<string name="move_to_title">Bewegen</string>
+	<string name="move_to_normal">Normal</string>
+	<string name="move_to_forced">Erzwungen</string>
+	<string name="move_to_waypoint">Wegpunkt</string>
+	<string name="move_to_patrol">Patrouille</string>
 </resources>
