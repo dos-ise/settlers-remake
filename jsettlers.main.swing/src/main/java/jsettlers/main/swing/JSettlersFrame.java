@@ -65,6 +65,7 @@ import jsettlers.logic.player.PlayerSetting;
 import jsettlers.main.JSettlersGame;
 import jsettlers.main.swing.menu.SwingMenuImageDecoder;
 import jsettlers.main.swing.menu.joinpanel.JoinGamePanel;
+import jsettlers.main.swing.menu.multiplayer.lan.LANConnectionPanel;
 import jsettlers.main.swing.menu.startinggamemenu.StartingGamePanel;
 import jsettlers.main.swing.settings.SettingsManager;
 
@@ -79,6 +80,7 @@ public class JSettlersFrame extends JFrame {
 	private final SwingSoundPlayer soundPlayer = new SwingSoundPlayer(SettingsManager.getInstance());
 
 	private Timer redrawTimer;
+	private Timer multiplayerUpdateTimer;
 	private boolean fullScreen = false;
 	private boolean textInputDialogOpen = false;
 	private AreaContainer areaContainer;
@@ -147,6 +149,10 @@ public class JSettlersFrame extends JFrame {
 			redrawTimer.stop();
 			redrawTimer = null;
 		}
+		if (multiplayerUpdateTimer != null) {
+			multiplayerUpdateTimer.stop();
+			multiplayerUpdateTimer = null;
+		}
 	}
 
 	public void showMainMenu() {
@@ -184,6 +190,16 @@ public class JSettlersFrame extends JFrame {
 			@Override
 			public void showSettings() {
 				showSettingsPanel();
+			}
+
+			@Override
+			public void showNewMultiplayerGame() {
+				showMultiplayerConnection();
+			}
+
+			@Override
+			public void showJoinMultiplayerGame() {
+				showMultiplayerConnection();
 			}
 
 			@Override
@@ -362,6 +378,22 @@ public class JSettlersFrame extends JFrame {
 			}
 		}
 		return playerSettings;
+	}
+
+	/**
+	 * Shows the Swing LAN multiplayer connection panel. This is the temporary entry point for the
+	 * multiplayer until the shared multiplayer panels are fully wired up.
+	 */
+	private void showMultiplayerConnection() {
+		abortRedrawTimerIfPresent();
+		LANConnectionPanel lanConnectionPanel = new LANConnectionPanel(this);
+		setNewContentPane(lanConnectionPanel);
+		multiplayerUpdateTimer = new Timer(500, e -> {
+			lanConnectionPanel.update();
+			lanConnectionPanel.repaint();
+		});
+		multiplayerUpdateTimer.setInitialDelay(0);
+		multiplayerUpdateTimer.start();
 	}
 
 	public void showNewMultiPlayerGameMenu(MapLoader mapLoader, IMultiplayerConnector connector) {

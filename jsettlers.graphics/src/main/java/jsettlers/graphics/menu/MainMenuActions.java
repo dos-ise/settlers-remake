@@ -44,6 +44,16 @@ public interface MainMenuActions {
 	void showSettings();
 
 	/**
+	 * Shows the multiplayer setup to host a new network game.
+	 */
+	void showNewMultiplayerGame();
+
+	/**
+	 * Shows the multiplayer setup to join a network game.
+	 */
+	void showJoinMultiplayerGame();
+
+	/**
 	 * Exits the application.
 	 */
 	void exit();

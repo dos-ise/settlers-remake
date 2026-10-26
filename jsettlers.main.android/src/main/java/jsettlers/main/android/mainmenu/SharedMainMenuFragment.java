@@ -209,6 +209,16 @@ public class SharedMainMenuFragment extends Fragment implements MainMenuActions 
 	}
 
 	@Override
+	public void showNewMultiplayerGame() {
+		((MainMenuNavigator) getActivity()).showNewMultiPlayerPicker();
+	}
+
+	@Override
+	public void showJoinMultiplayerGame() {
+		((MainMenuNavigator) getActivity()).showJoinMultiPlayerPicker();
+	}
+
+	@Override
 	public void exit() {
 		getActivity().finish();
 	}
