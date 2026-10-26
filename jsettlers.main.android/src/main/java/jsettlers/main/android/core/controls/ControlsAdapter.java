@@ -71,6 +71,8 @@ public class ControlsAdapter implements ActionControls, DrawControls, SelectionC
 
 		// The shared OriginalControls render the full in-game UI (main panel, minimap, chat) on all platforms.
 		mapContent = new MapContent(game, SOUND_PLAYER, ETextDrawPosition.MOBILE);
+		// Widen the control panel so the buttons are large enough to be tapped reliably on a touch screen.
+		mapContent.setUiScale(1.5f);
 		gameMenu = new GameMenu(context, SOUND_PLAYER, this, new GameSpeedLiveData(gameClock, this), game.isMultiplayerGame(),
 				mapContent.getMusicManager(), preferences, game);
 		graphicsGrid = game.getMap();

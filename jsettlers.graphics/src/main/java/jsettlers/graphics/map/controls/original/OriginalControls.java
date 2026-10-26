@@ -72,6 +72,12 @@ public class OriginalControls implements IControls {
 	 */
 	private static final float MAX_PANEL_WIDTH_RATIO = 0.4f;
 
+	/**
+	 * Scales the width of the control panel. Touch devices (Android) use a value &gt; 1 so the buttons are large enough
+	 * to be tapped reliably; desktop keeps the default of 1.
+	 */
+	private float uiScale = 1f;
+
 	private final MinimapMode minimapSettings = new MinimapMode();
 	private final MainPanel mainPanel;
 	private final Button chatButton;
@@ -84,6 +90,16 @@ public class OriginalControls implements IControls {
 	private final IInGamePlayer player;
 	private final MapContent parentMapContent;
 	private final IStartedGame game;
+
+	/**
+	 * Sets the width scale factor for the control panel. Must be called before the controls are first drawn.
+	 *
+	 * @param uiScale
+	 *            The scale factor, 1 keeps the default desktop size.
+	 */
+	public void setUiScale(float uiScale) {
+		this.uiScale = uiScale;
+	}
 
 	/**
 	 * Creates a new {@link OriginalControls} overlay.
@@ -173,12 +189,13 @@ public class OriginalControls implements IControls {
 		// Derive the panel width from the window height to preserve the artwork's aspect ratio, but never let it
 		// exceed MAX_PANEL_WIDTH_RATIO of the window width. If it would, clamp the width and shrink the panel height
 		// accordingly so the aspect ratio is kept and the panel stays pinned to the bottom-left corner (bug #67).
+		// The uiScale widens the panel on touch devices so the buttons are large enough to tap.
 		float height = newHeight;
-		int width = (int) (layoutProperties.ASPECT_RATIO * height);
+		int width = (int) (uiScale * layoutProperties.ASPECT_RATIO * height);
 		int maxWidth = (int) (MAX_PANEL_WIDTH_RATIO * newWidth);
 		if (width > maxWidth) {
 			width = maxWidth;
-			height = width / layoutProperties.ASPECT_RATIO;
+			height = width / (uiScale * layoutProperties.ASPECT_RATIO);
 		}
 		this.uiBase.setPosition(new FloatRectangle(0, 0, width, height));
 

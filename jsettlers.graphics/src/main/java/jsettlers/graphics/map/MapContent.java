@@ -1060,6 +1060,19 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 		controls.displaySelection(selection);
 	}
 
+	/**
+	 * Sets the width scale factor for the in-game control panel. Touch devices use a value &gt; 1 so the buttons are
+	 * large enough to be tapped reliably. Must be called before the controls are first drawn.
+	 *
+	 * @param uiScale
+	 *            The scale factor, 1 keeps the default desktop size.
+	 */
+	public void setUiScale(float uiScale) {
+		if (controls instanceof OriginalControls) {
+			((OriginalControls) controls).setUiScale(uiScale);
+		}
+	}
+
 	public void scrollTo(ShortPoint2D point, boolean mark) {
 		if (point != null) {
 			this.context.scrollTo(point);
