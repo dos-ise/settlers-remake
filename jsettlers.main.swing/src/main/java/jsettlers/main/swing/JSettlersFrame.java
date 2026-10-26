@@ -54,6 +54,7 @@ import jsettlers.graphics.menu.MapPreviewImage;
 import jsettlers.graphics.menu.MenuContent;
 import jsettlers.graphics.menu.MenuImageProvider;
 import jsettlers.graphics.menu.SettingsMenuPanel;
+import jsettlers.logic.map.loading.EMapStartResources;
 import jsettlers.logic.map.loading.MapLoader;
 import jsettlers.logic.map.loading.list.MapList;
 import jsettlers.logic.map.loading.newmap.MapFileHeader;
@@ -283,8 +284,43 @@ public class JSettlersFrame extends JFrame {
 	}
 
 	public void showNewSinglePlayerGameMenu(MapLoader mapLoader) {
-		joinGamePanel.setSinglePlayerMap(mapLoader);
-		setNewContentPane(joinGamePanel);
+		jsettlers.graphics.menu.JoinGameMapInfo mapInfo = new jsettlers.graphics.menu.JoinGameMapInfo(mapLoader.getMapName(),
+				MapPreviewImage.create(mapLoader.getImage()), mapLoader.getMaxPlayers(),
+				toJoinGameSlots(mapLoader.getFileHeader().getPlayerSettings()));
+		jsettlers.graphics.menu.JoinGamePanel joinGamePanel = new jsettlers.graphics.menu.JoinGamePanel(mapInfo,
+				SettingsManager.getInstance().getPlayer().getName(), settings -> {
+			PlayerSetting[] playerSettings = toPlayerSettings(settings, mapLoader.getMaxPlayers());
+			InitialGameState initialGameState = new InitialGameState(settings.getHumanPlayerSlot(), playerSettings,
+					System.currentTimeMillis(), EMapStartResources.fromMapValue(settings.getStartResourcesValue()),
+					settings.getPeaceTime());
+			JSettlersGame game = new JSettlersGame(mapLoader, initialGameState);
+			showStartingGamePanel(game.start());
+		}, this::showSharedMainMenu);
+		showMenuContent(new MenuContent(joinGamePanel, action -> {
+		}));
+	}
+
+	private static jsettlers.graphics.menu.JoinGamePlayerSlotData[] toJoinGameSlots(PlayerSetting[] playerSettings) {
+		jsettlers.graphics.menu.JoinGamePlayerSlotData[] slots = new jsettlers.graphics.menu.JoinGamePlayerSlotData[playerSettings.length];
+		for (int i = 0; i < playerSettings.length; i++) {
+			PlayerSetting setting = playerSettings[i];
+			slots[i] = new jsettlers.graphics.menu.JoinGamePlayerSlotData(setting.getCivilisation(), setting.getPlayerType(),
+					setting.getTeamId());
+		}
+		return slots;
+	}
+
+	private static PlayerSetting[] toPlayerSettings(jsettlers.graphics.menu.JoinGameSettings settings, int maxPlayers) {
+		PlayerSetting[] playerSettings = new PlayerSetting[maxPlayers];
+		for (int i = 0; i < maxPlayers; i++) {
+			jsettlers.graphics.menu.JoinGamePlayerSlotData slot = settings.getPlayerSlots()[i];
+			if (slot.getPlayerType() != null) {
+				playerSettings[i] = new PlayerSetting(slot.getPlayerType(), slot.getCivilisation(), slot.getTeam());
+			} else {
+				playerSettings[i] = new PlayerSetting();
+			}
+		}
+		return playerSettings;
 	}
 
 	public void showNewMultiPlayerGameMenu(MapLoader mapLoader, IMultiplayerConnector connector) {
