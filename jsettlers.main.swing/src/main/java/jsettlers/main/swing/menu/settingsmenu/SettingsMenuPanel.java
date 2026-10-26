@@ -38,9 +38,9 @@ public class SettingsMenuPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * Reference to main panel
+	 * Reference to the action to run when leaving the settings
 	 */
-	private final MainMenuPanel mainMenuPanel;
+	private final Runnable onBack;
 
 	/**
 	 * Name of the player
@@ -63,11 +63,11 @@ public class SettingsMenuPanel extends JPanel {
 	/**
 	 * Constructor
 	 *
-	 * @param mainMenuPanel
-	 *            Reference to main panel
+	 * @param onBack
+	 *            Action to run when the player leaves the settings
 	 */
-	public SettingsMenuPanel(MainMenuPanel mainMenuPanel) {
-		this.mainMenuPanel = mainMenuPanel;
+	public SettingsMenuPanel(Runnable onBack) {
+		this.onBack = onBack;
 		setLayout(new BorderLayout());
 		settinsgPanel.setLayout(new GridLayout(0, 2, 10, 10));
 		add(settinsgPanel, BorderLayout.NORTH);
@@ -117,7 +117,7 @@ public class SettingsMenuPanel extends JPanel {
 	private void initButton() {
 		JButton cancelButton = new JButton(Labels.getString("settings-back"));
 		cancelButton.putClientProperty(ELFStyle.KEY, ELFStyle.BUTTON_MENU);
-		cancelButton.addActionListener(e -> mainMenuPanel.reset());
+		cancelButton.addActionListener(e -> onBack.run());
 
 		JButton saveButton = new JButton(Labels.getString("settings-ok"));
 		saveButton.putClientProperty(ELFStyle.KEY, ELFStyle.BUTTON_MENU);
@@ -132,7 +132,7 @@ public class SettingsMenuPanel extends JPanel {
 			settingsManager.setBackend(backendSelector.getSelectedItem()+"");
 			settingsManager.setGuiScale(guiScaleSlider.getValue()/100f);
 			settingsManager.setAiNoPioneers(aiTowerFocusCheckBox.isSelected());
-			mainMenuPanel.reset();
+			onBack.run();
 		});
 
 		JPanel buttonPanel = new JPanel();

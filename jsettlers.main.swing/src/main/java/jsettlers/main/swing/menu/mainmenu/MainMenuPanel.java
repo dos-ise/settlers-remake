@@ -81,7 +81,7 @@ public class MainMenuPanel extends SplitedBackgroundPanel {
 
 		openSinglePlayerPanel = new OpenPanel(MapList.getDefaultList().getFreshMaps().getItems(), settlersFrame::showNewSinglePlayerGameMenu);
 		OpenPanel openSaveGamePanel = new OpenPanel(MapList.getDefaultList().getSavedMaps(), this::loadSavegame);
-		SettingsMenuPanel settingsPanel = new SettingsMenuPanel(this);
+		SettingsMenuPanel settingsPanel = new SettingsMenuPanel(this::reset);
 
 		registerMenu("main-panel-new-single-player-game-button", e -> setCenter("main-panel-new-single-player-game-button", openSinglePlayerPanel));
 		registerMenu("start-loadgame", e -> setCenter("start-loadgame", openSaveGamePanel));

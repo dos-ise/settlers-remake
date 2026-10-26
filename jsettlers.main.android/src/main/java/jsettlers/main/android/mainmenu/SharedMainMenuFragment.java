@@ -1,0 +1,133 @@
+/*
+ * Copyright (c) 2026
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+package jsettlers.main.android.mainmenu;
+
+import java.util.HashSet;
+import java.util.stream.Collectors;
+
+import org.androidannotations.annotations.AfterViews;
+import org.androidannotations.annotations.EFragment;
+import org.androidannotations.annotations.ViewById;
+
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.widget.FrameLayout;
+
+import go.graphics.android.GOSurfaceView;
+import go.graphics.area.Area;
+import go.graphics.region.Region;
+import jsettlers.graphics.menu.MainMenuActions;
+import jsettlers.graphics.menu.MapListProvider;
+import jsettlers.graphics.menu.MapMenuItem;
+import jsettlers.graphics.menu.MenuContent;
+import jsettlers.graphics.menu.MenuImageProvider;
+import jsettlers.logic.map.loading.MapLoader;
+import jsettlers.logic.map.loading.list.MapList;
+import jsettlers.logic.map.loading.newmap.MapFileHeader;
+import jsettlers.logic.player.InitialGameState;
+import jsettlers.logic.player.PlayerSetting;
+import jsettlers.main.JSettlersGame;
+import jsettlers.main.android.R;
+import jsettlers.main.android.core.GameStarter;
+import jsettlers.main.android.mainmenu.gamesetup.NewSinglePlayerSetupFragment;
+import jsettlers.main.android.mainmenu.navigation.MainMenuNavigator;
+import jsettlers.main.android.mainmenu.settings.SettingsActivity_;
+
+/**
+ * Shows the shared, GL rendered main menu. The same menu code runs on desktop and Android.
+ */
+@EFragment(R.layout.fragment_shared_main_menu)
+public class SharedMainMenuFragment extends Fragment implements MainMenuActions {
+	private GameStarter gameStarter;
+
+	@ViewById(R.id.frame_layout)
+	FrameLayout frameLayout;
+
+	public static Fragment create() {
+		return new SharedMainMenuFragment_();
+	}
+
+	@Override
+	public void onCreate(@Nullable Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		gameStarter = (GameStarter) getActivity().getApplication();
+	}
+
+	@AfterViews
+	void setupMenu() {
+		MenuImageProvider.setInstance(new MenuImageProvider(new AndroidMenuImageDecoder()));
+
+		MapList mapList = gameStarter.getMapList();
+		MapListProvider freshMaps = () -> mapList.getFreshMaps().getItems().stream()
+				.map(this::toMapMenuItem).collect(Collectors.toList());
+		MapListProvider savedMaps = () -> mapList.getSavedMaps().getItems().stream()
+				.map(this::toMapMenuItem).collect(Collectors.toList());
+
+		jsettlers.graphics.menu.MainMenuPanel mainMenuPanel = new jsettlers.graphics.menu.MainMenuPanel(this, freshMaps, savedMaps);
+		MenuContent menuContent = new MenuContent(mainMenuPanel, action -> {
+		});
+
+		Region goRegion = new Region(Region.POSITION_CENTER);
+		goRegion.setContent(menuContent);
+		Area goArea = new Area();
+		goArea.set(goRegion);
+
+		GOSurfaceView goView = new GOSurfaceView(getActivity(), goArea, () -> new HashSet<>());
+		frameLayout.addView(goView);
+	}
+
+	private MapMenuItem toMapMenuItem(MapLoader loader) {
+		return new MapMenuItem(loader.getMapId(), loader.getMapName(), loader.getDescription());
+	}
+
+	private MapLoader resolveMap(MapMenuItem map) {
+		return gameStarter.getMapList().getMapById(map.getId());
+	}
+
+	/**
+	 * MainMenuActions implementation
+	 */
+	@Override
+	public void startNewSinglePlayerGame(MapMenuItem map) {
+		MainMenuNavigator navigator = (MainMenuNavigator) getActivity();
+		navigator.showNewSinglePlayerSetup(map.getId());
+	}
+
+	@Override
+	public void startLoadGame(MapMenuItem map) {
+		MapLoader loader = resolveMap(map);
+		if (loader != null) {
+			MapFileHeader mapFileHeader = loader.getFileHeader();
+			PlayerSetting[] playerSettings = mapFileHeader.getPlayerSettings();
+			byte playerId = mapFileHeader.getPlayerId();
+			InitialGameState initialGameState = new InitialGameState(playerId, playerSettings, 4711);
+			JSettlersGame game = new JSettlersGame(loader, initialGameState);
+			gameStarter.setStartingGame(game.start());
+			((MainMenuNavigator) getActivity()).showGame();
+		}
+	}
+
+	@Override
+	public void showSettings() {
+		SettingsActivity_.intent(this).start();
+	}
+
+	@Override
+	public void exit() {
+		getActivity().finish();
+	}
+}

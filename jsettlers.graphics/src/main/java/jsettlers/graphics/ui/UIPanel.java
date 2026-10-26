@@ -39,6 +39,7 @@ public class UIPanel implements UIElement {
 	private FloatRectangle position = new FloatRectangle(0, 0, 1, 1);
 
 	private ImageLink background;
+	private Image backgroundImage;
 
 	private boolean attached = false;
 	protected float intensity = 1;
@@ -49,6 +50,13 @@ public class UIPanel implements UIElement {
 	 */
 	public void setBackground(ImageLink imageLink) {
 		this.background = imageLink;
+	}
+
+	/**
+	 * Sets a directly decoded background image. Takes precedence over the {@link ImageLink} background.
+	 */
+	public void setBackgroundImage(Image image) {
+		this.backgroundImage = image;
 	}
 
 	/**
@@ -113,6 +121,10 @@ public class UIPanel implements UIElement {
 	}
 
 	protected void drawBackground(GLDrawContext gl) {
+		if (backgroundImage != null) {
+			drawAtRect(gl, backgroundImage, getPosition());
+			return;
+		}
 		ImageLink link = getBackgroundImage();
 		if (link != null) {
 			FloatRectangle position = getPosition();

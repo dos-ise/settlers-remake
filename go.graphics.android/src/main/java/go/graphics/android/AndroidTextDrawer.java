@@ -70,6 +70,12 @@ public class AndroidTextDrawer extends AbstractTextDrawer<GLESDrawContext> {
 	protected int[] getRGB() {
 		int[] pixels = new int[tex_width*tex_height];
 		pre_render.getPixels(pixels, 0, tex_width, 0, 0, tex_width, tex_height);
+		// The ALPHA_8 bitmap only provides the alpha channel. The text is white, so set RGB to full and keep the
+		// alpha in the standard 0xAARRGGBB layout (converted to the game's 0xRRGGBBAA layout in AbstractTextDrawer).
+		for(int i = 0; i != pixels.length; i++) {
+			int alpha = (pixels[i] >>> 24) & 0xFF;
+			pixels[i] = (alpha << 24) | 0x00FFFFFF;
+		}
 		return pixels;
 	}
 

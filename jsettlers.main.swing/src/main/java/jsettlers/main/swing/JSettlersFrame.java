@@ -22,6 +22,7 @@ import java.awt.HeadlessException;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -46,9 +47,21 @@ import jsettlers.common.menu.IStartingGame;
 import jsettlers.graphics.localization.Labels;
 import jsettlers.graphics.map.ETextDrawPosition;
 import jsettlers.graphics.map.MapContent;
+import jsettlers.graphics.menu.MainMenuActions;
+import jsettlers.graphics.menu.MapListProvider;
+import jsettlers.graphics.menu.MapMenuItem;
+import jsettlers.graphics.menu.MenuContent;
+import jsettlers.graphics.menu.MenuImageProvider;
 import jsettlers.logic.map.loading.MapLoader;
+import jsettlers.logic.map.loading.list.MapList;
+import jsettlers.logic.map.loading.newmap.MapFileHeader;
+import jsettlers.logic.map.loading.savegame.SavegameLoader;
+import jsettlers.logic.player.InitialGameState;
+import jsettlers.logic.player.PlayerSetting;
+import jsettlers.main.JSettlersGame;
+import jsettlers.main.swing.menu.SwingMenuImageDecoder;
 import jsettlers.main.swing.menu.joinpanel.JoinGamePanel;
-import jsettlers.main.swing.menu.mainmenu.MainMenuPanel;
+import jsettlers.main.swing.menu.settingsmenu.SettingsMenuPanel;
 import jsettlers.main.swing.menu.startinggamemenu.StartingGamePanel;
 import jsettlers.main.swing.menu.statspanel.EndgameStatsPanel;
 import jsettlers.main.swing.settings.SettingsManager;
@@ -59,7 +72,6 @@ import jsettlers.main.swing.settings.SettingsManager;
 public class JSettlersFrame extends JFrame {
 	private static final long serialVersionUID = 2607082717493797224L;
 
-	private final MainMenuPanel mainPanel;
 	private final EndgameStatsPanel endgameStatsPanel = new EndgameStatsPanel(this);
 	private final StartingGamePanel startingGamePanel = new StartingGamePanel(this);
 	private final JoinGamePanel joinGamePanel = new JoinGamePanel(this);
@@ -75,8 +87,6 @@ public class JSettlersFrame extends JFrame {
 		setIconImage(JSettlersSwingUtil.APP_ICON);
 
 		SettingsManager settingsManager = SettingsManager.getInstance();
-
-		mainPanel = new MainMenuPanel(this);
 
 		showMainMenu();
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -129,7 +139,93 @@ public class JSettlersFrame extends JFrame {
 	}
 
 	public void showMainMenu() {
-		setNewContentPane(mainPanel);
+		showSharedMainMenu();
+	}
+
+	/**
+	 * Shows the shared, GL rendered main menu. The same menu code runs on desktop and Android.
+	 */
+	public void showSharedMainMenu() {
+		MenuImageProvider.setInstance(new MenuImageProvider(new SwingMenuImageDecoder()));
+		MapList mapList = MapList.getDefaultList();
+		MapListProvider freshMaps = () -> mapList.getFreshMaps().getItems().stream()
+				.map(this::toMapMenuItem).collect(Collectors.toList());
+		MapListProvider savedMaps = () -> mapList.getSavedMaps().getItems().stream()
+				.map(this::toMapMenuItem).collect(Collectors.toList());
+
+		jsettlers.graphics.menu.MainMenuPanel mainMenuPanel = new jsettlers.graphics.menu.MainMenuPanel(new MainMenuActions() {
+			@Override
+			public void startNewSinglePlayerGame(MapMenuItem map) {
+				MapLoader loader = resolveMap(map);
+				if (loader != null) {
+					showNewSinglePlayerGameMenu(loader);
+				}
+			}
+
+			@Override
+			public void startLoadGame(MapMenuItem map) {
+				MapLoader loader = resolveMap(map);
+				if (loader != null) {
+					loadSavegame(loader);
+				}
+			}
+
+			@Override
+			public void showSettings() {
+				showSettingsPanel();
+			}
+
+			@Override
+			public void exit() {
+				exit();
+			}
+		}, freshMaps, savedMaps);
+
+		MenuContent menuContent = new MenuContent(mainMenuPanel, action -> {
+		});
+		showMenuContent(menuContent);
+	}
+
+	private MapMenuItem toMapMenuItem(MapLoader loader) {
+		return new MapMenuItem(loader.getMapId(), loader.getMapName(), loader.getDescription());
+	}
+
+	private MapLoader resolveMap(MapMenuItem map) {
+		return MapList.getDefaultList().getMapById(map.getId());
+	}
+
+	private void showMenuContent(MenuContent menuContent) {
+		abortRedrawTimerIfPresent();
+		Region region = new Region(Region.POSITION_CENTER);
+		region.setContent(menuContent);
+		Area area = new Area();
+		area.set(region);
+		SwingUtilities.invokeLater(() -> {
+			setContentPane(areaContainer = new AreaContainer(area, SettingsManager.getInstance().getBackend(),
+					SettingsManager.getInstance().isGraphicsDebug(), SettingsManager.getInstance().getGuiScale()));
+			revalidate();
+			repaint();
+			setVisible(true);
+		});
+	}
+
+	private void showSettingsPanel() {
+		SettingsMenuPanel settingsPanel = new SettingsMenuPanel(this::showSharedMainMenu);
+		settingsPanel.initializeValues();
+		setNewContentPane(settingsPanel);
+	}
+
+	private void loadSavegame(MapLoader map) {
+		SavegameLoader savegameLoader = (SavegameLoader) map;
+
+		if (savegameLoader != null) {
+			MapFileHeader mapFileHeader = savegameLoader.getFileHeader();
+			PlayerSetting[] playerSettings = mapFileHeader.getPlayerSettings();
+			byte playerId = mapFileHeader.getPlayerId();
+			JSettlersGame game = new JSettlersGame(savegameLoader, new InitialGameState(playerId, playerSettings, -1));
+			IStartingGame startingGame = game.start();
+			showStartingGamePanel(startingGame);
+		}
 	}
 
 	public void showStartingGamePanel(IStartingGame startingGame) {

@@ -20,10 +20,12 @@ import org.androidannotations.annotations.OptionsItem;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
 import jsettlers.main.android.R;
+import jsettlers.main.android.core.resources.scanner.AndroidResourcesLoader;
 import jsettlers.main.android.gameplay.GameActivity_;
 import jsettlers.main.android.mainmenu.gamesetup.JoinMultiPlayerSetupFragment;
 import jsettlers.main.android.mainmenu.gamesetup.NewMultiPlayerSetupFragment;
@@ -47,8 +49,12 @@ public class MainActivity extends AppCompatActivity implements MainMenuNavigator
 		if (savedInstanceState != null)
 			return;
 
+		// The shared GL menu needs the original game assets. If they are not set up yet, fall back to the native
+		// main menu which offers the directory picker.
+		boolean resourcesLoaded = new AndroidResourcesLoader(this).setup();
+		Fragment startFragment = resourcesLoaded ? SharedMainMenuFragment.create() : MainMenuFragment.create();
 		getSupportFragmentManager().beginTransaction()
-				.add(R.id.frame_layout, MainMenuFragment.create())
+				.add(R.id.frame_layout, startFragment)
 				.commit();
 	}
 
@@ -140,6 +146,9 @@ public class MainActivity extends AppCompatActivity implements MainMenuNavigator
 	}
 
 	private void setUpButton() {
+		if (getSupportActionBar() == null) {
+			return;
+		}
 		boolean isAtRootOfBackStack = getSupportFragmentManager().getBackStackEntryCount() == 0;
 		getSupportActionBar().setDisplayHomeAsUpEnabled(!isAtRootOfBackStack);
 	}
