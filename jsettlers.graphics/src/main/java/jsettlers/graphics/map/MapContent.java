@@ -324,6 +324,12 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 
 	@Override
 	public void drawContent(GLDrawContext gl, int newWidth, int newHeight) {
+		if (game.isShutdownFinished()) {
+			// The game is being torn down. The render thread may still draw a few frames until the surface is
+			// destroyed (e.g. on Android while the activity finishes), but the game state is already cleared and
+			// drawing would fail (e.g. the game clock is null). Skip drawing to avoid exceptions.
+			return;
+		}
 		try {
 			framerate.nextFrame();
 			gamespeedCalculator.tick();
