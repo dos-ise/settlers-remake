@@ -1,7 +1,6 @@
 # JSettlers
 
-This project intends to create a remake of the famous strategy game "The Settlers 3" published by Blue Byte in 1998. The project is developed in Java and runs on PC (Windows/Linux) and Android.
-MacOS support is broken regardless of CPU architecture.
+This project intends to create a remake of the famous strategy game "The Settlers 3" published by Blue Byte in 1998. The project is developed in Java and runs on PC (Windows/Linux), macOS and Android.
 
 ### Warning: Alpha Status
 The game is currently in an **alpha** status! Therefore bugs, frequent changes making saved games invalid and server abortions need to be expected. Nevertheless we will try to minimize trouble.
@@ -30,20 +29,43 @@ Many thanks in advance for helping to improve this game!
 
 In order to play the game, you need to have the folders "GFX", "SND" and "MAP" (optional) of the original version of "The Settlers 3" as obtained by installing the original "The Settlers 3" game (DEMO version also works).
 
-Furthermore, you need an up-to-date installation of [Java 11 or newer](https://adoptium.net/). A Java Installation is needed to run the desktop version of JSettlers, as it is written in the programming language Java.
+The desktop releases come in two flavours:
+
+- **Portable builds** (`JSettlers-<version>-windows.zip`, `JSettlers-<version>-linux.zip`, `JSettlers-<version>-macos.zip`): each bundles its own Java runtime, so **no Java installation is needed**. Just unzip and start.
+- **`JSettlers.zip`**: the classic jar-based distribution (also includes the Map Editor). It needs an up-to-date installation of [Java 11 or newer](https://adoptium.net/).
 
 Java is preinstalled on Android.
 
-After that, follow the detailed installation instructions for you platform.
+After that, follow the detailed installation instructions for your platform.
 
-### Windows and Linux
+### Windows
 1. Install "The Settlers III" or a demo version ([Settlers III Amazons Demo](http://www.siedler-maps.de/downloads.php?action=download&downloadid=41)) of it. Don't worry, if it is not running on your OS, we only need the graphics and sound files. In order to get them, you can also unzip the Amazons Demo exe file (yes: unzip the .exe) and copy the folders `Gfx`, `Snd` and `Map` (optional) into an empty folder on your computer.
-2. Download the newest stable [release of JSettlers*.zip](https://github.com/paulwedeck/settlers-remake/releases) (this also includes the MapEditor).
-3. Unpack the downloaded archive to wherever you want JSettlers' installation to be.
-5. Run the "JSettlers.jar" file.
-  1. On the first start, the game will ask you for the folder where you've installed / unziped (see step 1) the original Settlers III. Please select the respective folder and continue.
+2. Download the newest stable [release](https://github.com/dos-ise/settlers-remake/releases) and unpack `JSettlers-<version>-windows.zip` to wherever you want JSettlers to live.
+3. Double-click `JSettlers.exe`.
+  1. On the first start, the game will ask you for the folder where you've installed / unzipped (see step 1) the original Settlers III. Please select the respective folder and continue.
   2. Have fun and enjoy the game!
-6. Please have a look at the [manual](https://github.com/jsettlers/settlers-remake/wiki/JSettlers-Manual). The current state of the game lacks some controls known from the original, but also contains new ways to do things, which you shouldn't miss. 
+
+### Linux
+1. Install "The Settlers III" or a demo version ([Settlers III Amazons Demo](http://www.siedler-maps.de/downloads.php?action=download&downloadid=41)) of it. Don't worry, if it is not running on your OS, we only need the graphics and sound files. In order to get them, you can also unzip the Amazons Demo exe file (yes: unzip the .exe) and copy the folders `Gfx`, `Snd` and `Map` (optional) into an empty folder on your computer.
+2. Download the newest stable [release](https://github.com/dos-ise/settlers-remake/releases) and unpack `JSettlers-<version>-linux.zip` to wherever you want JSettlers to live. This works on any distribution, including immutable ones like Fedora Silverblue/Bazzite.
+3. Run `JSettlers/bin/JSettlers`.
+  1. On the first start, the game will ask you for the folder where you've installed / unzipped (see step 1) the original Settlers III. Please select the respective folder and continue.
+  2. Have fun and enjoy the game!
+
+### macOS
+1. Install "The Settlers III" or a demo version ([Settlers III Amazons Demo](http://www.siedler-maps.de/downloads.php?action=download&downloadid=41)) of it. Don't worry, if it is not running on your OS, we only need the graphics and sound files. In order to get them, you can also unzip the Amazons Demo exe file (yes: unzip the .exe) and copy the folders `Gfx`, `Snd` and `Map` (optional) into an empty folder on your computer.
+2. Download the newest stable [release](https://github.com/dos-ise/settlers-remake/releases) and unpack `JSettlers-<version>-macos.zip` to wherever you want JSettlers to live.
+3. Open `JSettlers.app`. If macOS warns that the developer cannot be verified, right-click the app and choose **Open**.
+  1. On the first start, the game will ask you for the folder where you've installed / unzipped (see step 1) the original Settlers III. Please select the respective folder and continue.
+  2. Have fun and enjoy the game!
+
+### Classic jar distribution (JSettlers.zip)
+1. Install "The Settlers III" or a demo version ([Settlers III Amazons Demo](http://www.siedler-maps.de/downloads.php?action=download&downloadid=41)) of it. Don't worry, if it is not running on your OS, we only need the graphics and sound files. In order to get them, you can also unzip the Amazons Demo exe file (yes: unzip the .exe) and copy the folders `Gfx`, `Snd` and `Map` (optional) into an empty folder on your computer.
+2. Download the newest stable [release](https://github.com/dos-ise/settlers-remake/releases) and unpack `JSettlers.zip` to wherever you want JSettlers' installation to be.
+3. Run the "JSettlers.jar" file.
+  1. On the first start, the game will ask you for the folder where you've installed / unzipped (see step 1) the original Settlers III. Please select the respective folder and continue.
+  2. Have fun and enjoy the game!
+4. Please have a look at the [manual](https://github.com/dos-ise/settlers-remake/wiki/JSettlers-Manual). The current state of the game lacks some controls known from the original, but also contains new ways to do things, which you shouldn't miss.
 
 #### Arch Linux
 1. Install [jsettlers-git](https://aur.archlinux.org/packages/jsettlers-git/) from the AUR.
@@ -105,7 +127,7 @@ By default, when a single-player game has several computer players, the first on
 - **Demo data limitations.** JSettlers needs the graphics of an original Settlers 3 installation. With the old 1999 *demo* version's files the game runs, but many images are missing or shifted: ships and ferries are invisible (you only see the passengers), buildings of the non-Roman peoples do not show up, and the tower panel can show the wrong person (e.g. a healer instead of a soldier). Use the data files of a full Settlers 3 installation (for example the GOG edition) for correct graphics.
 
 ## Build instructions and developer's guide
-The [build instructions](https://github.com/paulwedeck/settlers-remake/wiki/Compiling-using-gradle) and the [developer's guide](https://github.com/paulwedeck/settlers-remake/wiki/Developer's%20Guide) can be found in our wiki.
+The [build instructions](https://github.com/dos-ise/settlers-remake/wiki/Compiling-using-gradle) and the [developer's guide](https://github.com/dos-ise/settlers-remake/wiki/Developer's%20Guide) can be found in our wiki.
 
 
 Building JSettlers requires a JDK 17 or newer (JDK 21 is recommended), because the build uses Gradle 8 and the Android Gradle Plugin 8. The built game still runs with Java 11 or newer.
@@ -129,7 +151,7 @@ To skip the folder dialog (e.g. for scripted runs), pass a config file that reco
 ### Textures
 JSettlers is meant to be used with the original textures from Settlers 3.
 However we are working on replacing these with new textures that have a more permissive license.
-There is a [list](https://github.com/paulwedeck/settlers-remake/blob/master/TEXTURES.md) of textures that we didn't create ourselves but instead took from image sites on the internet
+There is a [list](https://github.com/dos-ise/settlers-remake/blob/master/TEXTURES.md) of textures that we didn't create ourselves but instead took from image sites on the internet
 
 
 
