@@ -64,7 +64,9 @@ public class ToggleButton extends LabeledButton {
 			@Override
 			public void execute() {
 				checked = !checked;
-				onToggle.accept(checked);
+				if (onToggle != null) {
+					onToggle.accept(checked);
+				}
 			}
 		};
 	}
