@@ -66,7 +66,6 @@ import jsettlers.main.JSettlersGame;
 import jsettlers.main.swing.menu.SwingMenuImageDecoder;
 import jsettlers.main.swing.menu.joinpanel.JoinGamePanel;
 import jsettlers.main.swing.menu.startinggamemenu.StartingGamePanel;
-import jsettlers.main.swing.menu.statspanel.EndgameStatsPanel;
 import jsettlers.main.swing.settings.SettingsManager;
 
 /**
@@ -75,7 +74,6 @@ import jsettlers.main.swing.settings.SettingsManager;
 public class JSettlersFrame extends JFrame {
 	private static final long serialVersionUID = 2607082717493797224L;
 
-	private final EndgameStatsPanel endgameStatsPanel = new EndgameStatsPanel(this);
 	private final StartingGamePanel startingGamePanel = new StartingGamePanel(this);
 	private final JoinGamePanel joinGamePanel = new JoinGamePanel(this);
 	private final SwingSoundPlayer soundPlayer = new SwingSoundPlayer(SettingsManager.getInstance());
