@@ -183,6 +183,21 @@ public class UIList<T> implements UIElement {
 		scrollBy(zoomFactor > 1 ? -1 : 1);
 	}
 
+	private float panStartOffset = Float.NaN;
+
+	@Override
+	public void handlePan(float relativex, float relativey, float panDistanceX, float panDistanceY) {
+		// A pan starts with a distance of (0, 0), so record the offset the pan started at.
+		if (panDistanceX == 0 && panDistanceY == 0) {
+			panStartOffset = listoffset;
+		}
+		float height = position.getHeight();
+		if (height > 0 && !Float.isNaN(panStartOffset)) {
+			// Dragging up (positive y) scrolls down, so the offset grows with the pan distance.
+			listoffset = panStartOffset + panDistanceY / height;
+		}
+	}
+
 	private class SelectAction extends ExecutableAction {
 		private final T item;
 

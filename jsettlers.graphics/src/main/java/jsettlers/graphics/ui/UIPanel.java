@@ -255,6 +255,18 @@ public class UIPanel implements UIElement {
 	}
 
 	@Override
+	public void handlePan(float relativex, float relativey, float panDistanceX, float panDistanceY) {
+		for (ChildLink link : children) {
+			if (link.left <= relativex && relativex <= link.right && link.bottom <= relativey && relativey <= link.top) {
+				float childX = (relativex - link.left) / (link.right - link.left);
+				float childY = (relativey - link.bottom) / (link.top - link.bottom);
+				link.child.handlePan(childX, childY, panDistanceX, panDistanceY);
+				return;
+			}
+		}
+	}
+
+	@Override
 	public void onAttach() {
 		if (!attached) {
 			for (ChildLink link : children) {

@@ -57,4 +57,22 @@ public interface UIElement {
 	 */
 	default void handleZoom(float relativex, float relativey, float zoomFactor) {
 	}
+
+	/**
+	 * Handles a pan (drag) event at the given relative position.
+	 * <p>
+	 * Menus use this to scroll lists with touch. The pan distance is the cumulative distance from the start of the
+	 * pan. The default implementation does nothing.
+	 *
+	 * @param relativex
+	 *            The relative x position of the pan start (0..1).
+	 * @param relativey
+	 *            The relative y position of the pan start (0..1).
+	 * @param panDistanceX
+	 *            The cumulative x distance of the pan in pixels.
+	 * @param panDistanceY
+	 *            The cumulative y distance of the pan in pixels.
+	 */
+	default void handlePan(float relativex, float relativey, float panDistanceX, float panDistanceY) {
+	}
 }
