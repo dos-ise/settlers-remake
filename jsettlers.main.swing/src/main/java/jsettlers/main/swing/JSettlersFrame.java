@@ -43,6 +43,7 @@ import jsettlers.common.action.SaveAction;
 import jsettlers.common.menu.IJoinPhaseMultiplayerGameConnector;
 import jsettlers.common.menu.IMapInterfaceConnector;
 import jsettlers.common.menu.IMultiplayerConnector;
+import jsettlers.common.menu.IMultiplayerListener;
 import jsettlers.common.menu.IStartedGame;
 import jsettlers.common.menu.IStartingGame;
 import jsettlers.graphics.localization.Labels;
@@ -64,7 +65,6 @@ import jsettlers.logic.player.InitialGameState;
 import jsettlers.logic.player.PlayerSetting;
 import jsettlers.main.JSettlersGame;
 import jsettlers.main.swing.menu.SwingMenuImageDecoder;
-import jsettlers.main.swing.menu.joinpanel.JoinGamePanel;
 import jsettlers.main.swing.menu.multiplayer.lan.LANConnectionPanel;
 import jsettlers.main.swing.menu.startinggamemenu.StartingGamePanel;
 import jsettlers.main.swing.settings.SettingsManager;
@@ -76,7 +76,6 @@ public class JSettlersFrame extends JFrame {
 	private static final long serialVersionUID = 2607082717493797224L;
 
 	private final StartingGamePanel startingGamePanel = new StartingGamePanel(this);
-	private final JoinGamePanel joinGamePanel = new JoinGamePanel(this);
 	private final SwingSoundPlayer soundPlayer = new SwingSoundPlayer(SettingsManager.getInstance());
 
 	private Timer redrawTimer;
@@ -397,13 +396,45 @@ public class JSettlersFrame extends JFrame {
 	}
 
 	public void showNewMultiPlayerGameMenu(MapLoader mapLoader, IMultiplayerConnector connector) {
-		joinGamePanel.setNewMultiPlayerMap(mapLoader, connector);
-		setNewContentPane(joinGamePanel);
+		jsettlers.graphics.menu.JoinGameMapInfo mapInfo = new jsettlers.graphics.menu.JoinGameMapInfo(mapLoader.getMapName(),
+				MapPreviewImage.create(mapLoader.getImage()), mapLoader.getMaxPlayers(),
+				toJoinGameSlots(mapLoader.getFileHeader().getPlayerSettings()));
+		jsettlers.common.menu.IOpenMultiplayerGameInfo gameInfo = new jsettlers.graphics.menu.OpenMultiplayerGameInfo(
+				SettingsManager.getInstance().getUserName(), mapLoader);
+		jsettlers.graphics.menu.MultiplayerJoinGamePanel panel = jsettlers.graphics.menu.MultiplayerJoinGamePanel.createHost(
+				mapInfo, connector.getPlayerUUID(), connector, gameInfo, this::showSharedMainMenu, new IMultiplayerListener() {
+					@Override
+					public void gameIsStarting(IStartingGame game) {
+						showStartingGamePanel(game);
+					}
+
+					@Override
+					public void gameAborted() {
+						showSharedMainMenu();
+					}
+				});
+		showMenuContent(new MenuContent(panel, action -> {
+		}));
 	}
 
 	public void showJoinMultiplayerMenu(IJoinPhaseMultiplayerGameConnector joinPhaseMultiplayerGameConnector, MapLoader mapLoader, String playerUUID) {
-		joinGamePanel.setJoinMultiPlayerMap(joinPhaseMultiplayerGameConnector, mapLoader, playerUUID);
-		setNewContentPane(joinGamePanel);
+		jsettlers.graphics.menu.JoinGameMapInfo mapInfo = new jsettlers.graphics.menu.JoinGameMapInfo(mapLoader.getMapName(),
+				MapPreviewImage.create(mapLoader.getImage()), mapLoader.getMaxPlayers(),
+				toJoinGameSlots(mapLoader.getFileHeader().getPlayerSettings()));
+		jsettlers.graphics.menu.MultiplayerJoinGamePanel panel = jsettlers.graphics.menu.MultiplayerJoinGamePanel.createJoin(
+				mapInfo, playerUUID, joinPhaseMultiplayerGameConnector, this::showSharedMainMenu, new IMultiplayerListener() {
+					@Override
+					public void gameIsStarting(IStartingGame game) {
+						showStartingGamePanel(game);
+					}
+
+					@Override
+					public void gameAborted() {
+						showSharedMainMenu();
+					}
+				});
+		showMenuContent(new MenuContent(panel, action -> {
+		}));
 	}
 
 	public void showEndgameStatistics(IStartedGame game) {
