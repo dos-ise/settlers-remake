@@ -131,7 +131,8 @@ public class EndgameStatisticsActivity extends AppCompatActivity {
 
 	private void showMainMenu() {
 		gameManager.clearEndgameStatistics();
-		MainActivity_.intent(this).flags(Intent.FLAG_ACTIVITY_CLEAR_TOP).start();
+		// Clear the whole task so the finished GameActivity below is removed as well.
+		MainActivity_.intent(this).flags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK).start();
 		finish();
 	}
 }

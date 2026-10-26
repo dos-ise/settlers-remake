@@ -172,7 +172,9 @@ public class MapFragment extends Fragment implements SelectionListener, BackPres
 
 	private Observer<GameMenu.GameState> gameStateObserver = gameState -> {
 		if (gameState == GameMenu.GameState.QUITTED) {
-			getActivity().finish();
+			// The game is shut down. The GameMenuDialog already started the EndgameStatisticsActivity, which
+			// continues to the main menu. Do not finish this activity here: it is the root of the task, so
+			// finishing it would close the whole app.
 		}
 	};
 }
