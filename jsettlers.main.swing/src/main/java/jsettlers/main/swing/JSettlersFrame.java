@@ -34,6 +34,7 @@ import go.graphics.area.Area;
 import go.graphics.region.Region;
 import go.graphics.sound.SoundPlayer;
 import go.graphics.swing.AreaContainer;
+import go.graphics.swing.contextcreator.EBackendType;
 import go.graphics.swing.sound.SwingSoundPlayer;
 
 import jsettlers.common.CommitInfo;
@@ -125,12 +126,22 @@ public class JSettlersFrame extends JFrame {
 		setUndecorated(fullScreen);
 
 		pack();
-		setVisible(true);
+		if (!isGlfwBackend()) {
+			setVisible(true);
+		}
 
 		GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		GraphicsDevice graphicsDevice = graphicsEnvironment.getDefaultScreenDevice();
-		graphicsDevice.setFullScreenWindow(fullScreen ? this : null);
+		graphicsDevice.setFullScreenWindow(fullScreen && !isGlfwBackend() ? this : null);
 		if(areaContainer != null) areaContainer.notifyResize();
+	}
+
+	/**
+	 * The GLFW backend renders into its own native window, so the Swing frame is only a hidden
+	 * container. Showing it would produce a second, empty window next to the game window.
+	 */
+	private boolean isGlfwBackend() {
+		return SettingsManager.getInstance().getBackend() == EBackendType.GLFW;
 	}
 
 	private void abortRedrawTimerIfPresent() {
@@ -202,15 +213,33 @@ public class JSettlersFrame extends JFrame {
 		abortRedrawTimerIfPresent();
 		Region region = new Region(Region.POSITION_CENTER);
 		region.setContent(menuContent);
-		Area area = new Area();
-		area.set(region);
 		SwingUtilities.invokeLater(() -> {
-			setContentPane(areaContainer = new AreaContainer(area, SettingsManager.getInstance().getBackend(),
-					SettingsManager.getInstance().isGraphicsDebug(), SettingsManager.getInstance().getGuiScale()));
+			if (areaContainer != null) {
+				// Reuse the existing window so menu and game share one native window.
+				areaContainer.setAreaContent(region);
+			} else {
+				Area area = new Area();
+				area.set(region);
+				setContentPane(areaContainer = new AreaContainer(area, SettingsManager.getInstance().getBackend(),
+						SettingsManager.getInstance().isGraphicsDebug(), SettingsManager.getInstance().getGuiScale()));
+			}
 			revalidate();
 			repaint();
-			setVisible(true);
+			if (!isGlfwBackend()) {
+				setVisible(true);
+			}
 		});
+	}
+
+	/**
+	 * Stops the render thread and destroys the native window of the current {@link AreaContainer}, if any.
+	 * Only needed when the content pane is replaced by a plain Swing panel.
+	 */
+	private void disposeAreaContainer() {
+		if (areaContainer != null) {
+			areaContainer.disposeAll();
+			areaContainer = null;
+		}
 	}
 
 	private void showSettingsPanel() {
@@ -235,14 +264,19 @@ public class JSettlersFrame extends JFrame {
 
 	public void showStartingGamePanel(IStartingGame startingGame) {
 		startingGamePanel.setStartingGame(startingGame);
-		setNewContentPane(startingGamePanel);
+		if (!isGlfwBackend()) {
+			setNewContentPane(startingGamePanel);
+		}
+		// With the GLFW backend the menu window is reused for the game, so the Swing loading
+		// panel is skipped and the menu stays visible until the game content replaces it.
 	}
 
 	private void setNewContentPane(Container newContent) {
 		abortRedrawTimerIfPresent();
+		disposeAreaContainer();
 		// The game runs in its own (GLFW) window, so this menu window is hidden during a match
 		// (see setContent). Whenever we switch back to a menu/stats panel, show it again.
-		if (isDisplayable() && !isVisible()) {
+		if (isDisplayable() && !isVisible() && !isGlfwBackend()) {
 			setVisible(true);
 		}
 		setContentPane(newContent);
@@ -263,8 +297,6 @@ public class JSettlersFrame extends JFrame {
 	public void setContent(MapContent content) {
 		Region region = new Region(500, 500);
 		region.setContent(content);
-		Area area = new Area();
-		area.set(region);
 
 		int fpsLimit = SettingsManager.getInstance().getFpsLimit();
 		if(fpsLimit != 0) {
@@ -274,13 +306,23 @@ public class JSettlersFrame extends JFrame {
 		}
 
 		SwingUtilities.invokeLater(() -> {
-			setContentPane(areaContainer = new AreaContainer(area, SettingsManager.getInstance().getBackend(), SettingsManager.getInstance().isGraphicsDebug(), SettingsManager.getInstance().getGuiScale()));
-			areaContainer.updateFPSLimit(fpsLimit);
+			if (areaContainer != null) {
+				// Reuse the existing window so menu and game share one native window.
+				areaContainer.setAreaContent(region);
+				areaContainer.updateFPSLimit(fpsLimit);
+			} else {
+				Area area = new Area();
+				area.set(region);
+				setContentPane(areaContainer = new AreaContainer(area, SettingsManager.getInstance().getBackend(), SettingsManager.getInstance().isGraphicsDebug(), SettingsManager.getInstance().getGuiScale()));
+				areaContainer.updateFPSLimit(fpsLimit);
+			}
 			revalidate();
 			repaint();
 			// The game is rendered in its own (GLFW) window. Hide this menu window so only the
 			// game window is visible during the match; it is shown again in setNewContentPane.
-			setVisible(false);
+			if (isGlfwBackend()) {
+				setVisible(false);
+			}
 		});
 	}
 
@@ -335,11 +377,6 @@ public class JSettlersFrame extends JFrame {
 	}
 
 	public void showEndgameStatistics(IStartedGame game) {
-		if(areaContainer != null) {
-			areaContainer.disposeAll();
-			areaContainer = null;
-		}
-
 		jsettlers.graphics.menu.EndgameStatsPanel statsPanel = new jsettlers.graphics.menu.EndgameStatsPanel(this::showSharedMainMenu);
 		statsPanel.setGame(game);
 		showMenuContent(new MenuContent(statsPanel, action -> {

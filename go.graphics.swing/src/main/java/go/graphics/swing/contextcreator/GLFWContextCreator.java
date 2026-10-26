@@ -25,7 +25,9 @@ import org.lwjgl.glfw.GLFWWindowCloseCallbackI;
 import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
 
 import java.awt.Window;
+import java.awt.event.ComponentEvent;
 import java.awt.event.WindowEvent;
+import java.awt.geom.AffineTransform;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Set;
@@ -113,8 +115,31 @@ public class GLFWContextCreator extends AsyncContextCreator {
 		GLFW.glfwSwapBuffers(glfw_wnd);
 	}
 
+	@Override
+	public void componentResized(ComponentEvent componentEvent) {
+		// The GLFW window is a separate native window, so the Swing frame's focus must not
+		// gate its size. Otherwise the window stays at its initial tiny size until the user
+		// resizes it manually.
+		synchronized (wnd_lock) {
+			AffineTransform scaleInfo = canvas.getGraphicsConfiguration().getDefaultTransform();
+
+			double scaleX = 1;
+			double scaleY = 1;
+			if(scaleInfo != null) {
+				scaleX = scaleInfo.getScaleX();
+				scaleY = scaleInfo.getScaleX();
+			}
+			new_width = (int) (canvas.getWidth()*scaleX);
+			new_height = (int) (canvas.getHeight()*scaleY);
+			change_res = true;
+
+			if(new_width == 0) new_width = 1;
+			if(new_height == 0) new_height = 1;
+		}
+	}
+
 	public void async_stop() {
-		GLFW.glfwTerminate();
+		GLFW.glfwDestroyWindow(glfw_wnd);
 	}
 
 	private static final HashMap<Integer, String> keys = new HashMap<>();
