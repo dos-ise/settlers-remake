@@ -39,13 +39,13 @@ jobs:
         include:
           - os: windows-latest
             artifact: JSettlers-windows
-            glob: '*.exe'
+            glob: '*.zip'
           - os: ubuntu-latest
             artifact: JSettlers-linux
-            glob: '*.deb'
+            glob: '*.zip'
           - os: macos-latest
             artifact: JSettlers-macos
-            glob: '*.dmg'
+            glob: '*.zip'
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -61,7 +61,7 @@ jobs:
         if [ -z "$VERSION" ]; then
           VERSION="${GITHUB_REF_NAME#v}"
         fi
-        ./gradlew :jsettlers.main.swing:nativePackage -PreleaseVersion="$VERSION" --no-daemon
+        ./gradlew :jsettlers.main.swing:nativePackage :jsettlers.main.swing:packagePortableZip -PreleaseVersion="$VERSION" --no-daemon
     - uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.artifact }}
