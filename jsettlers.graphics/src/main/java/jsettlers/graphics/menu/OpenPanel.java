@@ -67,7 +67,7 @@ public class OpenPanel extends UIPanel {
 		searchInput.setTextChangedListener(text -> updateList());
 		addChild(searchInput, 0.1f, 0.8f, 0.9f, 0.88f);
 
-		mapList = new UIList<>(allMaps, MapListItem::new, 0.1f);
+		mapList = new UIList<>(allMaps, MapListItem::new, 0.15f);
 		addChild(mapList, 0.1f, 0.15f, 0.9f, 0.78f);
 
 		LabeledButton openButton = new LabeledButton(openButtonText, new ExecutableAction() {

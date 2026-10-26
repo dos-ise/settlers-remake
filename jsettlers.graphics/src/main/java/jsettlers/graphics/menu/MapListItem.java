@@ -14,15 +14,19 @@
  *******************************************************************************/
 package jsettlers.graphics.menu;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import go.graphics.text.EFontSize;
 import jsettlers.common.Color;
+import jsettlers.graphics.localization.Labels;
 import jsettlers.graphics.ui.AspectRatioImagePanel;
 import jsettlers.graphics.ui.Label;
 import jsettlers.graphics.ui.UIPanel;
 import jsettlers.graphics.ui.UIListItem;
 
 /**
- * A list item that shows the preview image and the name of a map in the shared map selection menu.
+ * A list item that shows the preview image, the name and the details of a map in the shared map selection menu.
  *
  * @author Copilot
  */
@@ -39,12 +43,39 @@ public class MapListItem extends UIPanel implements UIListItem {
 	 */
 	public MapListItem(MapMenuItem map) {
 		nameLabel = new Label(map.getName(), EFontSize.NORMAL, Label.EHorizontalAlignment.LEFT);
+		float textLeft = 0.02f;
 		if (map.getPreview() != null) {
 			addChild(new AspectRatioImagePanel(map.getPreview()), 0.02f, 0.1f, 0.2f, 0.9f);
-			addChild(nameLabel, 0.22f, 0.1f, 0.98f, 0.9f);
-		} else {
-			addChild(nameLabel, 0.02f, 0.1f, 0.98f, 0.9f);
+			textLeft = 0.22f;
 		}
+
+		Label infoLabel = new Label(buildInfo(map), EFontSize.NORMAL, Label.EHorizontalAlignment.LEFT);
+		Label descriptionLabel = new Label(map.getDescription(), EFontSize.NORMAL, Label.EHorizontalAlignment.LEFT);
+
+		addChild(nameLabel, textLeft, 0.6f, 0.98f, 0.95f);
+		addChild(infoLabel, textLeft, 0.35f, 0.98f, 0.6f);
+		addChild(descriptionLabel, textLeft, 0.05f, 0.98f, 0.35f);
+	}
+
+	private static String buildInfo(MapMenuItem map) {
+		StringBuilder info = new StringBuilder();
+		if (map.getMaxPlayers() > 0) {
+			info.append(Labels.getString("map-player-count", map.getMinPlayers(), map.getMaxPlayers()));
+		}
+		Date creationDate = map.getCreationDate();
+		if (creationDate != null) {
+			if (info.length() > 0) {
+				info.append("  ");
+			}
+			info.append(new SimpleDateFormat(Labels.getString("date.date-only")).format(creationDate));
+		}
+		if (map.getId() != null && !map.getId().isEmpty()) {
+			if (info.length() > 0) {
+				info.append("  ");
+			}
+			info.append(map.getId());
+		}
+		return info.toString();
 	}
 
 	@Override

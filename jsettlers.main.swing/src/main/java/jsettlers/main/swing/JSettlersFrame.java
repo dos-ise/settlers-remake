@@ -190,7 +190,8 @@ public class JSettlersFrame extends JFrame {
 
 	private MapMenuItem toMapMenuItem(MapLoader loader) {
 		return new MapMenuItem(loader.getMapId(), loader.getMapName(), loader.getDescription(),
-				MapPreviewImage.create(loader.getImage()));
+				MapPreviewImage.create(loader.getImage()), loader.getMinPlayers(), loader.getMaxPlayers(),
+				loader.getCreationDate());
 	}
 
 	private MapLoader resolveMap(MapMenuItem map) {

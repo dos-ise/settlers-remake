@@ -14,6 +14,8 @@
  *******************************************************************************/
 package jsettlers.graphics.menu;
 
+import java.util.Date;
+
 import jsettlers.graphics.image.Image;
 
 /**
@@ -29,6 +31,9 @@ public class MapMenuItem {
 	private final String name;
 	private final String description;
 	private final Image preview;
+	private final int minPlayers;
+	private final int maxPlayers;
+	private final Date creationDate;
 
 	/**
 	 * Creates a new map menu item without a preview image.
@@ -41,7 +46,7 @@ public class MapMenuItem {
 	 *            An optional description of the map.
 	 */
 	public MapMenuItem(String id, String name, String description) {
-		this(id, name, description, null);
+		this(id, name, description, null, 0, 0, null);
 	}
 
 	/**
@@ -57,10 +62,36 @@ public class MapMenuItem {
 	 *            The preview image of the map, or <code>null</code> if there is none.
 	 */
 	public MapMenuItem(String id, String name, String description, Image preview) {
+		this(id, name, description, preview, 0, 0, null);
+	}
+
+	/**
+	 * Creates a new map menu item.
+	 *
+	 * @param id
+	 *            An opaque id that the host application can resolve back to its map representation.
+	 * @param name
+	 *            The display name of the map.
+	 * @param description
+	 *            An optional description of the map.
+	 * @param preview
+	 *            The preview image of the map, or <code>null</code> if there is none.
+	 * @param minPlayers
+	 *            The minimum number of players supported by the map.
+	 * @param maxPlayers
+	 *            The maximum number of players supported by the map.
+	 * @param creationDate
+	 *            The creation date of the map, or <code>null</code> if unknown.
+	 */
+	public MapMenuItem(String id, String name, String description, Image preview, int minPlayers, int maxPlayers,
+			Date creationDate) {
 		this.id = id;
 		this.name = name;
 		this.description = description;
 		this.preview = preview;
+		this.minPlayers = minPlayers;
+		this.maxPlayers = maxPlayers;
+		this.creationDate = creationDate;
 	}
 
 	/**
@@ -97,5 +128,32 @@ public class MapMenuItem {
 	 */
 	public Image getPreview() {
 		return preview;
+	}
+
+	/**
+	 * Gets the minimum number of players supported by this map.
+	 *
+	 * @return The minimum number of players.
+	 */
+	public int getMinPlayers() {
+		return minPlayers;
+	}
+
+	/**
+	 * Gets the maximum number of players supported by this map.
+	 *
+	 * @return The maximum number of players.
+	 */
+	public int getMaxPlayers() {
+		return maxPlayers;
+	}
+
+	/**
+	 * Gets the creation date of this map.
+	 *
+	 * @return The creation date, or <code>null</code> if unknown.
+	 */
+	public Date getCreationDate() {
+		return creationDate;
 	}
 }
