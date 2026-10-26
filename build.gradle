@@ -203,15 +203,10 @@ task releaseDedicatedServer(type: Copy) {
 
 
 if (findProject(':jsettlers.main.android')) {
-    task releaseAndroid(type: Zip, dependsOn: ':jsettlers.main.android:assembleDebug') {
-        into('JSettlers-Android') {
-            from rootProject.file('LICENSE.txt')
-            from project(':jsettlers.main.android').layout.buildDirectory.file('outputs/apk/debug/jsettlers.main.android-debug.apk')
-            rename 'jsettlers.main.android-debug.apk', 'JSettlers-Android.apk'
-        }
-
-        destinationDirectory.set(releaseDir);
-        archiveBaseName.set("JSettlers-Android");
+    task releaseAndroid(type: Copy, dependsOn: ':jsettlers.main.android:assembleDebug') {
+        from project(':jsettlers.main.android').layout.buildDirectory.file('outputs/apk/debug/jsettlers.main.android-debug.apk')
+        into releaseDir
+        rename 'jsettlers.main.android-debug.apk', 'JSettlers-Android.apk'
     }
 }
 
