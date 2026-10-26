@@ -88,6 +88,8 @@ public class JSettlersGame {
 	private final INetworkConnector networkConnector;
 	private final boolean multiplayer;
 	private final DataInputStream replayFileInputStream;
+	/** True when this game was loaded from a replay file. In replay mode the AI is not executed (the recorded tasks are replayed instead). */
+	private final boolean replayMode;
 
 	private final GameRunner gameRunner;
 	private final InitialGameState initialGameState;
@@ -121,6 +123,7 @@ public class JSettlersGame {
 		this.networkConnector = networkConnector;
 		this.multiplayer = multiplayer;
 		this.replayFileInputStream = replayFileInputStream;
+		this.replayMode = replayFileInputStream != null;
 
 		MatchConstants.ENABLE_ALL_PLAYER_FOG_OF_WAR = controlAll;
 		MatchConstants.ENABLE_ALL_PLAYER_SELECTION = controlAll;
@@ -269,7 +272,7 @@ public class JSettlersGame {
 				connector.loadUIState(playerState.getUiState()); // This is required after the GuiInterface instantiation so that
 				// ConstructionMarksThread has it's mapArea variable initialized via the EActionType.SCREEN_CHANGE event.
 
-				aiExecutor = new AiExecutor(initialGameState.getPlayerSettings(), mainGrid, networkConnector.getTaskScheduler());
+				aiExecutor = new AiExecutor(initialGameState.getPlayerSettings(), mainGrid, networkConnector.getTaskScheduler(), replayMode);
 				networkConnector.getGameClock().schedule(aiExecutor, (short) 1000);
 				schedulePeaceTimeNotifier();
 

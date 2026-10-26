@@ -44,6 +44,16 @@ public class AiExecutor implements INetworkTimerable {
 	private final ExecutorService statisticsUpdaterPool;
 
 	public AiExecutor(PlayerSetting[] playerSettings, MainGrid mainGrid, ITaskScheduler taskScheduler) {
+		this(playerSettings, mainGrid, taskScheduler, false);
+	}
+
+	/**
+	 * @param replayMode
+	 *            When true (game loaded from a replay), no AI players are created: the recorded tasks are replayed instead, so the AI must
+	 *            not run and re-make decisions. The player settings keep their original types so the game logic behaves identically to the
+	 *            direct play.
+	 */
+	public AiExecutor(PlayerSetting[] playerSettings, MainGrid mainGrid, ITaskScheduler taskScheduler, boolean replayMode) {
 		ExecutorService re;
 		try {
 			re = (ExecutorService) Executors.class.getMethod("newWorkStealingPool").invoke(null);
@@ -60,7 +70,7 @@ public class AiExecutor implements INetworkTimerable {
 		WhatToDoAiFactory aiFactory = new WhatToDoAiFactory();
 		for (byte playerId = 0; playerId < playerSettings.length; playerId++) {
 			PlayerSetting playerSetting = playerSettings[playerId];
-			if (playerSetting.isAvailable() && playerSetting.getPlayerType().isAi()) {
+			if (!replayMode && playerSetting.isAvailable() && playerSetting.getPlayerType().isAi()) {
 				IWhatToDoAi whatToDoAi = aiFactory.buildWhatToDoAi(
 						playerSettings[playerId].getPlayerType(),
 						playerSettings[playerId].getCivilisation(),

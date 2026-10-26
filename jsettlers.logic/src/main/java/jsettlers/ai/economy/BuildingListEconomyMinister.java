@@ -107,7 +107,11 @@ public class BuildingListEconomyMinister implements EconomyMinister {
 		// calculation in AiMapInformation: reserving space for a dockyard on every watery map would otherwise reduce the number of
 		// weapon smiths and weaken the AI even on maps where no dockyard is ever needed. The dockyard construction position finder
 		// only actually places it when a coast is available, so a single queued entry is safe.
-		if ((aiStatistics.hasEnemyAcrossWaterOf(player) || aiStatistics.hasFlankableEnemyOf(player)) && currentCountOf(DOCKYARD) < 1) {
+		// NOTE: only an enemy ACROSS water motivates a dockyard. The amphibious-flank case (a land-reachable enemy behind a fortified
+		// front) is deliberately NOT included: on maps where the enemy is reachable by land the dockyard is a pure resource sink that
+		// activates the cross-water colonization/naval-invasion pipelines, which ship pioneers/soldiers overseas and bleed the home
+		// economy - on SpezialSumpf this made AI_HARD lose to AI_EASY (AiDifficultiesIT.hardShouldConquerEasy).
+		if (aiStatistics.hasEnemyAcrossWaterOf(player) && currentCountOf(DOCKYARD) < 1) {
 			buildingsToBuild.add(DOCKYARD);
 		}
 	}

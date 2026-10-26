@@ -1,6 +1,5 @@
 package jsettlers.logic.player;
 
-import jsettlers.common.ai.EPlayerType;
 import jsettlers.common.menu.EPeaceTime;
 import jsettlers.logic.map.loading.EMapStartResources;
 
@@ -79,11 +78,17 @@ public class InitialGameState implements Cloneable, Serializable {
 		return peaceTime != null ? peaceTime : EPeaceTime.WITHOUT;
 	}
 
+	/**
+	 * Returns the player settings for replaying this match. The original player types are preserved so that the game logic (e.g. the
+	 * human-only pursuit leash in {@code SoldierMovable}) behaves identically to the direct play. The AI itself is disabled separately
+	 * when the game is loaded from a replay (see {@code JSettlersGame#replayMode}), so the recorded tasks are replayed without the AI
+	 * re-running and re-making decisions.
+	 */
 	public PlayerSetting[] getReplayablePlayerSettings() {
 		PlayerSetting[] playerSettings = new PlayerSetting[this.playerSettings.length];
 		for (int i = 0; i < playerSettings.length; i++) {
 			PlayerSetting originalSetting = this.playerSettings[i];
-			playerSettings[i] = new PlayerSetting(originalSetting.isAvailable(), EPlayerType.HUMAN, originalSetting.getCivilisation(), originalSetting.getTeamId());
+			playerSettings[i] = new PlayerSetting(originalSetting.isAvailable(), originalSetting.getPlayerType(), originalSetting.getCivilisation(), originalSetting.getTeamId());
 		}
 		return playerSettings;
 	}
