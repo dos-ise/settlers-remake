@@ -103,7 +103,13 @@ public class JSettlersFrame extends JFrame {
 		keyboardFocusManager.addKeyEventDispatcher(e -> {
 			if (e.getID() == KeyEvent.KEY_PRESSED) {
 				if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_ENTER) {
-					toogleFullScreenMode();
+					if (isGlfwBackend()) {
+						if (areaContainer != null) {
+							areaContainer.toggleFullscreen();
+						}
+					} else {
+						toogleFullScreenMode();
+					}
 					return true; // consume this key event.
 				}
 			}

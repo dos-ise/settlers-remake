@@ -21,13 +21,16 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWKeyCallbackI;
 import org.lwjgl.glfw.GLFWMouseButtonCallbackI;
 import org.lwjgl.glfw.GLFWScrollCallbackI;
+import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.glfw.GLFWWindowCloseCallbackI;
 import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
+import org.lwjgl.system.MemoryStack;
 
 import java.awt.Window;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
+import java.nio.IntBuffer;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Set;
@@ -140,6 +143,38 @@ public class GLFWContextCreator extends AsyncContextCreator {
 
 	public void async_stop() {
 		GLFW.glfwDestroyWindow(glfw_wnd);
+	}
+
+	private boolean fullscreen = false;
+	private int windowedX, windowedY, windowedWidth, windowedHeight;
+
+	/**
+	 * Toggles between windowed and fullscreen mode for the GLFW window. Only used on desktop;
+	 * Android renders into its own surface and never calls this.
+	 */
+	public void toggleFullscreen() {
+		if (fullscreen) {
+			GLFW.glfwSetWindowMonitor(glfw_wnd, 0, windowedX, windowedY, windowedWidth, windowedHeight,
+					GLFW.GLFW_DONT_CARE);
+			fullscreen = false;
+		} else {
+			try (MemoryStack stack = MemoryStack.stackPush()) {
+				IntBuffer x = stack.mallocInt(1);
+				IntBuffer y = stack.mallocInt(1);
+				IntBuffer w = stack.mallocInt(1);
+				IntBuffer h = stack.mallocInt(1);
+				GLFW.glfwGetWindowPos(glfw_wnd, x, y);
+				GLFW.glfwGetWindowSize(glfw_wnd, w, h);
+				windowedX = x.get(0);
+				windowedY = y.get(0);
+				windowedWidth = w.get(0);
+				windowedHeight = h.get(0);
+			}
+			long monitor = GLFW.glfwGetPrimaryMonitor();
+			GLFWVidMode mode = GLFW.glfwGetVideoMode(monitor);
+			GLFW.glfwSetWindowMonitor(glfw_wnd, monitor, 0, 0, mode.width(), mode.height(), mode.refreshRate());
+			fullscreen = true;
+		}
 	}
 
 	private static final HashMap<Integer, String> keys = new HashMap<>();
