@@ -21,8 +21,9 @@ import android.content.SharedPreferences;
 import android.os.Build;
 
 import jsettlers.common.CommonConstants;
+import jsettlers.graphics.settings.ISettings;
 
-public class AndroidPreferences {
+public class AndroidPreferences implements ISettings {
 	private static final String PREFS = "prefs";
 	private static final String PREF_PLAYER_ID = "playerid";
 	private static final String PREF_PLAYER_NAME = "playername";
@@ -119,6 +120,46 @@ public class AndroidPreferences {
 
 	public void setSoundVolume(float volume) {
 		preferences.edit().putFloat(PREF_SOUND_VOLUME, clampVolume(volume)).apply();
+	}
+
+	@Override
+	public float getVolume() {
+		return getSoundVolume();
+	}
+
+	@Override
+	public void setVolume(float volume) {
+		setSoundVolume(volume);
+	}
+
+	@Override
+	public int getFpsLimit() {
+		return 0; // not configurable on Android
+	}
+
+	@Override
+	public void setFpsLimit(int fps) {
+		// not configurable on Android
+	}
+
+	@Override
+	public float getGuiScale() {
+		return 1;
+	}
+
+	@Override
+	public void setGuiScale(float scale) {
+		// not configurable on Android
+	}
+
+	@Override
+	public boolean getAiTowerFocus() {
+		return false;
+	}
+
+	@Override
+	public void setAiTowerFocus(boolean focus) {
+		// not configurable on Android
 	}
 
 	private static float clampVolume(float volume) {

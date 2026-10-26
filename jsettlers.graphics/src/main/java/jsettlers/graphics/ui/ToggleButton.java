@@ -18,11 +18,13 @@ import java.util.function.Consumer;
 
 import jsettlers.common.action.Action;
 import jsettlers.graphics.action.ExecutableAction;
+import jsettlers.graphics.localization.Labels;
 
 /**
  * A labeled button that toggles between a checked and an unchecked state on every click.
  * <p>
- * The checked state is reflected by the active button image. This is the shared replacement for a checkbox.
+ * The checked state is reflected by the active button image and by the shown text (on/off). This is the shared
+ * replacement for a checkbox.
  *
  * @author Copilot
  */
@@ -44,6 +46,11 @@ public class ToggleButton extends LabeledButton {
 		super(text, null);
 		this.checked = checked;
 		this.onToggle = onToggle;
+	}
+
+	@Override
+	protected String getText() {
+		return checked ? Labels.getString("settings-on") : Labels.getString("settings-off");
 	}
 
 	@Override

@@ -35,6 +35,8 @@ import jsettlers.graphics.menu.MapListProvider;
 import jsettlers.graphics.menu.MapMenuItem;
 import jsettlers.graphics.menu.MenuContent;
 import jsettlers.graphics.menu.MenuImageProvider;
+import jsettlers.graphics.menu.SettingsMenuPanel;
+import jsettlers.graphics.ui.UIPanel;
 import jsettlers.logic.map.loading.MapLoader;
 import jsettlers.logic.map.loading.list.MapList;
 import jsettlers.logic.map.loading.newmap.MapFileHeader;
@@ -42,10 +44,10 @@ import jsettlers.logic.player.InitialGameState;
 import jsettlers.logic.player.PlayerSetting;
 import jsettlers.main.JSettlersGame;
 import jsettlers.main.android.R;
+import jsettlers.main.android.core.AndroidPreferences;
 import jsettlers.main.android.core.GameStarter;
 import jsettlers.main.android.mainmenu.gamesetup.NewSinglePlayerSetupFragment;
 import jsettlers.main.android.mainmenu.navigation.MainMenuNavigator;
-import jsettlers.main.android.mainmenu.settings.SettingsActivity_;
 
 /**
  * Shows the shared, GL rendered main menu. The same menu code runs on desktop and Android.
@@ -53,6 +55,9 @@ import jsettlers.main.android.mainmenu.settings.SettingsActivity_;
 @EFragment(R.layout.fragment_shared_main_menu)
 public class SharedMainMenuFragment extends Fragment implements MainMenuActions {
 	private GameStarter gameStarter;
+	private MapListProvider freshMaps;
+	private MapListProvider savedMaps;
+	private Region goRegion;
 
 	@ViewById(R.id.frame_layout)
 	FrameLayout frameLayout;
@@ -72,22 +77,28 @@ public class SharedMainMenuFragment extends Fragment implements MainMenuActions 
 		MenuImageProvider.setInstance(new MenuImageProvider(new AndroidMenuImageDecoder()));
 
 		MapList mapList = gameStarter.getMapList();
-		MapListProvider freshMaps = () -> mapList.getFreshMaps().getItems().stream()
+		freshMaps = () -> mapList.getFreshMaps().getItems().stream()
 				.map(this::toMapMenuItem).collect(Collectors.toList());
-		MapListProvider savedMaps = () -> mapList.getSavedMaps().getItems().stream()
+		savedMaps = () -> mapList.getSavedMaps().getItems().stream()
 				.map(this::toMapMenuItem).collect(Collectors.toList());
 
-		jsettlers.graphics.menu.MainMenuPanel mainMenuPanel = new jsettlers.graphics.menu.MainMenuPanel(this, freshMaps, savedMaps);
-		MenuContent menuContent = new MenuContent(mainMenuPanel, action -> {
-		});
-
-		Region goRegion = new Region(Region.POSITION_CENTER);
-		goRegion.setContent(menuContent);
+		goRegion = new Region(Region.POSITION_CENTER);
 		Area goArea = new Area();
 		goArea.set(goRegion);
 
-		GOSurfaceView goView = new GOSurfaceView(getActivity(), goArea, () -> new HashSet<>());
+		goView = new GOSurfaceView(getActivity(), goArea, () -> new HashSet<>());
 		frameLayout.addView(goView);
+
+		showMainMenu();
+	}
+
+	private void showMainMenu() {
+		showMenu(new jsettlers.graphics.menu.MainMenuPanel(this, freshMaps, savedMaps));
+	}
+
+	private void showMenu(UIPanel panel) {
+		goRegion.setContent(new MenuContent(panel, action -> {
+		}));
 	}
 
 	private MapMenuItem toMapMenuItem(MapLoader loader) {
@@ -123,7 +134,10 @@ public class SharedMainMenuFragment extends Fragment implements MainMenuActions 
 
 	@Override
 	public void showSettings() {
-		SettingsActivity_.intent(this).start();
+		AndroidPreferences preferences = new AndroidPreferences(getActivity());
+		SettingsMenuPanel settingsPanel = new SettingsMenuPanel(preferences, this::showMainMenu);
+		settingsPanel.initializeValues();
+		showMenu(settingsPanel);
 	}
 
 	@Override

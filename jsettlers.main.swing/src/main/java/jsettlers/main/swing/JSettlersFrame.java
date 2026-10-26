@@ -52,6 +52,7 @@ import jsettlers.graphics.menu.MapListProvider;
 import jsettlers.graphics.menu.MapMenuItem;
 import jsettlers.graphics.menu.MenuContent;
 import jsettlers.graphics.menu.MenuImageProvider;
+import jsettlers.graphics.menu.SettingsMenuPanel;
 import jsettlers.logic.map.loading.MapLoader;
 import jsettlers.logic.map.loading.list.MapList;
 import jsettlers.logic.map.loading.newmap.MapFileHeader;
@@ -61,7 +62,6 @@ import jsettlers.logic.player.PlayerSetting;
 import jsettlers.main.JSettlersGame;
 import jsettlers.main.swing.menu.SwingMenuImageDecoder;
 import jsettlers.main.swing.menu.joinpanel.JoinGamePanel;
-import jsettlers.main.swing.menu.settingsmenu.SettingsMenuPanel;
 import jsettlers.main.swing.menu.startinggamemenu.StartingGamePanel;
 import jsettlers.main.swing.menu.statspanel.EndgameStatsPanel;
 import jsettlers.main.swing.settings.SettingsManager;
@@ -210,9 +210,10 @@ public class JSettlersFrame extends JFrame {
 	}
 
 	private void showSettingsPanel() {
-		SettingsMenuPanel settingsPanel = new SettingsMenuPanel(this::showSharedMainMenu);
+		SettingsMenuPanel settingsPanel = new SettingsMenuPanel(SettingsManager.getInstance(), this::showSharedMainMenu);
 		settingsPanel.initializeValues();
-		setNewContentPane(settingsPanel);
+		showMenuContent(new MenuContent(settingsPanel, action -> {
+		}));
 	}
 
 	private void loadSavegame(MapLoader map) {
