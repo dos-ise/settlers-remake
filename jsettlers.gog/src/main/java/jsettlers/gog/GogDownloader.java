@@ -29,12 +29,11 @@ import java.util.zip.ZipFile;
 
 import com.google.gson.Gson;
 
-import jsettlers.gog.GogModels.GogDownload;
 import jsettlers.gog.GogModels.GogDownlinkResponse;
+import jsettlers.gog.GogModels.GogInstaller;
 import jsettlers.gog.GogModels.GogOwnedProducts;
 import jsettlers.gog.GogModels.GogProduct;
 import jsettlers.gog.GogModels.GogProductSummary;
-import jsettlers.gog.GogModels.GogUser;
 
 /**
  * Downloads the Settlers 3 game data from GOG. Downloads the "The Settlers 3 - Ultimate Collection"
@@ -44,7 +43,6 @@ import jsettlers.gog.GogModels.GogUser;
 public class GogDownloader {
 
 	// "The Settlers 3 - Ultimate Collection" on GOG.
-	public static final long SETTLERS3_ULTIMATE_COLLECTION_PRODUCT_ID = 1207659160L;
 	public static final String SETTLERS3_TITLE = "The Settlers 3 - Ultimate Collection";
 
 	// Data directories needed by the game (relative to the install root).
@@ -71,30 +69,24 @@ public class GogDownloader {
 	 * Runs the whole download flow. Returns the number of files written.
 	 */
 	public int download(ProgressCallback progress) throws IOException {
-		progress.onProgress("Checking account...", 5);
-		GogUser user = GogLogin.getUser(accessToken);
-		if (user == null || user.id == null || user.id.isEmpty()) {
-			throw new GogException("Could not verify the GOG account.");
-		}
-
 		// Check ownership.
 		progress.onProgress("Checking ownership...", 10);
 		GogProductSummary settlers = findOwnedSettlers();
 		if (settlers == null) {
-			throw new GogException("You do not own The Settlers 3 - Ultimate Collection on this account.");
+			throw new GogException("You do not own " + SETTLERS3_TITLE + " on this account.");
 		}
 
 		// Get the downloads and pick the Windows installer.
 		progress.onProgress("Getting download info...", 15);
 		GogProduct product = getProduct(settlers.id);
-		GogDownload installer = pickInstaller(product);
-		if (installer == null) {
+		GogInstaller installer = pickInstaller(product);
+		if (installer == null || installer.files == null || installer.files.length == 0) {
 			throw new GogException("No Windows installer found for this game.");
 		}
 
 		// Generate a temporary download link.
 		progress.onProgress("Preparing download...", 20);
-		String downloadUrl = getDownlink(settlers.id, installer.downlink.path);
+		String downloadUrl = getDownlink(installer.files[0].downlink);
 
 		// Download the installer to a temporary file.
 		File installerFile = File.createTempFile("jsettlers-gog-", ".exe");
@@ -116,7 +108,8 @@ public class GogDownloader {
 	}
 
 	/**
-	 * Searches the owned products for Settlers 3, by product id or title.
+	 * Checks whether the user owns Settlers 3, by title or slug. Uses the getFilteredProducts
+	 * endpoint which returns titles, so we can match by name.
 	 */
 	private GogProductSummary findOwnedSettlers() throws IOException {
 		int page = 1;
@@ -125,24 +118,41 @@ public class GogDownloader {
 			if (owned == null || owned.products == null || owned.products.length == 0) {
 				return null;
 			}
-
 			for (GogProductSummary product : owned.products) {
-				if (product.id == SETTLERS3_ULTIMATE_COLLECTION_PRODUCT_ID
-						|| (product.title != null && product.title.equalsIgnoreCase(SETTLERS3_TITLE))) {
+				// Debug: log every owned game so we can identify the right product id.
+				System.out.println("JSettlersGog owned: id=" + product.id + " title=" + product.title + " slug=" + product.slug);
+				if (isSettlers3(product)) {
 					return product;
 				}
 			}
-
-			if (page * 100 >= owned.totalProducts) {
+			if (page >= owned.totalPages) {
 				return null;
 			}
 			page++;
 		}
 	}
 
+	private static boolean isSettlers3(GogProductSummary product) {
+		if (product.title != null) {
+			String title = product.title.toLowerCase(Locale.ROOT);
+			if (title.contains("settlers 3") || title.contains("siedler 3")) {
+				return true;
+			}
+		}
+		if (product.slug != null) {
+			String slug = product.slug.toLowerCase(Locale.ROOT);
+			if (slug.contains("settlers_3") || slug.contains("siedler_3")) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private GogOwnedProducts getOwnedProducts(int page) throws IOException {
-		HttpURLConnection connection = GogLogin.openApiConnection("GET",
-				"/account/getFilteredProducts?filter=owned&mediaType=1&page=" + page + "&productsPerPage=100", accessToken);
+		HttpURLConnection connection = GogLogin.openConnection("GET",
+				GogLogin.EMBED_URL + "/account/getFilteredProducts?filter=owned&mediaType=1&page=" + page
+						+ "&productsPerPage=100",
+				accessToken);
 		return getJson(connection, GogOwnedProducts.class, "Could not load the GOG library");
 	}
 
@@ -152,18 +162,24 @@ public class GogDownloader {
 		return getJson(connection, GogProduct.class, "Could not load the game details");
 	}
 
-	private String getDownlink(long productId, String path) throws IOException {
-		if (path == null || path.isEmpty()) {
-			throw new GogException("No download path available.");
+	private String getDownlink(String downlinkUrl) throws IOException {
+		if (downlinkUrl == null || downlinkUrl.isEmpty()) {
+			throw new GogException("No download link available.");
+		}
+		if (!downlinkUrl.startsWith("http")) {
+			downlinkUrl = GogLogin.API_URL + downlinkUrl;
 		}
 
-		HttpURLConnection connection = GogLogin.openApiConnection("GET",
-				"/products/" + productId + "/downlink?path=" + GogLogin.urlEncode(path), accessToken);
+		HttpURLConnection connection = GogLogin.openConnection("GET", downlinkUrl, accessToken);
 		GogDownlinkResponse response = getJson(connection, GogDownlinkResponse.class, "Could not generate a download link");
-		if (response == null || response.url == null || response.url.isEmpty()) {
+		if (response == null) {
 			throw new GogException("No download link received.");
 		}
-		return response.url;
+		String url = response.downlink != null ? response.downlink : response.url;
+		if (url == null || url.isEmpty()) {
+			throw new GogException("No download link received.");
+		}
+		return url;
 	}
 
 	private static <T> T getJson(HttpURLConnection connection, Class<T> type, String errorPrefix) throws IOException {
@@ -171,30 +187,34 @@ public class GogDownloader {
 		InputStream stream = code >= 200 && code < 300 ? connection.getInputStream() : connection.getErrorStream();
 		String body = stream != null ? new String(GogLogin.readAllBytes(stream), StandardCharsets.UTF_8) : "";
 		if (code >= 200 && code < 300) {
-			return GSON.fromJson(body, type);
+			try {
+				return GSON.fromJson(body, type);
+			} catch (com.google.gson.JsonSyntaxException ex) {
+				throw new GogException(errorPrefix + ": " + ex.getMessage() + " Body: " + body, ex);
+			}
 		}
-		throw new GogException(errorPrefix + " (HTTP " + code + ").");
+		throw new GogException(errorPrefix + " (HTTP " + code + "): " + body);
 	}
 
 	/**
 	 * Picks the Windows installer, preferring the device language.
 	 */
-	private static GogDownload pickInstaller(GogProduct product) {
-		if (product == null || product.downloads == null) {
+	private static GogInstaller pickInstaller(GogProduct product) {
+		if (product == null || product.downloads == null || product.downloads.installers == null) {
 			return null;
 		}
 
 		String deviceLanguage = Locale.getDefault().getLanguage();
-		GogDownload fallback = null;
-		for (GogDownload download : product.downloads) {
-			if (!"installer".equals(download.type) || !"windows".equals(download.os) || download.downlink == null) {
+		GogInstaller fallback = null;
+		for (GogInstaller installer : product.downloads.installers) {
+			if (!"windows".equals(installer.os) || installer.files == null || installer.files.length == 0) {
 				continue;
 			}
 			if (fallback == null) {
-				fallback = download;
+				fallback = installer;
 			}
-			if (download.language != null && download.language.equalsIgnoreCase(deviceLanguage)) {
-				return download;
+			if (installer.language != null && installer.language.equalsIgnoreCase(deviceLanguage)) {
+				return installer;
 			}
 		}
 		return fallback;

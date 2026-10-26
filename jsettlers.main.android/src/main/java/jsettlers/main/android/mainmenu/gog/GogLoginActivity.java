@@ -250,7 +250,7 @@ public class GogLoginActivity extends AppCompatActivity {
 					}
 				});
 			} catch (Exception ex) {
-				Log.e(TAG, "Exchange code: " + ex);
+				Log.e(TAG, "Exchange code", ex);
 				mainHandler.post(() -> showError(ex.getMessage()));
 			}
 		});

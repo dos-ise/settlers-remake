@@ -17,7 +17,6 @@ package jsettlers.gog;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -27,6 +26,7 @@ import com.google.gson.Gson;
 
 import jsettlers.gog.GogModels.GogTokenResponse;
 import jsettlers.gog.GogModels.GogUser;
+import jsettlers.gog.GogModels.GogUserData;
 
 /**
  * Login against the GOG API. Uses the public OAuth2 API that the GOG Galaxy client uses (also used
@@ -36,7 +36,7 @@ public class GogLogin {
 
 	// Public OAuth2 client credentials of the GOG Galaxy client.
 	public static final String CLIENT_ID = "46899977096215655";
-	public static final String CLIENT_SECRET = "9d85c43b1482497dbbce61f4378764b1";
+	public static final String CLIENT_SECRET = "9d85c43b1482497dbbce61f6e4aa173a433796eeae2ca8c5f6129f2dc4de46d9";
 
 	// Redirect target of the web login. The authorization code arrives as a "code" query parameter
 	// on this URL.
@@ -44,8 +44,9 @@ public class GogLogin {
 
 	public static final String AUTH_URL = "https://auth.gog.com/auth?client_id=" + CLIENT_ID
 			+ "&redirect_uri=" + urlEncode(REDIRECT_URI) + "&response_type=code&layout=galaxy";
-	public static final String TOKEN_URL = "https://auth.gog.com/oauth/token";
+	public static final String TOKEN_URL = "https://auth.gog.com/token";
 	public static final String API_URL = "https://api.gog.com";
+	public static final String EMBED_URL = "https://embed.gog.com";
 
 	private static final Gson GSON = new Gson();
 
@@ -56,35 +57,31 @@ public class GogLogin {
 	 * Exchanges an authorization code (captured from the web login redirect) for an access token.
 	 */
 	public static GogTokenResponse exchangeCode(String code) throws IOException {
-		String body = "grant_type=authorization_code"
+		String query = "grant_type=authorization_code"
 				+ "&client_id=" + CLIENT_ID
 				+ "&client_secret=" + CLIENT_SECRET
 				+ "&code=" + urlEncode(code)
 				+ "&redirect_uri=" + urlEncode(REDIRECT_URI);
-		return postToken(body);
+		return getToken(query);
 	}
 
 	/**
 	 * Refreshes an expired access token.
 	 */
 	public static GogTokenResponse refreshToken(String refreshToken) throws IOException {
-		String body = "grant_type=refresh_token"
+		String query = "grant_type=refresh_token"
 				+ "&client_id=" + CLIENT_ID
 				+ "&client_secret=" + CLIENT_SECRET
 				+ "&refresh_token=" + urlEncode(refreshToken);
-		return postToken(body);
+		return getToken(query);
 	}
 
-	private static GogTokenResponse postToken(String body) throws IOException {
-		HttpURLConnection connection = (HttpURLConnection) new URL(TOKEN_URL).openConnection();
-		connection.setRequestMethod("POST");
+	private static GogTokenResponse getToken(String query) throws IOException {
+		HttpURLConnection connection = (HttpURLConnection) new URL(TOKEN_URL + "?" + query).openConnection();
+		connection.setRequestMethod("GET");
 		connection.setConnectTimeout(60000);
 		connection.setReadTimeout(60000);
-		connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-		connection.setDoOutput(true);
-		try (OutputStream os = connection.getOutputStream()) {
-			os.write(body.getBytes(StandardCharsets.UTF_8));
-		}
+		connection.setRequestProperty("Accept", "application/json");
 
 		int code = connection.getResponseCode();
 		InputStream stream = code >= 200 && code < 300 ? connection.getInputStream() : connection.getErrorStream();
@@ -98,19 +95,20 @@ public class GogLogin {
 		String message = response != null && response.errorDescription != null
 				? response.errorDescription
 				: (response != null && response.error != null ? response.error : "Login failed (HTTP " + code + ").");
-		throw new GogException(message);
+		throw new GogException(message + " (HTTP " + code + "): " + responseBody);
 	}
 
 	/**
 	 * Returns the user data for the given access token.
 	 */
 	public static GogUser getUser(String accessToken) throws IOException {
-		HttpURLConnection connection = openApiConnection("GET", "/users/me", accessToken);
+		HttpURLConnection connection = openConnection("GET", EMBED_URL + "/userData.json", accessToken);
 		int code = connection.getResponseCode();
 		InputStream stream = code >= 200 && code < 300 ? connection.getInputStream() : connection.getErrorStream();
 		String body = stream != null ? new String(readAllBytes(stream), StandardCharsets.UTF_8) : "";
 		if (code >= 200 && code < 300) {
-			return GSON.fromJson(body, GogUser.class);
+			GogUserData userData = GSON.fromJson(body, GogUserData.class);
+			return userData != null ? userData.user : null;
 		}
 		throw new GogException("Could not load the GOG user data (HTTP " + code + ").");
 	}
@@ -119,7 +117,11 @@ public class GogLogin {
 	 * Opens a connection to the GOG API with the Bearer token.
 	 */
 	static HttpURLConnection openApiConnection(String method, String path, String accessToken) throws IOException {
-		HttpURLConnection connection = (HttpURLConnection) new URL(API_URL + path).openConnection();
+		return openConnection(method, API_URL + path, accessToken);
+	}
+
+	static HttpURLConnection openConnection(String method, String url, String accessToken) throws IOException {
+		HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
 		connection.setRequestMethod(method);
 		connection.setConnectTimeout(60000);
 		connection.setReadTimeout(60000);

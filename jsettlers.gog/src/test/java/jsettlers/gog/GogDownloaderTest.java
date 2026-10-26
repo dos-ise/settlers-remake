@@ -31,10 +31,11 @@ import org.junit.rules.TemporaryFolder;
 import com.google.gson.Gson;
 
 import jsettlers.gog.GogModels.GogDownlinkResponse;
+import jsettlers.gog.GogModels.GogOwnedGames;
 import jsettlers.gog.GogModels.GogOwnedProducts;
 import jsettlers.gog.GogModels.GogProduct;
 import jsettlers.gog.GogModels.GogTokenResponse;
-import jsettlers.gog.GogModels.GogUser;
+import jsettlers.gog.GogModels.GogUserData;
 
 /**
  * Tests for the GOG API models and the installer extraction.
@@ -67,44 +68,64 @@ public class GogDownloaderTest {
 
 	@Test
 	public void parsesUser() {
-		String json = "{\"id\":\"123456\",\"email\":\"user@example.com\",\"username\":\"player1\"}";
-		GogUser user = GSON.fromJson(json, GogUser.class);
-		assertEquals("123456", user.id);
-		assertEquals("player1", user.username);
+		String json = "{\"user\":{\"id\":\"123456\",\"email\":\"user@example.com\",\"username\":\"player1\"}}";
+		GogUserData userData = GSON.fromJson(json, GogUserData.class);
+		assertEquals("123456", userData.user.id);
+		assertEquals("player1", userData.user.username);
+	}
+
+	@Test
+	public void parsesOwnedGames() {
+		String json = "{\"owned\":[1207659160,123,456]}";
+		GogOwnedGames owned = GSON.fromJson(json, GogOwnedGames.class);
+		assertEquals(3, owned.owned.length);
+		assertEquals(1207659160L, owned.owned[0]);
 	}
 
 	@Test
 	public void parsesOwnedProducts() {
-		String json = "{\"totalProducts\":2,\"page\":1,\"products\":["
-				+ "{\"id\":1207659160,\"title\":\"The Settlers 3 - Ultimate Collection\"},"
-				+ "{\"id\":123,\"title\":\"Some Other Game\"}]}";
+		String json = "{\"totalPages\":2,\"page\":1,\"products\":["
+				+ "{\"id\":1207659160,\"title\":\"The Settlers 3 - Ultimate Collection\",\"slug\":\"the_settlers_3_ultimate_collection\"},"
+				+ "{\"id\":123,\"title\":\"Some Other Game\",\"slug\":\"some_other_game\"}]}";
 		GogOwnedProducts products = GSON.fromJson(json, GogOwnedProducts.class);
-		assertEquals(2, products.totalProducts);
+		assertEquals(2, products.totalPages);
 		assertEquals(2, products.products.length);
 		assertEquals(1207659160L, products.products[0].id);
 		assertEquals("The Settlers 3 - Ultimate Collection", products.products[0].title);
+		assertEquals("the_settlers_3_ultimate_collection", products.products[0].slug);
 	}
 
 	@Test
 	public void parsesProductDownloads() {
-		String json = "{\"id\":1207659160,\"title\":\"The Settlers 3 - Ultimate Collection\",\"downloads\":["
-				+ "{\"name\":\"setup.exe\",\"type\":\"installer\",\"os\":\"windows\",\"language\":\"en\","
-				+ "\"size\":123456789,\"version\":\"2.0\",\"downlink\":{\"path\":\"/downlink/1207659160/setup.exe\"}},"
-				+ "{\"name\":\"bonus.zip\",\"type\":\"bonus_content\",\"os\":\"windows\",\"language\":\"en\","
-				+ "\"downlink\":{\"path\":\"/downlink/1207659160/bonus.zip\"}}]}";
+		String json = "{\"id\":1207659160,\"title\":\"The Settlers 3 - Ultimate Collection\",\"downloads\":{"
+				+ "\"installers\":[{\"name\":\"setup.exe\",\"os\":\"windows\",\"language\":\"en\","
+				+ "\"version\":\"2.0\",\"count\":1,\"total_size\":123456789,"
+				+ "\"files\":[{\"id\":\"1\",\"size\":123456789,\"downlink\":\"https://api.gog.com/products/1207659160/downlink?path=x\"}]}],"
+				+ "\"bonus_content\":[{\"name\":\"bonus.zip\",\"os\":\"windows\",\"language\":\"en\","
+				+ "\"files\":[{\"id\":\"2\",\"size\":1000,\"downlink\":\"https://api.gog.com/products/1207659160/downlink?path=y\"}]}]}}";
 		GogProduct product = GSON.fromJson(json, GogProduct.class);
 		assertEquals(1207659160L, product.id);
-		assertEquals(2, product.downloads.length);
-		assertEquals("installer", product.downloads[0].type);
-		assertEquals("windows", product.downloads[0].os);
-		assertEquals("/downlink/1207659160/setup.exe", product.downloads[0].downlink.path);
+		assertEquals(1, product.downloads.installers.length);
+		assertEquals("setup.exe", product.downloads.installers[0].name);
+		assertEquals("windows", product.downloads.installers[0].os);
+		assertEquals("https://api.gog.com/products/1207659160/downlink?path=x", product.downloads.installers[0].files[0].downlink);
+		assertEquals(1, product.downloads.bonusContent.length);
 	}
 
 	@Test
 	public void parsesDownlinkResponse() {
-		String json = "{\"url\":\"https://download.gog.com/example\",\"expires_at\":\"2026-01-01T00:00:00Z\"}";
+		String json = "{\"downlink\":\"https://download.gog.com/example\",\"expires_at\":\"2026-01-01T00:00:00Z\"}";
 		GogDownlinkResponse response = GSON.fromJson(json, GogDownlinkResponse.class);
-		assertEquals("https://download.gog.com/example", response.url);
+		assertEquals("https://download.gog.com/example", response.downlink);
+	}
+
+	@Test
+	public void usesCorrectTokenEndpoint() {
+		// The GOG token endpoint is a GET on /token (not POST /oauth/token); the client secret is the
+		// public Galaxy client secret used by lgogdownloader/gogdl.
+		assertEquals("https://auth.gog.com/token", GogLogin.TOKEN_URL);
+		assertEquals("9d85c43b1482497dbbce61f6e4aa173a433796eeae2ca8c5f6129f2dc4de46d9", GogLogin.CLIENT_SECRET);
+		assertEquals("https://embed.gog.com/on_login_success?origin=client", GogLogin.REDIRECT_URI);
 	}
 
 	@Test

@@ -54,11 +54,27 @@ public class GogModels {
 	}
 
 	/**
+	 * Response of GET https://embed.gog.com/userData.json
+	 */
+	public static class GogUserData {
+		@SerializedName("user")
+		public GogUser user;
+	}
+
+	/**
+	 * Response of GET https://embed.gog.com/user/data/games
+	 */
+	public static class GogOwnedGames {
+		@SerializedName("owned")
+		public long[] owned;
+	}
+
+	/**
 	 * Response of GET https://api.gog.com/account/getFilteredProducts
 	 */
 	public static class GogOwnedProducts {
-		@SerializedName("totalProducts")
-		public int totalProducts;
+		@SerializedName("totalPages")
+		public int totalPages;
 		@SerializedName("page")
 		public int page;
 		@SerializedName("products")
@@ -73,6 +89,8 @@ public class GogModels {
 		public long id;
 		@SerializedName("title")
 		public String title;
+		@SerializedName("slug")
+		public String slug;
 	}
 
 	/**
@@ -84,13 +102,27 @@ public class GogModels {
 		@SerializedName("title")
 		public String title;
 		@SerializedName("downloads")
-		public GogDownload[] downloads;
+		public GogDownloads downloads;
 	}
 
 	/**
-	 * A download entry of a product.
+	 * The downloads of a product, grouped by type.
 	 */
-	public static class GogDownload {
+	public static class GogDownloads {
+		@SerializedName("installers")
+		public GogInstaller[] installers;
+		@SerializedName("bonus_content")
+		public GogInstaller[] bonusContent;
+		@SerializedName("patches")
+		public GogInstaller[] patches;
+		@SerializedName("language_packs")
+		public GogInstaller[] languagePacks;
+	}
+
+	/**
+	 * A download entry of a product (installer, patch, ...).
+	 */
+	public static class GogInstaller {
 		@SerializedName("name")
 		public String name;
 		@SerializedName("type")
@@ -99,26 +131,34 @@ public class GogModels {
 		public String os;
 		@SerializedName("language")
 		public String language;
-		@SerializedName("size")
-		public long size;
 		@SerializedName("version")
 		public String version;
-		@SerializedName("downlink")
-		public GogDownlink downlink;
+		@SerializedName("count")
+		public int count;
+		@SerializedName("total_size")
+		public long totalSize;
+		@SerializedName("files")
+		public GogDownloadFile[] files;
 	}
 
 	/**
-	 * The downlink path used to generate a temporary download URL.
+	 * A single file of a download entry.
 	 */
-	public static class GogDownlink {
-		@SerializedName("path")
-		public String path;
+	public static class GogDownloadFile {
+		@SerializedName("id")
+		public String id;
+		@SerializedName("size")
+		public long size;
+		@SerializedName("downlink")
+		public String downlink;
 	}
 
 	/**
 	 * Response of GET https://api.gog.com/products/{id}/downlink
 	 */
 	public static class GogDownlinkResponse {
+		@SerializedName("downlink")
+		public String downlink;
 		@SerializedName("url")
 		public String url;
 		@SerializedName("expires_at")

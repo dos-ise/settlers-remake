@@ -138,6 +138,18 @@ public class MainMenuFragment extends Fragment {
 		}
 	}
 
+	/**
+	 * Handles the Android back button. Collapses the directory picker if it is expanded.
+	 * Returns true if the back press was handled.
+	 */
+	public boolean onBackPressed() {
+		if (homeAdapter != null && homeAdapter.isDirectoryPickerExpanded()) {
+			homeAdapter.collapseDirectoryPicker();
+			return true;
+		}
+		return false;
+	}
+
 	private class HomeAdapter extends RecyclerView.Adapter {
 		private final LayoutInflater layoutInflater;
 		private final Fragment viewModelOwner;
@@ -180,11 +192,16 @@ public class MainMenuFragment extends Fragment {
 
 				Button chooseDirectoryButton = view.findViewById(R.id.button_resources);
 				chooseDirectoryButton.setOnClickListener(v -> {
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
-						pendingAllFilesAccessRequest = true;
-						Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-						intent.setData(Uri.parse("package:" + getActivity().getPackageName()));
-						startActivity(intent);
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+						if (!Environment.isExternalStorageManager()) {
+							pendingAllFilesAccessRequest = true;
+							Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+							intent.setData(Uri.parse("package:" + getActivity().getPackageName()));
+							startActivity(intent);
+						} else {
+							expandDirectoryPicker(viewHolder);
+							// TODO save expanded state for rotation
+						}
 					} else if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 						requestPermissions(new String[] { Manifest.permission.READ_EXTERNAL_STORAGE }, REQUEST_CODE_PERMISSION_STORAGE);
 					} else {
@@ -222,11 +239,29 @@ public class MainMenuFragment extends Fragment {
 		public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
 		}
 
+		private boolean directoryPickerExpanded;
+
 		private void expandDirectoryPicker(DirectoryPickerViewHolder viewHolder) {
 			ViewGroup.LayoutParams layoutParams = viewHolder.itemView.getLayoutParams();
 			layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
 			viewHolder.itemView.setLayoutParams(layoutParams);
 			viewHolder.onExpand();
+			directoryPickerExpanded = true;
+		}
+
+		private void collapseDirectoryPicker() {
+			DirectoryPickerViewHolder viewHolder = (DirectoryPickerViewHolder) recyclerView.findViewHolderForItemId(R.layout.vh_directory_picker);
+			if (viewHolder != null) {
+				ViewGroup.LayoutParams layoutParams = viewHolder.itemView.getLayoutParams();
+				layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+				viewHolder.itemView.setLayoutParams(layoutParams);
+				viewHolder.onCollapse();
+			}
+			directoryPickerExpanded = false;
+		}
+
+		private boolean isDirectoryPickerExpanded() {
+			return directoryPickerExpanded && layouts.contains(R.layout.vh_directory_picker);
 		}
 
 		private void showOrHideDirectoryPicker(boolean areResourcesLoaded) {
