@@ -339,8 +339,10 @@ public class JSettlersFrame extends JFrame {
 			areaContainer = null;
 		}
 
-		endgameStatsPanel.setGame(game);
-		setNewContentPane(endgameStatsPanel);
+		jsettlers.graphics.menu.EndgameStatsPanel statsPanel = new jsettlers.graphics.menu.EndgameStatsPanel(this::showSharedMainMenu);
+		statsPanel.setGame(game);
+		showMenuContent(new MenuContent(statsPanel, action -> {
+		}));
 	}
 
 	private void showTextInputDialog(String title, Consumer<String> onEntered) {
