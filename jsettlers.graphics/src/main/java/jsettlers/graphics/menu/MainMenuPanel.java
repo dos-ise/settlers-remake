@@ -17,7 +17,6 @@ package jsettlers.graphics.menu;
 import java.util.function.Consumer;
 
 import go.graphics.text.EFontSize;
-import jsettlers.common.Color;
 import jsettlers.graphics.action.ExecutableAction;
 import jsettlers.graphics.localization.Labels;
 import jsettlers.graphics.ui.ImagePanel;
@@ -31,12 +30,6 @@ import jsettlers.graphics.ui.UIPanel;
  * @author Copilot
  */
 public class MainMenuPanel extends UIPanel {
-	/**
-	 * Dark text color for the menu buttons. The original Settlers 3 button graphics are light, so white text would be
-	 * hard to read.
-	 */
-	private static final Color BUTTON_TEXT_COLOR = new Color(0.2f, 0.15f, 0.1f, 1);
-
 	private final UIPanel contentPanel = new UIPanel();
 	private final MainMenuActions actions;
 
@@ -82,7 +75,7 @@ public class MainMenuPanel extends UIPanel {
 			public void execute() {
 				action.run();
 			}
-		}, EFontSize.HEADLINE, BUTTON_TEXT_COLOR);
+		}, EFontSize.HEADLINE);
 		panel.addChild(button, left, bottom, right, top);
 	}
 
