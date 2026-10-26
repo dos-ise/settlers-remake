@@ -219,10 +219,11 @@ public class JoinGamePanel extends UIPanel {
 			for (int i = 1; i <= mapInfo.getMaxPlayers(); i++) {
 				teamOptions.add(String.valueOf(i));
 			}
-			teamButton = new CycleButton(teamOptions, 0, newIndex -> team = (byte) (newIndex + 1));
+			teamButton = new CycleButton(teamOptions, 0, newIndex -> team = (byte) newIndex.intValue());
 
 			playerType = typeOptions[0];
-			team = 1;
+			team = index;
+			teamButton.setIndex(team);
 			updateAiPlayerName();
 		}
 
@@ -239,7 +240,7 @@ public class JoinGamePanel extends UIPanel {
 			}
 			if (data.getTeam() != null) {
 				team = data.getTeam();
-				teamButton.setIndex(team - 1);
+				teamButton.setIndex(team);
 				teamButton.setEnabled(false);
 			}
 			updateAiPlayerName();

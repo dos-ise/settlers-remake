@@ -331,7 +331,7 @@ public class MultiplayerJoinGamePanel extends UIPanel {
 			}
 			teamButton = new CycleButton(teamOptions, 0, newIndex -> {
 				if (connector != null) {
-					connector.setTeam(slotIndex, (byte) (newIndex + 1));
+					connector.setTeam(slotIndex, (byte) newIndex.intValue());
 				}
 			});
 
@@ -349,7 +349,7 @@ public class MultiplayerJoinGamePanel extends UIPanel {
 				civButton.setIndex(civIndex(slot.getCivilisation()));
 			}
 			typeButton.setIndex(typeIndex(slot.getType()));
-			teamButton.setIndex(Math.max(0, slot.getTeam() - 1));
+			teamButton.setIndex(Math.max(0, slot.getTeam()));
 			if (player == null) {
 				readyLabel.setText("");
 			} else if (player.isReady()) {
