@@ -14,6 +14,8 @@
  *******************************************************************************/
 package jsettlers.graphics.menu;
 
+import jsettlers.graphics.image.Image;
+
 /**
  * A map entry shown in the shared map selection menu.
  * <p>
@@ -26,6 +28,21 @@ public class MapMenuItem {
 	private final String id;
 	private final String name;
 	private final String description;
+	private final Image preview;
+
+	/**
+	 * Creates a new map menu item without a preview image.
+	 *
+	 * @param id
+	 *            An opaque id that the host application can resolve back to its map representation.
+	 * @param name
+	 *            The display name of the map.
+	 * @param description
+	 *            An optional description of the map.
+	 */
+	public MapMenuItem(String id, String name, String description) {
+		this(id, name, description, null);
+	}
 
 	/**
 	 * Creates a new map menu item.
@@ -36,11 +53,14 @@ public class MapMenuItem {
 	 *            The display name of the map.
 	 * @param description
 	 *            An optional description of the map.
+	 * @param preview
+	 *            The preview image of the map, or <code>null</code> if there is none.
 	 */
-	public MapMenuItem(String id, String name, String description) {
+	public MapMenuItem(String id, String name, String description, Image preview) {
 		this.id = id;
 		this.name = name;
 		this.description = description;
+		this.preview = preview;
 	}
 
 	/**
@@ -68,5 +88,14 @@ public class MapMenuItem {
 	 */
 	public String getDescription() {
 		return description;
+	}
+
+	/**
+	 * Gets the preview image of this map.
+	 *
+	 * @return The preview image, or <code>null</code> if there is none.
+	 */
+	public Image getPreview() {
+		return preview;
 	}
 }

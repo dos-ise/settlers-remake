@@ -33,6 +33,7 @@ import go.graphics.region.Region;
 import jsettlers.graphics.menu.MainMenuActions;
 import jsettlers.graphics.menu.MapListProvider;
 import jsettlers.graphics.menu.MapMenuItem;
+import jsettlers.graphics.menu.MapPreviewImage;
 import jsettlers.graphics.menu.MenuContent;
 import jsettlers.graphics.menu.MenuImageProvider;
 import jsettlers.graphics.menu.SettingsMenuPanel;
@@ -102,7 +103,8 @@ public class SharedMainMenuFragment extends Fragment implements MainMenuActions 
 	}
 
 	private MapMenuItem toMapMenuItem(MapLoader loader) {
-		return new MapMenuItem(loader.getMapId(), loader.getMapName(), loader.getDescription());
+		return new MapMenuItem(loader.getMapId(), loader.getMapName(), loader.getDescription(),
+				MapPreviewImage.create(loader.getImage()));
 	}
 
 	private MapLoader resolveMap(MapMenuItem map) {
