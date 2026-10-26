@@ -86,7 +86,7 @@ public class SharedMainMenuFragment extends Fragment implements MainMenuActions 
 		Area goArea = new Area();
 		goArea.set(goRegion);
 
-		goView = new GOSurfaceView(getActivity(), goArea, () -> new HashSet<>());
+		GOSurfaceView goView = new GOSurfaceView(getActivity(), goArea, () -> new HashSet<>());
 		frameLayout.addView(goView);
 
 		showMainMenu();

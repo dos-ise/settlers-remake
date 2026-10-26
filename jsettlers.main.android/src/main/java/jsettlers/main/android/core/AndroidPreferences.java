@@ -80,8 +80,18 @@ public class AndroidPreferences implements ISettings {
 		return preferences.getBoolean(PREF_PLAYALL_MUSIC, false);
 	}
 
+	@Override
+	public boolean isMusicPlayAll() {
+		return isPlayAllMusic();
+	}
+
 	public void setPlayAllMusic(boolean playAll) {
 		preferences.edit().putBoolean(PREF_PLAYALL_MUSIC, playAll).apply();
+	}
+
+	@Override
+	public void setMusicPlayAll(boolean playAll) {
+		setPlayAllMusic(playAll);
 	}
 
 	public boolean isShowMinimap() {
