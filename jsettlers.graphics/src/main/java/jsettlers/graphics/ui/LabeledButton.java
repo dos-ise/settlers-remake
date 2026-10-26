@@ -16,6 +16,7 @@ package jsettlers.graphics.ui;
 
 import java.util.Optional;
 
+import go.graphics.AbstractColor;
 import go.graphics.GLDrawContext;
 import go.graphics.text.EFontSize;
 import go.graphics.text.TextDrawer;
@@ -38,13 +39,31 @@ public class LabeledButton extends Button {
 			EImageLinkType.GUI, 3, 327, 0);
 
 	private final EFontSize size;
+	private final AbstractColor textColor;
 	private boolean enabled = true;
 
 	public LabeledButton(String text, Action action, EFontSize size) {
+		this(text, action, size, null);
+	}
+
+	/**
+	 * Creates a new labeled button.
+	 *
+	 * @param text
+	 *            The text to show on the button.
+	 * @param action
+	 *            The action to fire when the button is pressed.
+	 * @param size
+	 *            The font size of the text.
+	 * @param textColor
+	 *            The color of the text, or <code>null</code> to use the default color.
+	 */
+	public LabeledButton(String text, Action action, EFontSize size, AbstractColor textColor) {
 		super(action, BUTTON, BUTTON_ACTIVE, null);
 		this.size = size;
 		this.text = text;
 		this.action = action;
+		this.textColor = textColor;
 	}
 
 	public LabeledButton(String text, Action action) {
@@ -56,7 +75,13 @@ public class LabeledButton extends Button {
 		super.drawAt(gl);
 
 		TextDrawer drawer = gl.getTextDrawer(size);
-		drawer.renderCentered(getPosition().getCenterX(), getPosition().getCenterY(), getText());
+		float cx = getPosition().getCenterX();
+		float cy = getPosition().getCenterY();
+		if (textColor != null) {
+			drawer.drawString(cx - drawer.getWidth(text) / 2, cy - drawer.getHeight(text) / 2, textColor, text);
+		} else {
+			drawer.renderCentered(cx, cy, getText());
+		}
 	}
 
 	protected String getText() {
