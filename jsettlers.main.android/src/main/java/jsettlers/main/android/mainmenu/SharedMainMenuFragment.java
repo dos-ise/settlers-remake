@@ -25,11 +25,15 @@ import org.androidannotations.annotations.ViewById;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 
 import go.graphics.android.GOSurfaceView;
 import go.graphics.area.Area;
 import go.graphics.region.Region;
+import jsettlers.graphics.localization.Labels;
 import jsettlers.graphics.menu.JoinGameMapInfo;
 import jsettlers.graphics.menu.JoinGamePanel;
 import jsettlers.graphics.menu.JoinGamePlayerSlotData;
@@ -41,6 +45,7 @@ import jsettlers.graphics.menu.MapPreviewImage;
 import jsettlers.graphics.menu.MenuContent;
 import jsettlers.graphics.menu.MenuImageProvider;
 import jsettlers.graphics.menu.SettingsMenuPanel;
+import jsettlers.graphics.ui.UIInput;
 import jsettlers.graphics.ui.UIPanel;
 import jsettlers.logic.map.loading.EMapStartResources;
 import jsettlers.logic.map.loading.MapLoader;
@@ -102,8 +107,27 @@ public class SharedMainMenuFragment extends Fragment implements MainMenuActions 
 	}
 
 	private void showMenu(UIPanel panel) {
-		goRegion.setContent(new MenuContent(panel, action -> {
-		}));
+		MenuContent menuContent = new MenuContent(panel, action -> {
+		});
+		menuContent.setInputFocusListener(this::handleInputFocus);
+		goRegion.setContent(menuContent);
+	}
+
+	/**
+	 * Android has no physical keyboard, so a focused text input opens a text entry dialog. The
+	 * entered text is written back into the input field.
+	 */
+	private void handleInputFocus(UIInput input) {
+		View view = View.inflate(getActivity(), R.layout.dialog_edit_text, null);
+		final EditText editText = view.findViewById(R.id.edit_text);
+		editText.setText(input.getText());
+		new AlertDialog.Builder(getActivity())
+				.setTitle(Labels.getString("general.search"))
+				.setView(view)
+				.setPositiveButton(android.R.string.ok, (d, which) -> input.setTextAndNotify(editText.getText().toString()))
+				.setNegativeButton(android.R.string.cancel, null)
+				.create()
+				.show();
 	}
 
 	private MapMenuItem toMapMenuItem(MapLoader loader) {

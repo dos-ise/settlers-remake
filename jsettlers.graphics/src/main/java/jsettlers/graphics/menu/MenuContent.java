@@ -37,6 +37,8 @@ import jsettlers.graphics.action.ActionHandler;
 import jsettlers.graphics.action.ExecutableAction;
 import jsettlers.graphics.font.FontDrawerFactory;
 import jsettlers.graphics.map.ReplaceableTextDrawer;
+import java.util.function.Consumer;
+
 import jsettlers.graphics.ui.UIInput;
 import jsettlers.graphics.ui.UIPanel;
 import jsettlers.graphics.utils.FocusAction;
@@ -56,6 +58,7 @@ public class MenuContent implements RegionContent, ActionFireable {
 	private final ReplaceableTextDrawer textDrawer = new ReplaceableTextDrawer();
 
 	private UIInput focusedInput;
+	private Consumer<UIInput> inputFocusListener;
 	private int width = 1;
 	private int height = 1;
 	private UIPoint mousePosition = new UIPoint(0, 0);
@@ -126,11 +129,25 @@ public class MenuContent implements RegionContent, ActionFireable {
 	public void fireAction(IAction action) {
 		if (action instanceof FocusAction) {
 			focusedInput = ((FocusAction) action).getInput();
+			if (inputFocusListener != null) {
+				inputFocusListener.accept(focusedInput);
+			}
 		} else if (action instanceof ExecutableAction) {
 			((ExecutableAction) action).execute();
 		} else {
 			actionFireable.fireAction(action);
 		}
+	}
+
+	/**
+	 * Sets a listener that is called whenever a text input field is focused. Platforms without a
+	 * physical keyboard (e.g. Android) use this to show a soft keyboard or a text entry dialog.
+	 *
+	 * @param inputFocusListener
+	 *            The listener or <code>null</code> to remove it.
+	 */
+	public void setInputFocusListener(Consumer<UIInput> inputFocusListener) {
+		this.inputFocusListener = inputFocusListener;
 	}
 
 	private final GOEventHandler hoverHandler = new GOModalEventHandler() {

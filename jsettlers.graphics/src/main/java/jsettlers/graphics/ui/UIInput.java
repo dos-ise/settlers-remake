@@ -96,6 +96,20 @@ public class UIInput extends UIPanel implements GOEventHandler {
 		carret = text.length();
 	}
 
+	/**
+	 * Sets the text of this input and notifies the text changed listener. Used by platforms that
+	 * enter text through a dialog or soft keyboard instead of key events.
+	 * 
+	 * @param text
+	 *            The new text.
+	 */
+	public void setTextAndNotify(String text) {
+		setText(text);
+		if (textChangedListener != null) {
+			textChangedListener.accept(inputString.toString());
+		}
+	}
+
 	@Override
 	public void aborted(GOEvent event) {}
 
