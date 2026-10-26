@@ -67,8 +67,26 @@ shadowJar {
 	dependsOn copyDependencies
 }
 
-// --- Native packaging with jpackage (Windows .exe / Linux .deb) ---
+// --- Native packaging with jpackage (portable zip for Windows/Linux/macOS) ---
 def jpackageInputDir = layout.buildDirectory.dir('jpackage/input')
+def osName = System.getProperty('os.name').toLowerCase(Locale.ENGLISH)
+def isWindows = osName.contains('windows')
+def isLinux = osName.contains('linux')
+def isMac = osName.contains('mac') || osName.contains('darwin')
+def releaseVersion = project.findProperty('releaseVersion') ?: '0.7.0.0'
+def macVersion = releaseVersion
+if (isMac) {
+	// macOS jpackage only accepts 1-3 version components and the first
+	// number must not be zero (e.g. 0.7.0.0 -> 1.7.0).
+	def parts = macVersion.tokenize('.')
+	if (parts.size() > 3) {
+		parts = parts.take(3)
+	}
+	if (parts[0] == '0') {
+		parts[0] = '1'
+	}
+	macVersion = parts.join('.')
+}
 
 tasks.register('prepareJpackageInput', Sync) {
 	dependsOn tasks.named('shadowJar')
@@ -202,34 +220,17 @@ tasks.register('generateMacIcon') {
 
 tasks.register('nativePackage', Exec) {
 	group = 'distribution'
-	description = 'Builds a native installer (Windows .exe / Linux .deb / macOS .dmg) with jpackage.'
+	description = 'Builds a portable app-image (Windows/Linux/macOS) with jpackage.'
 	dependsOn tasks.named('prepareJpackageInput')
 
-	def osName = System.getProperty('os.name').toLowerCase(Locale.ENGLISH)
-	def isWindows = osName.contains('windows')
-	def isLinux = osName.contains('linux')
-	def isMac = osName.contains('mac') || osName.contains('darwin')
 	def jpackageBin = new File(System.getProperty('java.home'), 'bin/jpackage' + (isWindows ? '.exe' : '')).absolutePath
-	def version = project.findProperty('releaseVersion') ?: '0.7.0.0'
-	if (isMac) {
-		// macOS jpackage only accepts 1-3 version components and the first
-		// number must not be zero (e.g. 0.7.0.0 -> 1.7.0).
-		def parts = version.tokenize('.')
-		if (parts.size() > 3) {
-			parts = parts.take(3)
-		}
-		if (parts[0] == '0') {
-			parts[0] = '1'
-		}
-		version = parts.join('.')
-	}
 	def destDir = layout.buildDirectory.dir('jpackage')
 
 	def jpackageArgs = [
 		jpackageBin,
-		'--type', isWindows ? 'exe' : (isLinux ? 'deb' : (isMac ? 'dmg' : 'app-image')),
+		'--type', 'app-image',
 		'--name', 'JSettlers',
-		'--app-version', version,
+		'--app-version', isMac ? macVersion : releaseVersion,
 		'--vendor', 'JSettlers',
 		'--input', jpackageInputDir.get().asFile.absolutePath,
 		'--main-jar', 'JSettlers.jar',
@@ -243,12 +244,24 @@ tasks.register('nativePackage', Exec) {
 		jpackageArgs += ['--icon', layout.buildDirectory.file('jpackage/icon.ico').get().asFile.absolutePath]
 	} else if (isLinux) {
 		jpackageArgs += ['--icon', rootProject.file('jsettlers.main.swing/src/main/resources/jsettlers/main/swing/icon.png').absolutePath]
-		jpackageArgs += ['--linux-deb-maintainer', 'jsettlers@users.noreply.github.com']
-		jpackageArgs += ['--linux-app-category', 'Game']
 	} else if (isMac) {
 		dependsOn tasks.named('generateMacIcon')
 		jpackageArgs += ['--icon', layout.buildDirectory.file('jpackage/icon.icns').get().asFile.absolutePath]
 		jpackageArgs += ['--mac-package-identifier', 'org.jsettlers.JSettlers']
 	}
 	commandLine jpackageArgs
+}
+
+// Each platform ships as its own portable zip (unzip and start, no installer).
+tasks.register('packagePortableZip', Zip) {
+	group = 'distribution'
+	description = 'Zips the app-image into a portable distribution for the current platform.'
+	dependsOn tasks.named('nativePackage')
+	onlyIf { isWindows || isLinux || isMac }
+	from isMac ? layout.buildDirectory.dir('jpackage/JSettlers.app') : layout.buildDirectory.dir('jpackage/JSettlers')
+	into isMac ? 'JSettlers.app' : 'JSettlers'
+	archiveBaseName = 'JSettlers'
+	archiveVersion = isMac ? macVersion : releaseVersion
+	archiveClassifier = isWindows ? 'windows' : (isLinux ? 'linux' : 'macos')
+	destinationDirectory = layout.buildDirectory.dir('jpackage')
 }

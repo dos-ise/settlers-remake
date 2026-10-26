@@ -5,9 +5,9 @@ The first release of the dos-ise fork, building on v0.6.0.9-alpha. It focuses on
 ## Assets
 
 - **JSettlers.zip** – desktop game for Windows/Linux (includes the Map Editor and tools)
-- **JSettlers-0.7.0.0.exe** – Windows installer (bundled JRE, no Java installation needed)
-- **jsettlers_0.7.0.0_amd64.deb** – Linux Debian/Ubuntu package (bundled JRE, no Java installation needed)
-- **JSettlers-1.7.0.dmg** – macOS installer (bundled JRE, no Java installation needed; macOS requires a version that does not start with 0, so 0.7.0.0 is reported as 1.7.0)
+- **JSettlers-0.7.0.0-windows.zip** – portable Windows build (bundled JRE, unzip and double-click `JSettlers.exe`, no installation needed)
+- **JSettlers-0.7.0.0-linux.zip** – portable Linux build (bundled JRE, unzip and run `JSettlers/bin/JSettlers`, works on any distro)
+- **JSettlers-1.7.0-macos.zip** – portable macOS build (bundled JRE, unzip and open `JSettlers.app`; macOS requires a version that does not start with 0, so 0.7.0.0 is reported as 1.7.0)
 - **JSettlers-Android.apk** – Android app
 - **DedicatedJSettlersServer.jar** – dedicated multiplayer server
 
@@ -66,6 +66,6 @@ The computer players have been reworked into much more capable opponents:
 - Build with **Gradle 8 on JDK 21**, still producing Java 11 bytecode.
 - Updated deprecated GitHub Actions.
 - **Automated release workflow** – pushing a `v*` tag now builds and publishes the release with all six assets.
-- **Native packages** – the desktop game is also packaged with `jpackage` as a Windows `.exe` installer, a Linux `.deb` package and a macOS `.dmg`, each bundling its own JRE.
+- **Native packages** – the desktop game is packaged with `jpackage` as portable app-images for Windows, Linux and macOS, each bundling its own JRE and shipped as a per-platform zip (no installer, no security-warning setup).
 - **Manual CI trigger** – the workflow can be run manually (Actions → CI → Run workflow) to build and inspect the native packages without creating a release.
 - Fixes ported from the BotGGias fork (fog-of-war save sync, movable draw order, geologist resource sound).
