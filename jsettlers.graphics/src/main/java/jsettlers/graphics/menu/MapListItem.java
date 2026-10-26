@@ -26,7 +26,7 @@ import jsettlers.graphics.ui.UIPanel;
 import jsettlers.graphics.ui.UIListItem;
 
 /**
- * A list item that shows the preview image, the name and the details of a map in the shared map selection menu.
+ * A list item that shows the preview image, the name and a short info line of a map in the shared map selection menu.
  *
  * @author Copilot
  */
@@ -49,12 +49,10 @@ public class MapListItem extends UIPanel implements UIListItem {
 			textLeft = 0.22f;
 		}
 
-		Label infoLabel = new Label(buildInfo(map), EFontSize.NORMAL, Label.EHorizontalAlignment.LEFT);
-		Label descriptionLabel = new Label(map.getDescription(), EFontSize.NORMAL, Label.EHorizontalAlignment.LEFT);
+		Label infoLabel = new Label(buildInfo(map), EFontSize.SMALL, Label.EHorizontalAlignment.LEFT);
 
-		addChild(nameLabel, textLeft, 0.6f, 0.98f, 0.95f);
-		addChild(infoLabel, textLeft, 0.35f, 0.98f, 0.6f);
-		addChild(descriptionLabel, textLeft, 0.05f, 0.98f, 0.35f);
+		addChild(nameLabel, textLeft, 0.55f, 0.98f, 0.95f);
+		addChild(infoLabel, textLeft, 0.1f, 0.98f, 0.5f);
 	}
 
 	private static String buildInfo(MapMenuItem map) {
