@@ -223,7 +223,14 @@ public class GLFWContextCreator extends AsyncContextCreator {
 
 		private final EnumSet<EModifier> activeMods = EnumSet.noneOf(EModifier.class);
 
-		private GLFWKeyCallbackI key_callback = (window, key, scancode, action, modsUNUSUED) -> {
+		private GLFWKeyCallbackI key_callback = (window, key, scancode, action, keyMods) -> {
+			// Alt+Enter toggles fullscreen. The Swing frame is hidden with the GLFW backend, so
+			// the Swing KeyboardFocusManager never sees this key combination.
+			if (action == GLFW.GLFW_PRESS && key == GLFW.GLFW_KEY_ENTER && (keyMods & GLFW.GLFW_MOD_ALT) != 0) {
+				toggleFullscreen();
+				return;
+			}
+
 			String name = GLFW.glfwGetKeyName(key, scancode);
 			if(name == null) {
 				name = keys.get(key);

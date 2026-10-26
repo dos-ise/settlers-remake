@@ -244,7 +244,11 @@ public class JSettlersFrame extends JFrame {
 			}
 			revalidate();
 			repaint();
-			if (!isGlfwBackend()) {
+			if (isGlfwBackend()) {
+				// The GLFW window is the visible one; hide the Swing frame so it does not show
+				// stale Swing content (e.g. the LAN connection panel) next to the GL window.
+				setVisible(false);
+			} else {
 				setVisible(true);
 			}
 		});
@@ -293,9 +297,9 @@ public class JSettlersFrame extends JFrame {
 	private void setNewContentPane(Container newContent) {
 		abortRedrawTimerIfPresent();
 		disposeAreaContainer();
-		// The game runs in its own (GLFW) window, so this menu window is hidden during a match
-		// (see setContent). Whenever we switch back to a menu/stats panel, show it again.
-		if (isDisplayable() && !isVisible() && !isGlfwBackend()) {
+		// The GLFW window is destroyed when the area container is disposed, so the Swing frame
+		// becomes the only window again and must be shown (e.g. for the LAN connection panel).
+		if (isDisplayable() && !isVisible()) {
 			setVisible(true);
 		}
 		setContentPane(newContent);
