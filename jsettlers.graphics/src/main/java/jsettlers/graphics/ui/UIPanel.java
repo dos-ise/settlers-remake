@@ -243,6 +243,18 @@ public class UIPanel implements UIElement {
 	}
 
 	@Override
+	public void handleZoom(float relativex, float relativey, float zoomFactor) {
+		for (ChildLink link : children) {
+			if (link.left <= relativex && relativex <= link.right && link.bottom <= relativey && relativey <= link.top) {
+				float childX = (relativex - link.left) / (link.right - link.left);
+				float childY = (relativey - link.bottom) / (link.top - link.bottom);
+				link.child.handleZoom(childX, childY, zoomFactor);
+				return;
+			}
+		}
+	}
+
+	@Override
 	public void onAttach() {
 		if (!attached) {
 			for (ChildLink link : children) {

@@ -138,15 +138,17 @@ public class UIList<T> implements UIElement {
 
 			// side
 			ImageProvider provider = ImageProvider.getInstance();
+			float scrollbarWidth = width * (1 - RIGHTBORDER);
+			float scrollbarX = minX + width * RIGHTBORDER;
 			provider.getImage(SCROLLBAR_TOP).drawImageAtRect(gl,
-					minX + width * RIGHTBORDER, sliderMaxY - edgeHeight,
-					 width, sliderMaxY, 1);
+					scrollbarX, sliderMaxY - edgeHeight,
+					scrollbarWidth, edgeHeight, 1);
 			provider.getImage(SCROLLBAR_MIDDLE).drawImageAtRect(gl,
-					minX + width * RIGHTBORDER, edgeHeight,
-					 width, sliderMaxY - edgeHeight, 1);
+					scrollbarX, sliderMinY + edgeHeight,
+					scrollbarWidth, Math.max(0, sliderMaxY - sliderMinY - 2 * edgeHeight), 1);
 			provider.getImage(SCROLLBAR_BOTTOM).drawImageAtRect(gl,
-					minX + width * RIGHTBORDER, sliderMinY, width,
-					 edgeHeight, 1);
+					scrollbarX, sliderMinY,
+					scrollbarWidth, edgeHeight, 1);
 		}
 	}
 
@@ -173,6 +175,12 @@ public class UIList<T> implements UIElement {
 
 	protected void scrollBy(int offset) {
 		listoffset = itemheight * offset;
+	}
+
+	@Override
+	public void handleZoom(float relativex, float relativey, float zoomFactor) {
+		// The mouse wheel is converted to a zoom event. Scroll the list by one item per wheel step.
+		scrollBy(zoomFactor > 1 ? -1 : 1);
 	}
 
 	private class SelectAction extends ExecutableAction {

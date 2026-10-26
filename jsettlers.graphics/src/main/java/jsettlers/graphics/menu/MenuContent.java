@@ -24,6 +24,7 @@ import go.graphics.event.GOKeyEvent;
 import go.graphics.event.GOModalEventHandler;
 import go.graphics.event.command.GOCommandEvent;
 import go.graphics.event.mouse.GOHoverEvent;
+import go.graphics.event.mouse.GOZoomEvent;
 import go.graphics.region.RegionContent;
 import go.graphics.text.EFontSize;
 import go.graphics.text.TextDrawer;
@@ -104,6 +105,9 @@ public class MenuContent implements RegionContent, ActionFireable {
 		} else if (event instanceof GOHoverEvent) {
 			GOHoverEvent hoverEvent = (GOHoverEvent) event;
 			hoverEvent.setHandler(hoverHandler);
+		} else if (event instanceof GOZoomEvent) {
+			GOZoomEvent zoomEvent = (GOZoomEvent) event;
+			zoomEvent.setHandler(zoomHandler);
 		}
 	}
 
@@ -151,6 +155,35 @@ public class MenuContent implements RegionContent, ActionFireable {
 		float relativeY = (float) (position.getY() / height);
 		String description = rootPanel.getDescription(relativeX, relativeY);
 		tooltipString = description == null ? "" : description;
+	}
+
+	private final GOModalEventHandler zoomHandler = new GOModalEventHandler() {
+		@Override
+		public void phaseChanged(GOEvent event) {
+		}
+
+		@Override
+		public void finished(GOEvent event) {
+		}
+
+		@Override
+		public void aborted(GOEvent event) {
+		}
+
+		@Override
+		public void eventDataChanged(GOEvent event) {
+			handleZoom((GOZoomEvent) event);
+		}
+	};
+
+	private void handleZoom(GOZoomEvent zoomEvent) {
+		UIPoint position = zoomEvent.getPointingPosition();
+		if (position == null) {
+			position = mousePosition;
+		}
+		float relativeX = (float) (position.getX() / width);
+		float relativeY = (float) (position.getY() / height);
+		rootPanel.handleZoom(relativeX, relativeY, zoomEvent.getZoomFactor());
 	}
 
 	private void drawTooltip(GLDrawContext gl) {

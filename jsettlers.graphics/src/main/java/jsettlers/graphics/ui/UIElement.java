@@ -42,4 +42,19 @@ public interface UIElement {
 	 * The opposite of {@link #onAttach()}.
 	 */
 	void onDetach();
+
+	/**
+	 * Handles a zoom event (usually created by the mouse wheel) at the given relative position.
+	 * <p>
+	 * Menus use this to scroll lists. The default implementation does nothing.
+	 *
+	 * @param relativex
+	 *            The relative x position of the event (0..1).
+	 * @param relativey
+	 *            The relative y position of the event (0..1).
+	 * @param zoomFactor
+	 *            The zoom factor, 1 means no zoom, values &gt; 1 zoom in, values &lt; 1 zoom out.
+	 */
+	default void handleZoom(float relativex, float relativey, float zoomFactor) {
+	}
 }
