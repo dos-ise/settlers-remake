@@ -186,16 +186,22 @@ public class UIList<T> implements UIElement {
 	private float panStartOffset = Float.NaN;
 
 	@Override
+	public void handlePanStart(float relativex, float relativey) {
+		panStartOffset = listoffset;
+	}
+
+	@Override
 	public void handlePan(float relativex, float relativey, float panDistanceX, float panDistanceY) {
-		// A pan starts with a distance of (0, 0), so record the offset the pan started at.
-		if (panDistanceX == 0 && panDistanceY == 0) {
-			panStartOffset = listoffset;
-		}
 		float height = position.getHeight();
 		if (height > 0 && !Float.isNaN(panStartOffset)) {
 			// Dragging up (positive y) scrolls down, so the offset grows with the pan distance.
 			listoffset = panStartOffset + panDistanceY / height;
 		}
+	}
+
+	@Override
+	public void handlePanEnd(float relativex, float relativey) {
+		panStartOffset = Float.NaN;
 	}
 
 	private class SelectAction extends ExecutableAction {

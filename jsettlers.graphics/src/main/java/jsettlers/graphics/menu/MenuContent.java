@@ -193,14 +193,21 @@ public class MenuContent implements RegionContent, ActionFireable {
 	private final GOModalEventHandler panHandler = new GOModalEventHandler() {
 		@Override
 		public void phaseChanged(GOEvent event) {
+			GOPanEvent panEvent = (GOPanEvent) event;
+			UIPoint center = panEvent.getPanCenter();
+			if (center != null) {
+				rootPanel.handlePanStart((float) (center.getX() / width), (float) (center.getY() / height));
+			}
 		}
 
 		@Override
 		public void finished(GOEvent event) {
+			endPan((GOPanEvent) event);
 		}
 
 		@Override
 		public void aborted(GOEvent event) {
+			endPan((GOPanEvent) event);
 		}
 
 		@Override
@@ -211,9 +218,15 @@ public class MenuContent implements RegionContent, ActionFireable {
 				return;
 			}
 			UIPoint distance = panEvent.getPanDistance();
-			float relativeX = (float) (center.getX() / width);
-			float relativeY = (float) (center.getY() / height);
-			rootPanel.handlePan(relativeX, relativeY, (float) distance.getX(), (float) distance.getY());
+			rootPanel.handlePan((float) (center.getX() / width), (float) (center.getY() / height),
+					(float) distance.getX(), (float) distance.getY());
+		}
+
+		private void endPan(GOPanEvent panEvent) {
+			UIPoint center = panEvent.getPanCenter();
+			if (center != null) {
+				rootPanel.handlePanEnd((float) (center.getX() / width), (float) (center.getY() / height));
+			}
 		}
 	};
 

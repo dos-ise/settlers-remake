@@ -75,4 +75,26 @@ public interface UIElement {
 	 */
 	default void handlePan(float relativex, float relativey, float panDistanceX, float panDistanceY) {
 	}
+
+	/**
+	 * Called when a pan (drag) gesture starts at the given relative position.
+	 *
+	 * @param relativex
+	 *            The relative x position of the pan start (0..1).
+	 * @param relativey
+	 *            The relative y position of the pan start (0..1).
+	 */
+	default void handlePanStart(float relativex, float relativey) {
+	}
+
+	/**
+	 * Called when a pan (drag) gesture ends at the given relative position.
+	 *
+	 * @param relativex
+	 *            The relative x position of the pan start (0..1).
+	 * @param relativey
+	 *            The relative y position of the pan start (0..1).
+	 */
+	default void handlePanEnd(float relativex, float relativey) {
+	}
 }
