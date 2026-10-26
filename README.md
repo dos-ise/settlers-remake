@@ -25,6 +25,13 @@ Therefore, always include the following information in a bug report:
 Many thanks in advance for helping to improve this game!
 
 
+## Screenshots
+
+![Main menu](docs/screenshots/main_menu.png)
+
+![Gameplay](docs/screenshots/gameplay.png)
+
+
 ## Playing JSettlers
 
 In order to play the game, you need to have the folders "GFX", "SND" and "MAP" (optional) of the original version of "The Settlers 3" as obtained by installing the original "The Settlers 3" game (DEMO version also works).
