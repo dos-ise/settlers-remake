@@ -147,8 +147,8 @@ public class MainMenuFragment extends Fragment {
 			this.viewModelOwner = parent;
 			this.mainMenuNavigator = mainMenuNavigator;
 
-			layouts.add(R.layout.vh_single_player);
-			layouts.add(R.layout.vh_multi_player);
+			// The shared GL menu (SharedMainMenuFragment) provides the single and multiplayer
+			// entries, so the native home screen only handles the game data setup.
 		}
 
 		@Override
@@ -200,10 +200,6 @@ public class MainMenuFragment extends Fragment {
 			}
 			case R.layout.vh_game_in_progress:
 				return new GameInProgressViewHolder(view, viewModelOwner, mainMenuNavigator);
-			case R.layout.vh_single_player:
-				return new SinglePlayerViewHolder(view, viewModelOwner, mainMenuNavigator);
-			case R.layout.vh_multi_player:
-				return new MultiPlayerViewHolder(view, viewModelOwner, mainMenuNavigator);
 			default:
 				throw new RuntimeException("Layout not support");
 			}
