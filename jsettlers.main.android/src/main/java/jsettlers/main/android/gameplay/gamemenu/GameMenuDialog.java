@@ -28,6 +28,7 @@ import android.widget.SeekBar;
 import java.util.function.IntConsumer;
 
 import jsettlers.main.android.R;
+import jsettlers.main.android.core.GameManager;
 import jsettlers.main.android.core.ui.dialogs.EditTextDialog;
 import jsettlers.main.android.databinding.DialogGameMenuBinding;
 import jsettlers.main.android.gameplay.statistics.EndgameStatisticsActivity_;
@@ -57,15 +58,30 @@ public class GameMenuDialog extends DialogFragment {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		GameManager gameManager = (GameManager) requireActivity().getApplication();
+		if (!gameManager.isGameInProgress()) {
+			// The game has already been quit (e.g. this dialog is being recreated after the game
+			// ended). There is no game menu to control anymore, so do not show the dialog.
+			dismissAllowingStateLoss();
+			return;
+		}
 		GameMenuViewModelFactory gameMenuViewModelFactory = new GameMenuViewModelFactory(requireActivity().getApplication());
 		viewModel = gameMenuViewModelFactory.get(this);
 
-		viewModel.getGameQuitted().observe(this, x -> EndgameStatisticsActivity_.intent(this).start());
+		viewModel.getGameQuitted().observe(this, x -> {
+			dismiss();
+			EndgameStatisticsActivity_.intent(this).start();
+		});
 	}
 
 	@NonNull
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
+		if (viewModel == null) {
+			// The game is not in progress anymore; the dialog was dismissed in onCreate.
+			dismiss();
+			return new AlertDialog.Builder(requireActivity()).create();
+		}
 		LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
 		DialogGameMenuBinding binding = DialogGameMenuBinding.inflate(layoutInflater);
 		binding.setLifecycleOwner(this);
