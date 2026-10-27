@@ -89,7 +89,6 @@
 	<string name="halt">Stopp</string>
 	<string name="join_multi_player_game">Multiplayer Spiel beitreten</string>
 	<string name="load_single_player_game">Lade Einzelspieler</string>
-	<string name="menu_game_in_progress">Spiel läuft</string>
 	<string name="menu_join">Beitreten</string>
 	<string name="menu_load">Laden</string>
 	<string name="menu_multi_player_info">Fordere deine Freunde auf Handy, Tablet und Desktop heraus.</string>
@@ -99,19 +98,13 @@
 	<string name="menu_single_player_title">Einzelspieler</string>
 	<string name="new_multi_player_game">Neues Mehrspieler Spiel</string>
 	<string name="new_single_player_game">Neues Einzelspieler Spiel</string>
-	<string name="no_saved_games">Keine Spielstände vorhanden</string>
 	<string name="notification_game_in_progress">JSettlers Spiel läuft</string>
 	<string name="number_of_players">Spieler</string>
 	<string name="ok">OK</string>
 	<string name="peacetime">Friedenszeit</string>
-	<string name="resource_directory_button">Lokalisiere die Ordner</string>
-	<string name="resource_directory_info">JSettlers benötigt die GFX und SND Ordner aus dem Installationsverzeichnis eines originalen Die Siedler III. Finde diese Ordner und kopiere sie auf dein Android Gerät um sie dann für JSettlers zu nutzen.</string>
 	<string name="resource_directory_title">Grafik- und Audio-Dateien</string>
 	<string name="resource_selection_dialog_title">Lokalisiere die Grafik- und Audio-Dateien</string>
 	<string name="searching_for_multiplayer_games">Suche Spiele…</string>
-	<string name="settings">Einstellungen</string>
-	<string name="settings_name">Name</string>
-	<string name="settings_player_name">Spielername</string>
 	<string name="start_game">Starte Spiel</string>
 	<string name="start_resources">Ressourcen</string>
 	<string name="work_here">Arbeite hier</string>
@@ -141,7 +134,6 @@
 	<string name="ask_workarea">Arbeitsbereich auswählen</string>
 	<string name="ask_dock">Stegposition auswählen</string>
 	<string name="ask_spell">Zauberstelle auswählen</string>
-	<string name="settings_play_all_music">Alle Musikdateien abspielen</string>
 	<string name="move_to_title">Bewegen</string>
 	<string name="move_to_normal">Normal</string>
 	<string name="move_to_forced">Erzwungen</string>
@@ -151,7 +143,6 @@
 	<string name="statistics_title">Statistik</string>
 	<string name="statistics_no_data">Noch keine Statistik aufgezeichnet</string>
 	<string name="statistics_time_axis">Spielzeit (h:mm), jede Spielminute aufgezeichnet</string>
-	<string name="settings_audio">Audio</string>
 	<string name="settings_music_enabled">Musik abspielen</string>
 	<string name="settings_music_volume">Musiklautstärke</string>
 	<string name="settings_sound_volume">Soundeffekte-Lautstärke</string>

@@ -39,6 +39,8 @@ dependencies {
 	implementation project(':jsettlers.graphics')
 	implementation project(':jsettlers.logic')
 	implementation project(':jsettlers.network')
+	implementation project(':jsettlers.gog')
+	implementation project(':jsettlers.ubisoft')
 	runtimeOnly project(':jsettlers.testutils')
 	implementation 'com.google.code.gson:gson:2.9.0'
 

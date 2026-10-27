@@ -49,11 +49,6 @@
 			android:screenOrientation="landscape"/>
 
 		<activity
-			android:name=".mainmenu.settings.SettingsActivity_"
-			android:label="@string/settings"
-			android:screenOrientation="landscape"/>
-
-		<activity
 			android:name=".mainmenu.ubisoft.UbisoftLoginActivity"
 			android:label="@string/ubisoft_login_title"
 			android:screenOrientation="landscape"

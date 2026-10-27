@@ -299,6 +299,9 @@ public final class ImageProvider {
 	}
 
 	private File findFileInPaths(String fileName) {
+		if (lookupPath == null) {
+			return null;
+		}
 		for (File currentFile : lookupPath.listFiles()) {
 			if (currentFile.isFile() && currentFile.canRead() &&
 					currentFile.getName().equalsIgnoreCase(fileName)) {

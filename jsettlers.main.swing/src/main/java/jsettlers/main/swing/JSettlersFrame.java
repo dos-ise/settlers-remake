@@ -21,6 +21,9 @@ import java.awt.GraphicsEnvironment;
 import java.awt.HeadlessException;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
+import java.io.File;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -49,6 +52,8 @@ import jsettlers.common.menu.IStartingGame;
 import jsettlers.graphics.localization.Labels;
 import jsettlers.graphics.map.ETextDrawPosition;
 import jsettlers.graphics.map.MapContent;
+import jsettlers.graphics.menu.GameDataActions;
+import jsettlers.graphics.menu.GameDataPanel;
 import jsettlers.graphics.menu.MainMenuActions;
 import jsettlers.graphics.menu.MapListProvider;
 import jsettlers.graphics.menu.MapMenuItem;
@@ -91,7 +96,6 @@ public class JSettlersFrame extends JFrame {
 
 		SettingsManager settingsManager = SettingsManager.getInstance();
 
-		showMainMenu();
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setPreferredSize(new Dimension(1200, 800));
 		pack();
@@ -226,6 +230,35 @@ public class JSettlersFrame extends JFrame {
 		MenuContent menuContent = new MenuContent(mainMenuPanel, action -> {
 		});
 		showMenuContent(menuContent);
+	}
+
+	/**
+	 * Shows the shared, GL rendered game data setup panel. It is shown when the original Settlers 3
+	 * game data is missing and lets the user select the installation folder or download the game data
+	 * from GOG or Ubisoft Connect. The same panel code runs on desktop and Android.
+	 */
+	public void showGameDataSetup(GameDataActions actions) {
+		MenuImageProvider.setInstance(new MenuImageProvider(new SwingMenuImageDecoder()));
+		GameDataPanel panel = new GameDataPanel(actions);
+		showMenuContent(new MenuContent(panel, action -> {
+		}));
+	}
+
+	/**
+	 * Shows the shared game data setup panel and blocks until the user has selected or downloaded a
+	 * Settlers 3 folder.
+	 *
+	 * @return The selected folder, or null if the user cancelled.
+	 */
+	public File askForGameDataFolder() {
+		CompletableFuture<File> folderFuture = new CompletableFuture<>();
+		SwingGameDataActions actions = new SwingGameDataActions(this, folderFuture);
+		showGameDataSetup(actions);
+		try {
+			return folderFuture.get();
+		} catch (InterruptedException | ExecutionException ex) {
+			return null;
+		}
 	}
 
 	private MapMenuItem toMapMenuItem(MapLoader loader, boolean savegame) {
