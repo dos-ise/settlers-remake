@@ -43,6 +43,7 @@ import jsettlers.graphics.map.MapContent;
 import jsettlers.graphics.map.draw.ImageProvider;
 import jsettlers.main.android.R;
 import jsettlers.main.android.core.controls.ControlsResolver;
+import jsettlers.main.android.core.controls.AndroidTextInputProvider;
 import jsettlers.main.android.core.controls.GameMenu;
 import jsettlers.main.android.core.controls.SelectionControls;
 import jsettlers.main.android.core.controls.SelectionListener;
@@ -78,7 +79,11 @@ public class MapFragment extends Fragment implements SelectionListener, BackPres
 		ControlsResolver controlsResolver = new ControlsResolver(getActivity());
 		selectionControls = controlsResolver.getSelectionControls();
 		gameMenu = controlsResolver.getGameMenu();
-		addMapViews(controlsResolver.getMapContent());
+		MapContent mapContent = controlsResolver.getMapContent();
+		// The text input provider needs an Activity context so its dialogs use the AppCompat theme
+		// (the application context set up in ControlsAdapter has no theme and crashes on show()).
+		mapContent.setTextInputProvider(new AndroidTextInputProvider(getActivity()));
+		addMapViews(mapContent);
 	}
 
 	@AfterViews

@@ -22,10 +22,14 @@ import android.app.Application;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.multidex.MultiDexApplication;
 
 import java.io.IOException;
 
+import jsettlers.common.action.EActionType;
+import jsettlers.common.action.SaveAction;
 import jsettlers.common.menu.IJoinPhaseMultiplayerGameConnector;
 import jsettlers.common.menu.IJoiningGame;
 import jsettlers.common.menu.IMapInterfaceConnector;
@@ -33,6 +37,9 @@ import jsettlers.common.menu.IMultiplayerConnector;
 import jsettlers.common.menu.IStartedGame;
 import jsettlers.common.menu.IStartingGame;
 import jsettlers.common.statistics.GameStatistics;
+import jsettlers.graphics.localization.Labels;
+import jsettlers.graphics.map.MapContent;
+import jsettlers.graphics.ui.TextInputDialog;
 import jsettlers.logic.constants.Constants;
 import jsettlers.logic.constants.MatchConstants;
 import jsettlers.logic.map.loading.list.MapList;
@@ -167,7 +174,31 @@ public class MainApplication extends MultiDexApplication implements GameStarter,
 
 		GameService_.intent(this).start();
 
-		return controlsAdapter.getMapContent().getInterfaceConnector();
+		IMapInterfaceConnector connector = controlsAdapter.getMapContent().getInterfaceConnector();
+		// A bare SAVE request (SaveAction with a null description) is intercepted here to ask for a
+		// description and re-fired as a committed SaveAction; only the committed one is written by the
+		// game logic (see GuiInterface). The shared GL dialog is used on all platforms. The action
+		// arrives on the action firerer thread, so the dialog must be shown on the main thread.
+		connector.addListener(action -> {
+			if (action.getActionType() != EActionType.SAVE) {
+				return;
+			}
+			boolean needsPrompt = !(action instanceof SaveAction) || ((SaveAction) action).getDescription() == null;
+			if (!needsPrompt) {
+				return; // already the committed save; let the logic handle it (avoid a prompt loop)
+			}
+			MapContent mapContent = controlsAdapter.getMapContent();
+			new Handler(Looper.getMainLooper()).post(() -> {
+				mapContent.showDialog(new TextInputDialog(Labels.getString("save-game-description"), description -> {
+					mapContent.hideDialog();
+					// An empty description falls back to the map name in MainGrid.generateSaveHeader.
+					connector.fireAction(new SaveAction(description));
+				}, mapContent::hideDialog));
+				// Android has no physical keyboard: open the text entry dialog for the input field.
+				mapContent.requestDialogTextInput();
+			});
+		});
+		return connector;
 	}
 
 	/**

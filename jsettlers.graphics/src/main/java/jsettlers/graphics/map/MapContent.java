@@ -84,6 +84,7 @@ import jsettlers.common.player.EWinState;
 import jsettlers.common.statistics.IntervalTimeRateCalculator;
 import jsettlers.graphics.action.ActionFireable;
 import jsettlers.graphics.action.ActionHandler;
+import jsettlers.graphics.action.ExecutableAction;
 import jsettlers.graphics.action.ActionThreadBlockingListener;
 import jsettlers.graphics.font.FontDrawerFactory;
 import jsettlers.graphics.localization.Labels;
@@ -98,6 +99,9 @@ import jsettlers.graphics.messages.Messenger;
 import jsettlers.graphics.sound.BackgroundSound;
 import jsettlers.graphics.sound.MusicManager;
 import jsettlers.graphics.sound.SoundManager;
+import jsettlers.graphics.ui.UIInput;
+import jsettlers.graphics.ui.UIPanel;
+import jsettlers.graphics.utils.FocusAction;
 
 /**
  * This is the main map content class. It manages the map drawing on the screen region.
@@ -213,6 +217,16 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 	 * The controls that represent the interface.
 	 */
 	private final IControls controls;
+
+	/**
+	 * A modal dialog shown on top of the game, or <code>null</code> if none is shown.
+	 */
+	private volatile UIPanel dialogOverlay;
+
+	/**
+	 * The text input of the currently shown dialog, or <code>null</code>.
+	 */
+	private volatile UIInput dialogInput;
 
 	private FloatRectangle oldScreen;
 	private UIPoint mousePosition = new UIPoint(0, 0);
@@ -375,6 +389,11 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 			controls.drawAt(gl);
 			drawMessages(gl);
 			drawWinStateMsg(gl);
+
+			UIPanel dialog = dialogOverlay;
+			if (dialog != null) {
+				dialog.drawAt(gl);
+			}
 
 			drawFramerateTimeAndHash(gl);
 
@@ -765,6 +784,10 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 
 	@Override
 	public void handleEvent(GOEvent event) {
+		if (dialogOverlay != null) {
+			handleDialogEvent(event);
+			return;
+		}
 		if (event instanceof GOPanEvent) {
 			GOPanEvent panEvent = (GOPanEvent) event;
 			UIPoint center = panEvent.getPanCenter();
@@ -799,6 +822,66 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 
 	private void handleZoom(GOZoomEvent zoomEvent) {
 		zoomEvent.setHandler(new ZoomEventHandler());
+	}
+
+	/**
+	 * Routes input events to the currently shown modal dialog. All other game input is blocked while
+	 * the dialog is open.
+	 *
+	 * @param event
+	 *            The event to handle.
+	 */
+	private void handleDialogEvent(GOEvent event) {
+		UIPanel dialog = dialogOverlay;
+		if (event instanceof GOCommandEvent) {
+			GOCommandEvent commandEvent = (GOCommandEvent) event;
+			UIPoint position = commandEvent.getCommandPosition();
+			float relativeX = (float) (position.getX() / windowWidth);
+			float relativeY = (float) (position.getY() / windowHeight);
+			Optional<Action> action = dialog.getAction(relativeX, relativeY);
+			event.setHandler(new DialogActionHandler(action));
+		} else if (event instanceof GOKeyEvent) {
+			GOKeyEvent keyEvent = (GOKeyEvent) event;
+			UIInput input = dialogInput;
+			if (input != null) {
+				keyEvent.setHandler(input);
+			}
+		}
+		// pan, draw, hover and zoom events are ignored while a dialog is shown.
+	}
+
+	/**
+	 * Executes the action of a dialog button. Executable actions (the dialog buttons) are run directly,
+	 * focus actions select the dialog's input field, everything else is forwarded to the game connector.
+	 */
+	private class DialogActionHandler implements GOEventHandler {
+		private final Optional<Action> action;
+
+		DialogActionHandler(Optional<Action> action) {
+			this.action = action;
+		}
+
+		@Override
+		public void aborted(GOEvent event) {
+		}
+
+		@Override
+		public void phaseChanged(GOEvent event) {
+		}
+
+		@Override
+		public void finished(GOEvent event) {
+			action.ifPresent(a -> {
+				if (a instanceof FocusAction) {
+					dialogInput = ((FocusAction) a).getInput();
+					requestDialogTextInput();
+				} else if (a instanceof ExecutableAction) {
+					((ExecutableAction) a).execute();
+				} else {
+					getInterfaceConnector().fireAction(a);
+				}
+			});
+		}
 	}
 
 	/**
@@ -1183,6 +1266,49 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 	 */
 	public void setTextInputProvider(ITextInputProvider textInputProvider) {
 		this.textInputProvider = textInputProvider;
+	}
+
+	/**
+	 * Shows a modal dialog on top of the game. All input is routed to the dialog until it is hidden
+	 * with {@link #hideDialog()}. If the dialog is a {@link jsettlers.graphics.ui.TextInputDialog} its
+	 * input field is focused so that keyboard input is routed into it.
+	 *
+	 * @param dialog
+	 *            The dialog to show.
+	 */
+	public void showDialog(UIPanel dialog) {
+		dialog.setPosition(new FloatRectangle(0, 0, windowWidth, windowHeight));
+		this.dialogOverlay = dialog;
+		this.dialogInput = dialog instanceof jsettlers.graphics.ui.TextInputDialog
+				? ((jsettlers.graphics.ui.TextInputDialog) dialog).getInput() : null;
+	}
+
+	/**
+	 * Hides the currently shown modal dialog, if any.
+	 */
+	public void hideDialog() {
+		this.dialogOverlay = null;
+		this.dialogInput = null;
+	}
+
+	/**
+	 * Asks the platform for a line of text for the currently shown dialog's input field. Used on
+	 * platforms without a physical keyboard (Android), where the text is entered through a platform
+	 * dialog and written back into the GL input field.
+	 */
+	public void requestDialogTextInput() {
+		UIInput input = dialogInput;
+		ITextInputProvider provider = textInputProvider;
+		if (input != null && provider != null) {
+			provider.requestText("", input::setTextAndNotify);
+		}
+	}
+
+	/**
+	 * @return true if a modal dialog is currently shown.
+	 */
+	public boolean isDialogShown() {
+		return dialogOverlay != null;
 	}
 
 	/**

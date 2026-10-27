@@ -56,6 +56,7 @@ import jsettlers.graphics.menu.MapPreviewImage;
 import jsettlers.graphics.menu.MenuContent;
 import jsettlers.graphics.menu.MenuImageProvider;
 import jsettlers.graphics.menu.SettingsMenuPanel;
+import jsettlers.graphics.ui.TextInputDialog;
 import jsettlers.logic.map.loading.EMapStartResources;
 import jsettlers.logic.map.loading.MapLoader;
 import jsettlers.logic.map.loading.list.MapList;
@@ -477,8 +478,9 @@ public class JSettlersFrame extends JFrame {
 		SwingUtilities.invokeLater(() -> setContent(content));
 		startedGame.setGameExitListener(exitGame -> SwingUtilities.invokeLater(() -> showEndgameStatistics(exitGame)));
 		IMapInterfaceConnector connector = content.getInterfaceConnector();
-		// Desktop save now depends on this Swing prompt listener: a bare SAVE request (SaveAction with null description) is intercepted here to ask the
-		// user for a description and re-fired as a committed SaveAction; only the committed one is written by the game logic.
+		// A bare SAVE request (SaveAction with a null description) is intercepted here to ask for a
+		// description and re-fired as a committed SaveAction; only the committed one is written by the
+		// game logic. The shared GL dialog is used on all platforms.
 		connector.addListener(action -> {
 			if (action.getActionType() != EActionType.SAVE) {
 				return;
@@ -488,11 +490,11 @@ public class JSettlersFrame extends JFrame {
 				return; // already the committed save; let the logic handle it (avoid a prompt loop)
 			}
 			SwingUtilities.invokeLater(() -> {
-				String description = JOptionPane.showInputDialog(this, "Description for this savegame (optional):", "");
-				if (description == null) {
-					return; // user cancelled -> abort the save
-				}
-				connector.fireAction(new SaveAction(description));
+				content.showDialog(new TextInputDialog(Labels.getString("save-game-description"), description -> {
+					content.hideDialog();
+					// An empty description falls back to the map name in MainGrid.generateSaveHeader.
+					connector.fireAction(new SaveAction(description));
+				}, content::hideDialog));
 			});
 		});
 		return connector;
