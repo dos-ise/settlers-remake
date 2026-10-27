@@ -41,16 +41,31 @@ public class UIList<T> implements UIElement {
 	/**
 	 * A solid black background so the list entries are readable on the menu background.
 	 */
-	private static final Image BACKGROUND = createBackground();
+	private final Image background = createBackground(new Color(0, 0, 0, 1), "list-background");
 
-	private static Image createBackground() {
+	/**
+	 * Background of every second list entry so the touch area of each row is visible.
+	 */
+	private final Image evenItemBackground = createBackground(new Color(0.1f, 0.1f, 0.1f, 1), "list-item-even");
+
+	/**
+	 * Background of the other list entries.
+	 */
+	private final Image oddItemBackground = createBackground(new Color(0.16f, 0.16f, 0.16f, 1), "list-item-odd");
+
+	/**
+	 * Background of the currently selected list entry.
+	 */
+	private final Image selectedItemBackground = createBackground(new Color(0.25f, 0.3f, 0.4f, 1), "list-item-selected");
+
+	private static Image createBackground(Color color, String name) {
 		ImageMetadata metadata = new ImageMetadata();
 		metadata.width = 1;
 		metadata.height = 1;
 		metadata.offsetX = 0;
 		metadata.offsetY = 0;
-		int[] rgba = new int[] { new Color(0, 0, 0, 1).getRGBA() };
-		return new SingleImage(metadata, rgba, "list-background");
+		int[] rgba = new int[] { color.getRGBA() };
+		return new SingleImage(metadata, rgba, name);
 	}
 
 	private static final float RIGHTBORDER = .97f;
@@ -123,7 +138,7 @@ public class UIList<T> implements UIElement {
 			float height = position.getHeight();
 			float width = position.getWidth();
 
-			BACKGROUND.drawImageAtRect(gl, minX, minY, width, height, 1);
+			background.drawImageAtRect(gl, minX, minY, width, height, 1);
 
 			int startindex = (int) (listoffset / itemheight);
 
@@ -137,6 +152,11 @@ public class UIList<T> implements UIElement {
 				// relative
 				float itemtop = 1 - i * itemheight + listoffset;
 				float itembottom = itemtop - itemheight;
+
+				Image itemBackground = activeItem == item ? selectedItemBackground
+						: (i % 2 == 0 ? evenItemBackground : oddItemBackground);
+				itemBackground.drawImageAtRect(gl, minX, minY + itembottom * height,
+						RIGHTBORDER * width, itemheight * height, 1);
 
 				listItem.setHighlighted(activeItem == item);
 				listItem.setPosition(new FloatRectangle(minX, minY + itembottom
