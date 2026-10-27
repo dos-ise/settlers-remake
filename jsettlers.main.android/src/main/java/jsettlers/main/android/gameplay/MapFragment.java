@@ -50,6 +50,7 @@ import jsettlers.main.android.core.controls.SelectionListener;
 import jsettlers.main.android.core.navigation.BackPressedListener;
 import jsettlers.main.android.core.ui.FragmentUtil;
 import jsettlers.main.android.gameplay.gamemenu.GameMenuDialog;
+import jsettlers.main.android.gameplay.statistics.EndgameStatisticsActivity_;
 
 /**
  * Shows the game map. The in-game UI (main panel, minimap, chat) is rendered by the shared {@code OriginalControls}
@@ -177,9 +178,14 @@ public class MapFragment extends Fragment implements SelectionListener, BackPres
 
 	private Observer<GameMenu.GameState> gameStateObserver = gameState -> {
 		if (gameState == GameMenu.GameState.QUITTED) {
-			// The game is shut down. The GameMenuDialog already started the EndgameStatisticsActivity, which
-			// continues to the main menu. Do not finish this activity here: it is the root of the task, so
-			// finishing it would close the whole app.
+			// The game is shut down. Navigate to the endgame statistics, which continues to the main
+			// menu. This is done here (and not only in the GameMenuDialog) so that it also works when
+			// the game is quit from the notification or the resume screen. The GameActivity is the
+			// root of the task, so it must not be finished here; the EndgameStatisticsActivity clears
+			// the whole task when it continues to the main menu.
+			if (isAdded()) {
+				EndgameStatisticsActivity_.intent(getActivity()).start();
+			}
 		}
 	};
 }

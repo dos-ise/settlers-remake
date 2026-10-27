@@ -31,7 +31,6 @@ import jsettlers.main.android.R;
 import jsettlers.main.android.core.GameManager;
 import jsettlers.main.android.core.ui.dialogs.EditTextDialog;
 import jsettlers.main.android.databinding.DialogGameMenuBinding;
-import jsettlers.main.android.gameplay.statistics.EndgameStatisticsActivity_;
 import jsettlers.main.android.gameplay.statistics.StatisticsDialog;
 
 public class GameMenuDialog extends DialogFragment {
@@ -69,8 +68,10 @@ public class GameMenuDialog extends DialogFragment {
 		viewModel = gameMenuViewModelFactory.get(this);
 
 		viewModel.getGameQuitted().observe(this, x -> {
+			// The navigation to the endgame statistics is done by the MapFragment when the game state
+			// becomes QUITTED, so that it also works when the game is quit from the notification or
+			// the resume screen. Only dismiss this dialog here.
 			dismiss();
-			EndgameStatisticsActivity_.intent(this).start();
 		});
 	}
 
