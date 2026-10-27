@@ -54,9 +54,9 @@ public class MainMenuPanel extends UIPanel {
 		addChild(buttonPanel, 0.03f, 0.1f, 0.28f, 0.9f);
 
 		addMenuButton(buttonPanel, "main-panel-new-single-player-game-button", 0f, 0.8f, 1f, 0.95f,
-				() -> showOpenPanel(Labels.getString("start-newgame"), freshMaps, Labels.getString("start-newgame-start"), actions::startNewSinglePlayerGame));
+				() -> showOpenPanel(Labels.getString("start-newgame"), freshMaps, Labels.getString("start-newgame-start"), actions::startNewSinglePlayerGame, null));
 		addMenuButton(buttonPanel, "start-loadgame", 0f, 0.65f, 1f, 0.8f,
-				() -> showOpenPanel(Labels.getString("start-loadgame"), savedMaps, Labels.getString("start-loadgame-start"), actions::startLoadGame));
+				() -> showOpenPanel(Labels.getString("start-loadgame"), savedMaps, Labels.getString("start-loadgame-start"), actions::startLoadGame, actions::deleteSavegame));
 		addMenuButton(buttonPanel, "start-newmultiplayer", 0f, 0.5f, 1f, 0.65f, actions::showNewMultiplayerGame);
 		addMenuButton(buttonPanel, "start-joinmultiplayer", 0f, 0.35f, 1f, 0.5f, actions::showJoinMultiplayerGame);
 		addMenuButton(buttonPanel, "settings-title", 0f, 0.2f, 1f, 0.35f, actions::showSettings);
@@ -81,8 +81,9 @@ public class MainMenuPanel extends UIPanel {
 		panel.addChild(button, left, bottom, right, top);
 	}
 
-	private void showOpenPanel(String title, MapListProvider provider, String openButtonText, Consumer<MapMenuItem> onSelect) {
-		setContent(new OpenPanel(title, provider, openButtonText, onSelect, this::showMainContent));
+	private void showOpenPanel(String title, MapListProvider provider, String openButtonText, Consumer<MapMenuItem> onSelect,
+			Consumer<MapMenuItem> onDelete) {
+		setContent(new OpenPanel(title, provider, openButtonText, onSelect, this::showMainContent, onDelete));
 	}
 
 	/**

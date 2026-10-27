@@ -194,6 +194,15 @@ public class JSettlersFrame extends JFrame {
 			}
 
 			@Override
+			public void deleteSavegame(MapMenuItem map) {
+				MapLoader loader = resolveMap(map);
+				if (loader != null) {
+					loader.getListedMap().delete();
+					MapList.getDefaultList().reload();
+				}
+			}
+
+			@Override
 			public void showSettings() {
 				showSettingsPanel();
 			}

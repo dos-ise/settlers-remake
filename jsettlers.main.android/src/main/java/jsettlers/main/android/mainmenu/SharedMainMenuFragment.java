@@ -201,6 +201,15 @@ public class SharedMainMenuFragment extends Fragment implements MainMenuActions 
 	}
 
 	@Override
+	public void deleteSavegame(MapMenuItem map) {
+		MapLoader loader = resolveMap(map);
+		if (loader != null) {
+			loader.getListedMap().delete();
+			gameStarter.getMapList().reload();
+		}
+	}
+
+	@Override
 	public void showSettings() {
 		AndroidPreferences preferences = new AndroidPreferences(getActivity());
 		SettingsMenuPanel settingsPanel = new SettingsMenuPanel(preferences, this::showMainMenu);

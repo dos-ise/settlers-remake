@@ -35,11 +35,13 @@ import jsettlers.graphics.ui.UIPanel;
  * @author Copilot
  */
 public class OpenPanel extends UIPanel {
+	private final MapListProvider provider;
 	private final List<MapMenuItem> allMaps;
 	private final UIList<MapMenuItem> mapList;
 	private final UIInput searchInput;
 	private final Consumer<MapMenuItem> onOpen;
 	private final Runnable onBack;
+	private final Consumer<MapMenuItem> onDelete;
 
 	/**
 	 * Creates a new open panel.
@@ -54,11 +56,17 @@ public class OpenPanel extends UIPanel {
 	 *            Called with the selected map when the player opens it.
 	 * @param onBack
 	 *            Called when the player goes back to the main menu.
+	 * @param onDelete
+	 *            Called with the selected savegame when the player deletes it, or <code>null</code> if deletion is not
+	 *            supported (e.g. for the fresh map list).
 	 */
-	public OpenPanel(String title, MapListProvider provider, String openButtonText, Consumer<MapMenuItem> onOpen, Runnable onBack) {
+	public OpenPanel(String title, MapListProvider provider, String openButtonText, Consumer<MapMenuItem> onOpen, Runnable onBack,
+			Consumer<MapMenuItem> onDelete) {
+		this.provider = provider;
 		this.allMaps = new ArrayList<>(provider.getMaps());
 		this.onOpen = onOpen;
 		this.onBack = onBack;
+		this.onDelete = onDelete;
 
 		Label titleLabel = new Label(title, EFontSize.HEADLINE);
 		addChild(titleLabel, 0.1f, 0.9f, 0.9f, 1f);
@@ -79,7 +87,21 @@ public class OpenPanel extends UIPanel {
 				}
 			}
 		});
-		addChild(openButton, 0.1f, 0.05f, 0.5f, 0.13f);
+		addChild(openButton, 0.1f, 0.05f, onDelete != null ? 0.4f : 0.5f, 0.13f);
+
+		if (onDelete != null) {
+			LabeledButton deleteButton = new LabeledButton(Labels.getString("start-loadgame-delete"), new ExecutableAction() {
+				@Override
+				public void execute() {
+					MapMenuItem selected = mapList.getActiveItem();
+					if (selected != null) {
+						onDelete.accept(selected);
+						reload();
+					}
+				}
+			});
+			addChild(deleteButton, 0.4f, 0.05f, 0.6f, 0.13f);
+		}
 
 		LabeledButton backButton = new LabeledButton(Labels.getString("settings-back"), new ExecutableAction() {
 			@Override
@@ -87,7 +109,16 @@ public class OpenPanel extends UIPanel {
 				onBack.run();
 			}
 		});
-		addChild(backButton, 0.5f, 0.05f, 0.9f, 0.13f);
+		addChild(backButton, onDelete != null ? 0.6f : 0.5f, 0.05f, 0.9f, 0.13f);
+	}
+
+	/**
+	 * Reloads the list from the provider and re-applies the search filter.
+	 */
+	private void reload() {
+		allMaps.clear();
+		allMaps.addAll(provider.getMaps());
+		updateList();
 	}
 
 	private void updateList() {

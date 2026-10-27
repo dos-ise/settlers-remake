@@ -129,6 +129,13 @@ public class MapList implements IMapListerCallable {
 		return freshMaps;
 	}
 
+	/**
+	 * Reloads the list of maps and savegames from disk. Call this after a savegame was deleted.
+	 */
+	public synchronized void reload() {
+		loadFileList();
+	}
+
 	private static BiConsumer<Consumer<IListedMap>, String> mapDownloader = null;
 
 	public static void setMapDownloader(BiConsumer<Consumer<IListedMap>, String> mapDownloader) {

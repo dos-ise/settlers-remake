@@ -39,6 +39,14 @@ public interface MainMenuActions {
 	void startLoadGame(MapMenuItem map);
 
 	/**
+	 * Deletes the given savegame from disk.
+	 *
+	 * @param map
+	 *            The savegame to delete.
+	 */
+	void deleteSavegame(MapMenuItem map);
+
+	/**
 	 * Shows the settings.
 	 */
 	void showSettings();
