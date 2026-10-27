@@ -17,9 +17,11 @@ package jsettlers.graphics.menu;
 import java.util.function.Consumer;
 
 import go.graphics.text.EFontSize;
+import jsettlers.common.Color;
 import jsettlers.graphics.action.ExecutableAction;
 import jsettlers.graphics.localization.Labels;
 import jsettlers.graphics.ui.AspectRatioImagePanel;
+import jsettlers.graphics.ui.BorderPanel;
 import jsettlers.graphics.ui.ImagePanel;
 import jsettlers.graphics.ui.LabeledButton;
 import jsettlers.graphics.ui.UIPanel;
@@ -31,6 +33,11 @@ import jsettlers.graphics.ui.UIPanel;
  * @author Copilot
  */
 public class MainMenuPanel extends UIPanel {
+	/**
+	 * The gold-yellow text color of the old desktop menu buttons.
+	 */
+	private static final Color BUTTON_TEXT_COLOR = new Color(1, 1, 0, 1);
+
 	private final UIPanel contentPanel = new UIPanel();
 	private final MainMenuActions actions;
 
@@ -65,6 +72,11 @@ public class MainMenuPanel extends UIPanel {
 
 		addChild(contentPanel, 0.32f, 0.1f, 0.97f, 0.9f);
 
+		if (images != null) {
+			// gold-yellow frame, drawn in front of the stones but behind the leaves like in the old desktop menu
+			addChild(new BorderPanel(images.getBorder(), 0.3f), 0, 0, 1, 1);
+		}
+
 		showMainContent();
 
 		if (images != null) {
@@ -80,7 +92,7 @@ public class MainMenuPanel extends UIPanel {
 			public void execute() {
 				action.run();
 			}
-		}, EFontSize.HEADLINE);
+		}, EFontSize.HEADLINE, BUTTON_TEXT_COLOR);
 		panel.addChild(button, left, bottom, right, top);
 	}
 

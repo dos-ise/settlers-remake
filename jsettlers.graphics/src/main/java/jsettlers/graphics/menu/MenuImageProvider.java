@@ -29,6 +29,7 @@ public class MenuImageProvider {
 	private Image leavesLeft;
 	private Image leavesRight;
 	private Image icon;
+	private Image border;
 
 	public MenuImageProvider(MenuImageDecoder decoder) {
 		this.decoder = decoder;
@@ -86,5 +87,15 @@ public class MenuImageProvider {
 			icon = decoder.decode("jsettlers/graphics/menu/ui_icon.png");
 		}
 		return icon;
+	}
+
+	/**
+	 * @return The gold-yellow border texture used for the menu frame.
+	 */
+	public Image getBorder() {
+		if (border == null) {
+			border = decoder.decode("jsettlers/graphics/menu/texture-border.png");
+		}
+		return border;
 	}
 }
