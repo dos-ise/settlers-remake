@@ -54,6 +54,11 @@
 			android:name=".mainmenu.ubisoft.UbisoftLoginActivity"
 			android:label="@string/ubisoft_login_title"
 			android:theme="@style/SettlersTheme"/>
+
+		<activity
+			android:name=".mainmenu.gog.GogLoginActivity"
+			android:label="@string/gog_login_title"
+			android:theme="@style/SettlersTheme"/>
 	</application>
 
 </manifest>

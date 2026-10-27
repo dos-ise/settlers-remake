@@ -20,6 +20,7 @@ import org.androidannotations.annotations.OptionsItem;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
@@ -61,6 +62,15 @@ public class MainActivity extends AppCompatActivity implements MainMenuNavigator
 	@OptionsItem(android.R.id.home)
 	void homeSelected() {
 		getSupportFragmentManager().popBackStack();
+	}
+
+	@Override
+	public void onBackPressed() {
+		Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frame_layout);
+		if (fragment instanceof MainMenuFragment && ((MainMenuFragment) fragment).onBackPressed()) {
+			return;
+		}
+		super.onBackPressed();
 	}
 
 	/**
