@@ -172,9 +172,9 @@ public class JSettlersFrame extends JFrame {
 		MenuImageProvider.setInstance(new MenuImageProvider(new SwingMenuImageDecoder()));
 		MapList mapList = MapList.getDefaultList();
 		MapListProvider freshMaps = () -> mapList.getFreshMaps().getItems().stream()
-				.map(this::toMapMenuItem).collect(Collectors.toList());
+				.map(loader -> toMapMenuItem(loader, false)).collect(Collectors.toList());
 		MapListProvider savedMaps = () -> mapList.getSavedMaps().getItems().stream()
-				.map(this::toMapMenuItem).collect(Collectors.toList());
+				.map(loader -> toMapMenuItem(loader, true)).collect(Collectors.toList());
 
 		jsettlers.graphics.menu.MainMenuPanel mainMenuPanel = new jsettlers.graphics.menu.MainMenuPanel(new MainMenuActions() {
 			@Override
@@ -219,10 +219,10 @@ public class JSettlersFrame extends JFrame {
 		showMenuContent(menuContent);
 	}
 
-	private MapMenuItem toMapMenuItem(MapLoader loader) {
+	private MapMenuItem toMapMenuItem(MapLoader loader, boolean savegame) {
 		return new MapMenuItem(loader.getMapId(), loader.getMapName(), loader.getDescription(),
 				MapPreviewImage.create(loader.getImage()), loader.getMinPlayers(), loader.getMaxPlayers(),
-				loader.getCreationDate());
+				loader.getCreationDate(), savegame);
 	}
 
 	private MapLoader resolveMap(MapMenuItem map) {

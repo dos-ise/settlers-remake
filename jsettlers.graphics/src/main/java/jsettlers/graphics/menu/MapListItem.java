@@ -57,7 +57,14 @@ public class MapListItem extends UIPanel implements UIListItem {
 
 	private static String buildInfo(MapMenuItem map) {
 		StringBuilder info = new StringBuilder();
+		// For savegames the description is the title the player entered when saving.
+		if (map.isSavegame() && map.getDescription() != null && !map.getDescription().isEmpty()) {
+			info.append(map.getDescription());
+		}
 		if (map.getMaxPlayers() > 0) {
+			if (info.length() > 0) {
+				info.append("  ");
+			}
 			info.append(Labels.getString("map-player-count", map.getMinPlayers(), map.getMaxPlayers()));
 		}
 		Date creationDate = map.getCreationDate();

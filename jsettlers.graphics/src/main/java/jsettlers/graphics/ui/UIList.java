@@ -19,11 +19,15 @@ import go.graphics.GLDrawContext;
 import java.util.List;
 import java.util.Optional;
 
+import jsettlers.common.Color;
 import jsettlers.common.images.EImageLinkType;
 import jsettlers.common.images.OriginalImageLink;
 import jsettlers.common.position.FloatRectangle;
 import jsettlers.common.action.Action;
 import jsettlers.graphics.action.ExecutableAction;
+import jsettlers.graphics.image.Image;
+import jsettlers.graphics.image.SingleImage;
+import jsettlers.graphics.image.reader.ImageMetadata;
 import jsettlers.graphics.map.draw.ImageProvider;
 
 public class UIList<T> implements UIElement {
@@ -33,6 +37,21 @@ public class UIList<T> implements UIElement {
 			new OriginalImageLink(EImageLinkType.GUI, 2, 3, 0);
 	private static final OriginalImageLink SCROLLBAR_BOTTOM =
 			new OriginalImageLink(EImageLinkType.GUI, 2, 4, 0);
+
+	/**
+	 * A solid black background so the list entries are readable on the menu background.
+	 */
+	private static final Image BACKGROUND = createBackground();
+
+	private static Image createBackground() {
+		ImageMetadata metadata = new ImageMetadata();
+		metadata.width = 1;
+		metadata.height = 1;
+		metadata.offsetX = 0;
+		metadata.offsetY = 0;
+		int[] rgba = new int[] { new Color(0, 0, 0, 1).getRGBA() };
+		return new SingleImage(metadata, rgba, "list-background");
+	}
 
 	private static final float RIGHTBORDER = .97f;
 	private static final float EDGEPART = .02f;
@@ -103,6 +122,8 @@ public class UIList<T> implements UIElement {
 
 			float height = position.getHeight();
 			float width = position.getWidth();
+
+			BACKGROUND.drawImageAtRect(gl, minX, minY, width, height, 1);
 
 			int startindex = (int) (listoffset / itemheight);
 

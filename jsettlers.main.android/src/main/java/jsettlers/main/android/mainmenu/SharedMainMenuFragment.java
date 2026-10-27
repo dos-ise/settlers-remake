@@ -88,9 +88,9 @@ public class SharedMainMenuFragment extends Fragment implements MainMenuActions 
 
 		MapList mapList = gameStarter.getMapList();
 		freshMaps = () -> mapList.getFreshMaps().getItems().stream()
-				.map(this::toMapMenuItem).collect(Collectors.toList());
+				.map(loader -> toMapMenuItem(loader, false)).collect(Collectors.toList());
 		savedMaps = () -> mapList.getSavedMaps().getItems().stream()
-				.map(this::toMapMenuItem).collect(Collectors.toList());
+				.map(loader -> toMapMenuItem(loader, true)).collect(Collectors.toList());
 
 		goRegion = new Region(Region.POSITION_CENTER);
 		Area goArea = new Area();
@@ -130,10 +130,10 @@ public class SharedMainMenuFragment extends Fragment implements MainMenuActions 
 				.show();
 	}
 
-	private MapMenuItem toMapMenuItem(MapLoader loader) {
+	private MapMenuItem toMapMenuItem(MapLoader loader, boolean savegame) {
 		return new MapMenuItem(loader.getMapId(), loader.getMapName(), loader.getDescription(),
 				MapPreviewImage.create(loader.getImage()), loader.getMinPlayers(), loader.getMaxPlayers(),
-				loader.getCreationDate());
+				loader.getCreationDate(), savegame);
 	}
 
 	private MapLoader resolveMap(MapMenuItem map) {
