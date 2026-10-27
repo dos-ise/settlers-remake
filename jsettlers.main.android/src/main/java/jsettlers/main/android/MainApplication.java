@@ -19,8 +19,6 @@ import jsettlers.network.infrastructure.log.ConsoleLogger;
 import org.androidannotations.annotations.EApplication;
 
 import android.app.Application;
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
 import android.os.Handler;
 import android.os.Looper;
@@ -36,7 +34,6 @@ import jsettlers.common.menu.IMapInterfaceConnector;
 import jsettlers.common.menu.IMultiplayerConnector;
 import jsettlers.common.menu.IStartedGame;
 import jsettlers.common.menu.IStartingGame;
-import jsettlers.common.statistics.GameStatistics;
 import jsettlers.graphics.localization.Labels;
 import jsettlers.graphics.map.MapContent;
 import jsettlers.graphics.ui.TextInputDialog;
@@ -67,7 +64,7 @@ public class MainApplication extends MultiDexApplication implements GameStarter,
 	private IJoiningGame joiningGame;
 
 	private ControlsAdapter controlsAdapter;
-	private final MutableLiveData<GameStatistics> endgameStatistics = new MutableLiveData<>();
+	private IStartedGame endgameGame;
 
 	@Override
 	public void onCreate() {
@@ -163,11 +160,11 @@ public class MainApplication extends MultiDexApplication implements GameStarter,
 	@Override
 	public IMapInterfaceConnector gameStarted(IStartedGame game) {
 		controlsAdapter = new ControlsAdapter(getApplicationContext(), game, MatchConstants.clock());
-		endgameStatistics.postValue(null);
+		endgameGame = null;
 		GameMenu gameMenu = controlsAdapter.getGameMenu();
 		game.setGameExitListener(exitedGame -> {
-			// the statistics are posted before the game menu reports the quit, so they are available when the game is gone
-			endgameStatistics.postValue(createStatistics(exitedGame));
+			// The finished game is kept so the endgame statistics panel can read the player results.
+			endgameGame = exitedGame;
 			gameMenu.accept(exitedGame);
 		});
 		controlsAdapter.getGameMenu().getGameState().observeForever(gameStateObserver);
@@ -224,22 +221,8 @@ public class MainApplication extends MultiDexApplication implements GameStarter,
 	}
 
 	@Override
-	public LiveData<GameStatistics> getEndgameStatistics() {
-		return endgameStatistics;
-	}
-
-	@Override
-	public void clearEndgameStatistics() {
-		endgameStatistics.setValue(null);
-	}
-
-	private static GameStatistics createStatistics(IStartedGame game) {
-		try {
-			return GameStatistics.create(game);
-		} catch (RuntimeException e) {
-			e.printStackTrace(); // the game must be quit even if the statistics are not available
-			return null;
-		}
+	public IStartedGame getEndgameGame() {
+		return endgameGame;
 	}
 
 	private Observer<GameMenu.GameState> gameStateObserver = gameState -> {

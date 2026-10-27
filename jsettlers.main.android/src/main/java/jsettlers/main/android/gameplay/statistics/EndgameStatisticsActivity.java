@@ -15,113 +15,73 @@
 
 package jsettlers.main.android.gameplay.statistics;
 
+import java.util.HashSet;
+
 import org.androidannotations.annotations.AfterViews;
-import org.androidannotations.annotations.Click;
 import org.androidannotations.annotations.EActivity;
 import org.androidannotations.annotations.ViewById;
 
 import android.content.Intent;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.view.View;
-import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.widget.FrameLayout;
 
-import jsettlers.common.player.EWinState;
-import jsettlers.common.statistics.EStatisticType;
-import jsettlers.common.statistics.GameStatistics;
-import jsettlers.common.statistics.GameStatistics.PlayerStatistics;
-import jsettlers.graphics.localization.Labels;
+import go.graphics.android.GOSurfaceView;
+import go.graphics.area.Area;
+import go.graphics.region.Region;
+import jsettlers.common.menu.IStartedGame;
+import jsettlers.graphics.menu.EndgameStatsPanel;
+import jsettlers.graphics.menu.MenuContent;
+import jsettlers.graphics.menu.MenuImageProvider;
+import jsettlers.graphics.map.draw.ImageProvider;
 import jsettlers.main.android.R;
 import jsettlers.main.android.core.GameManager;
+import jsettlers.main.android.mainmenu.AndroidMenuImageDecoder;
 import jsettlers.main.android.mainmenu.MainActivity_;
 
 /**
- * Shown after a game has been quit: the result of the local player and the statistics of all players. Continues to the main menu.
+ * Shown after a game has been quit. The result of the game is rendered by the shared GL endgame statistics panel,
+ * the same panel that is used on desktop. Continues to the main menu.
  */
 @EActivity(R.layout.activity_endgame_statistics)
 public class EndgameStatisticsActivity extends AppCompatActivity {
-	private static final String KEY_SELECTED_TYPE = "selected_type";
-	private static final int COLOR_WON = Color.rgb(0x66, 0xbb, 0x6a);
-	private static final int COLOR_LOST = Color.rgb(0xef, 0x53, 0x50);
-
-	@ViewById(R.id.toolbar)
-	Toolbar toolbar;
-
-	@ViewById(R.id.text_result)
-	TextView resultText;
-
-	@ViewById(R.id.progress_loading)
-	ProgressBar loadingProgress;
-
-	@ViewById(R.id.panel_statistics)
-	GameStatisticsPanel statisticsPanel;
+	@ViewById(R.id.frame_layout)
+	FrameLayout frameLayout;
 
 	private GameManager gameManager;
-	private EStatisticType restoredType;
-	private ColorStateList defaultResultColors;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		gameManager = (GameManager) getApplication();
-		if (savedInstanceState != null && savedInstanceState.getSerializable(KEY_SELECTED_TYPE) instanceof EStatisticType) {
-			restoredType = (EStatisticType) savedInstanceState.getSerializable(KEY_SELECTED_TYPE);
-		}
 	}
 
 	@AfterViews
 	void setupViews() {
-		setSupportActionBar(toolbar);
-		setTitle(R.string.statistics_endgame_title);
-		defaultResultColors = resultText.getTextColors();
-
-		if (restoredType != null) {
-			statisticsPanel.setSelectedType(restoredType);
+		IStartedGame game = gameManager.getEndgameGame();
+		if (game == null) {
+			// The game is already gone (e.g. the activity was recreated after the process was killed).
+			showMainMenu();
+			return;
 		}
-		gameManager.getEndgameStatistics().observe(this, this::showStatistics);
-	}
 
-	@Override
-	protected void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
-		if (statisticsPanel != null) {
-			outState.putSerializable(KEY_SELECTED_TYPE, statisticsPanel.getSelectedType());
-		}
-	}
+		// The menu images are cached with GL handles of the previous activity's context. A fresh provider
+		// re-decodes them so they are uploaded into this activity's GL context. The game images (e.g. the
+		// button frames) are invalidated the same way.
+		MenuImageProvider.setInstance(new MenuImageProvider(new AndroidMenuImageDecoder()));
+		ImageProvider.getInstance().invalidateAll();
 
-	private void showStatistics(GameStatistics statistics) {
-		// while the game is shutting down, the statistics are not available yet
-		boolean loading = statistics == null && gameManager.isGameInProgress();
-		loadingProgress.setVisibility(loading ? View.VISIBLE : View.GONE);
-		statisticsPanel.setVisibility(loading ? View.GONE : View.VISIBLE);
-		statisticsPanel.setStatistics(statistics);
-		showResult(statistics);
-	}
+		EndgameStatsPanel statsPanel = new EndgameStatsPanel(this::showMainMenu);
+		statsPanel.setGame(game);
+		MenuContent menuContent = new MenuContent(statsPanel, action -> {
+		});
 
-	private void showResult(GameStatistics statistics) {
-		PlayerStatistics localPlayer = statistics != null ? statistics.getLocalPlayer() : null;
-		if (localPlayer != null && localPlayer.getWinState() == EWinState.WON) {
-			resultText.setText(Labels.getString("winstate_WON"));
-			resultText.setTextColor(COLOR_WON);
-		} else if (localPlayer != null && localPlayer.getWinState() == EWinState.LOST) {
-			resultText.setText(Labels.getString("winstate_LOST"));
-			resultText.setTextColor(COLOR_LOST);
-		} else if (statistics != null && statistics.hasSamples()) {
-			resultText.setText(getString(R.string.statistics_game_ended, StatisticsChartView.formatTime(statistics.getLastTime())));
-			resultText.setTextColor(defaultResultColors);
-		} else {
-			resultText.setText(R.string.statistics_game_ended_no_time);
-			resultText.setTextColor(defaultResultColors);
-		}
-	}
-
-	@Click(R.id.button_continue)
-	void continueClicked() {
-		showMainMenu();
+		Region goRegion = new Region(Region.POSITION_CENTER);
+		goRegion.setContent(menuContent);
+		Area goArea = new Area();
+		goArea.set(goRegion);
+		GOSurfaceView goView = new GOSurfaceView(this, goArea, () -> new HashSet<>());
+		frameLayout.addView(goView);
 	}
 
 	@Override
@@ -130,7 +90,6 @@ public class EndgameStatisticsActivity extends AppCompatActivity {
 	}
 
 	private void showMainMenu() {
-		gameManager.clearEndgameStatistics();
 		// Clear the whole task so the finished GameActivity below is removed as well.
 		MainActivity_.intent(this).flags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK).start();
 		finish();

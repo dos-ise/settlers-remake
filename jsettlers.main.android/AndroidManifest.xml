@@ -46,7 +46,6 @@
 
 		<activity
 			android:name=".gameplay.statistics.EndgameStatisticsActivity_"
-			android:label="@string/statistics_endgame_title"
 			android:screenOrientation="landscape"/>
 
 		<activity
