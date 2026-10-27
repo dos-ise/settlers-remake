@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 import go.graphics.text.EFontSize;
 import jsettlers.graphics.action.ExecutableAction;
 import jsettlers.graphics.localization.Labels;
+import jsettlers.graphics.ui.AspectRatioImagePanel;
 import jsettlers.graphics.ui.ImagePanel;
 import jsettlers.graphics.ui.LabeledButton;
 import jsettlers.graphics.ui.UIPanel;
@@ -64,6 +65,8 @@ public class MainMenuPanel extends UIPanel {
 
 		addChild(contentPanel, 0.32f, 0.1f, 0.97f, 0.9f);
 
+		showMainContent();
+
 		if (images != null) {
 			// decorative leaves, drawn on top like in the desktop menu
 			addChild(new ImagePanel(images.getLeavesRight()), 0.8f, 0.79f, 1f, 1f);
@@ -102,5 +105,9 @@ public class MainMenuPanel extends UIPanel {
 	 */
 	public void showMainContent() {
 		contentPanel.removeAll();
+		MenuImageProvider images = MenuImageProvider.getInstance();
+		if (images != null && images.getIcon() != null) {
+			contentPanel.addChild(new AspectRatioImagePanel(images.getIcon()), 0.1f, 0.1f, 0.9f, 0.9f);
+		}
 	}
 }

@@ -28,6 +28,7 @@ public class MenuImageProvider {
 	private Image background;
 	private Image leavesLeft;
 	private Image leavesRight;
+	private Image icon;
 
 	public MenuImageProvider(MenuImageDecoder decoder) {
 		this.decoder = decoder;
@@ -75,5 +76,15 @@ public class MenuImageProvider {
 			leavesRight = decoder.decode("jsettlers/graphics/menu/ui_leafs-right.png");
 		}
 		return leavesRight;
+	}
+
+	/**
+	 * @return The game icon shown in the main menu when no sub menu is open.
+	 */
+	public Image getIcon() {
+		if (icon == null) {
+			icon = decoder.decode("jsettlers/graphics/menu/ui_icon.png");
+		}
+		return icon;
 	}
 }
