@@ -46,6 +46,7 @@ import android.widget.Button;
 
 import jsettlers.main.android.R;
 import jsettlers.main.android.core.ui.FragmentUtil;
+import jsettlers.main.android.mainmenu.gog.GogLoginActivity;
 import jsettlers.main.android.mainmenu.navigation.MainMenuNavigator;
 import jsettlers.main.android.mainmenu.settings.SettingsActivity_;
 import jsettlers.main.android.mainmenu.ubisoft.UbisoftLoginActivity;
@@ -55,6 +56,7 @@ import jsettlers.main.android.mainmenu.ubisoft.UbisoftLoginActivity;
 public class MainMenuFragment extends Fragment {
 	private static final int REQUEST_CODE_PERMISSION_STORAGE = 10;
 	private static final int REQUEST_CODE_UBISOFT_LOGIN = 11;
+	private static final int REQUEST_CODE_GOG_LOGIN = 12;
 
 	private MainMenuViewModel viewModel;
 	private MainMenuNavigator mainMenuNavigator;
@@ -130,9 +132,22 @@ public class MainMenuFragment extends Fragment {
 
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == REQUEST_CODE_UBISOFT_LOGIN && resultCode == getActivity().RESULT_OK) {
+		if (resultCode == getActivity().RESULT_OK
+				&& (requestCode == REQUEST_CODE_UBISOFT_LOGIN || requestCode == REQUEST_CODE_GOG_LOGIN)) {
 			viewModel.refreshResources();
 		}
+	}
+
+	/**
+	 * Handles the Android back button. Collapses the directory picker if it is expanded.
+	 * Returns true if the back press was handled.
+	 */
+	public boolean onBackPressed() {
+		if (homeAdapter != null && homeAdapter.isDirectoryPickerExpanded()) {
+			homeAdapter.collapseDirectoryPicker();
+			return true;
+		}
+		return false;
 	}
 
 	private class HomeAdapter extends RecyclerView.Adapter {
@@ -177,11 +192,16 @@ public class MainMenuFragment extends Fragment {
 
 				Button chooseDirectoryButton = view.findViewById(R.id.button_resources);
 				chooseDirectoryButton.setOnClickListener(v -> {
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
-						pendingAllFilesAccessRequest = true;
-						Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-						intent.setData(Uri.parse("package:" + getActivity().getPackageName()));
-						startActivity(intent);
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+						if (!Environment.isExternalStorageManager()) {
+							pendingAllFilesAccessRequest = true;
+							Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+							intent.setData(Uri.parse("package:" + getActivity().getPackageName()));
+							startActivity(intent);
+						} else {
+							expandDirectoryPicker(viewHolder);
+							// TODO save expanded state for rotation
+						}
 					} else if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 						requestPermissions(new String[] { Manifest.permission.READ_EXTERNAL_STORAGE }, REQUEST_CODE_PERMISSION_STORAGE);
 					} else {
@@ -194,6 +214,12 @@ public class MainMenuFragment extends Fragment {
 				ubisoftDownloadButton.setOnClickListener(v -> {
 					Intent intent = new Intent(getActivity(), UbisoftLoginActivity.class);
 					startActivityForResult(intent, REQUEST_CODE_UBISOFT_LOGIN);
+				});
+
+				Button gogDownloadButton = view.findViewById(R.id.button_gog_download);
+				gogDownloadButton.setOnClickListener(v -> {
+					Intent intent = new Intent(getActivity(), GogLoginActivity.class);
+					startActivityForResult(intent, REQUEST_CODE_GOG_LOGIN);
 				});
 
 				return viewHolder;
@@ -209,11 +235,29 @@ public class MainMenuFragment extends Fragment {
 		public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
 		}
 
+		private boolean directoryPickerExpanded;
+
 		private void expandDirectoryPicker(DirectoryPickerViewHolder viewHolder) {
 			ViewGroup.LayoutParams layoutParams = viewHolder.itemView.getLayoutParams();
 			layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
 			viewHolder.itemView.setLayoutParams(layoutParams);
 			viewHolder.onExpand();
+			directoryPickerExpanded = true;
+		}
+
+		private void collapseDirectoryPicker() {
+			DirectoryPickerViewHolder viewHolder = (DirectoryPickerViewHolder) recyclerView.findViewHolderForItemId(R.layout.vh_directory_picker);
+			if (viewHolder != null) {
+				ViewGroup.LayoutParams layoutParams = viewHolder.itemView.getLayoutParams();
+				layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+				viewHolder.itemView.setLayoutParams(layoutParams);
+				viewHolder.onCollapse();
+			}
+			directoryPickerExpanded = false;
+		}
+
+		private boolean isDirectoryPickerExpanded() {
+			return directoryPickerExpanded && layouts.contains(R.layout.vh_directory_picker);
 		}
 
 		private void showOrHideDirectoryPicker(boolean areResourcesLoaded) {

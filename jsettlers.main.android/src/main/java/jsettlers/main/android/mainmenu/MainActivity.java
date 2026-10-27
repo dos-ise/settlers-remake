@@ -69,6 +69,15 @@ public class MainActivity extends AppCompatActivity implements MainMenuNavigator
 		getSupportFragmentManager().popBackStack();
 	}
 
+	@Override
+	public void onBackPressed() {
+		Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frame_layout);
+		if (fragment instanceof MainMenuFragment && ((MainMenuFragment) fragment).onBackPressed()) {
+			return;
+		}
+		super.onBackPressed();
+	}
+
 	/**
 	 * MainMenu Navigation
 	 */

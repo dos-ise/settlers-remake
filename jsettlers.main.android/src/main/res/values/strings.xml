@@ -131,6 +131,17 @@
 	<string name="ubisoft_network_error">Cannot reach the Ubisoft login page.\nPlease check your internet connection.</string>
 	<string name="ubisoft_ssl_error">A secure connection to the Ubisoft login page could not be established.</string>
 	<string name="ubisoft_storage_permission_needed">All files access is required to download the game data to /storage/emulated/0/JSettlers. Please grant it in the system settings and try again.</string>
+	<string name="gog_download_button">Download from GOG</string>
+	<string name="gog_login_title">GOG Login</string>
+	<string name="gog_retry">Retry</string>
+	<string name="gog_logging_in">Logging in...</string>
+	<string name="gog_login_failed">Login failed.</string>
+	<string name="gog_starting_download">Starting download...</string>
+	<string name="gog_download_complete">Download complete (%1$d files).</string>
+	<string name="gog_download_failed">Download failed:</string>
+	<string name="gog_network_error">Cannot reach the GOG login page.\nPlease check your internet connection.</string>
+	<string name="gog_ssl_error">A secure connection to the GOG login page could not be established.</string>
+	<string name="gog_storage_permission_needed">All files access is required to download the game data to /storage/emulated/0/JSettlers. Please grant it in the system settings and try again.</string>
 
 	<string name="menu_single_player_title">Single-Player</string>
 	<string name="menu_single_player_info">Create a battle with computer opponents.</string>

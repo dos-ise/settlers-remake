@@ -51,6 +51,16 @@ public class DirectoryPickerViewHolder extends RecyclerView.ViewHolder {
 		listView.setVisibility(View.VISIBLE);
 		directoriesExplanationTextView.setVisibility(View.GONE);
 		chooseDirectoryButton.setVisibility(View.GONE);
+		itemView.findViewById(R.id.button_ubisoft_download).setVisibility(View.GONE);
+		itemView.findViewById(R.id.button_gog_download).setVisibility(View.GONE);
+	}
+
+	public void onCollapse() {
+		listView.setVisibility(View.GONE);
+		directoriesExplanationTextView.setVisibility(View.VISIBLE);
+		chooseDirectoryButton.setVisibility(View.VISIBLE);
+		itemView.findViewById(R.id.button_ubisoft_download).setVisibility(View.VISIBLE);
+		itemView.findViewById(R.id.button_gog_download).setVisibility(View.VISIBLE);
 	}
 
 	class DirectoryAdapter extends ArrayAdapter<String> {
