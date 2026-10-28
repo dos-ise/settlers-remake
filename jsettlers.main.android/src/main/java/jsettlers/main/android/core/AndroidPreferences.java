@@ -33,6 +33,7 @@ public class AndroidPreferences implements ISettings {
 	private static final String PREF_MUSIC_ENABLED = "music_enabled";
 	private static final String PREF_MUSIC_VOLUME = "music_volume";
 	private static final String PREF_SOUND_VOLUME = "sound_volume";
+	private static final String PREF_LANGUAGE = "language";
 
 	private static final float DEFAULT_MUSIC_VOLUME = 0.5f;
 	private static final float DEFAULT_SOUND_VOLUME = 1f;
@@ -170,6 +171,16 @@ public class AndroidPreferences implements ISettings {
 	@Override
 	public void setAiTowerFocus(boolean focus) {
 		// not configurable on Android
+	}
+
+	@Override
+	public String getLanguage() {
+		return preferences.getString(PREF_LANGUAGE, null);
+	}
+
+	@Override
+	public void setLanguage(String language) {
+		preferences.edit().putString(PREF_LANGUAGE, language).apply();
 	}
 
 	private static float clampVolume(float volume) {

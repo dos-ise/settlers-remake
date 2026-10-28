@@ -60,7 +60,9 @@ public class CycleButton extends LabeledButton {
 			@Override
 			public void execute() {
 				index = (index + 1) % options.size();
-				onSelect.accept(index);
+				if (onSelect != null) {
+					onSelect.accept(index);
+				}
 			}
 		};
 	}

@@ -14,10 +14,15 @@
  *******************************************************************************/
 package jsettlers.graphics.menu;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+
 import go.graphics.text.EFontSize;
 import jsettlers.graphics.action.ExecutableAction;
 import jsettlers.graphics.localization.Labels;
 import jsettlers.graphics.settings.ISettings;
+import jsettlers.graphics.ui.CycleButton;
 import jsettlers.graphics.ui.Label;
 import jsettlers.graphics.ui.LabeledButton;
 import jsettlers.graphics.ui.Slider;
@@ -34,10 +39,20 @@ import jsettlers.graphics.ui.UIPanel;
  * @author Copilot
  */
 public class SettingsMenuPanel extends UIPanel {
-	private static final int ROW_COUNT = 8;
+	private static final int ROW_COUNT = 9;
 	private static final float CONTENT_TOP = 0.88f;
 	private static final float CONTENT_BOTTOM = 0.15f;
 	private static final float ROW_HEIGHT = (CONTENT_TOP - CONTENT_BOTTOM) / ROW_COUNT;
+
+	/**
+	 * The language codes of the available translations, matching the {@code labels_*.properties} files.
+	 */
+	private static final List<String> LANGUAGE_CODES = Arrays.asList("en", "de", "es", "pl", "ru", "da_DK");
+
+	/**
+	 * The native names of the available languages, shown in the language selector.
+	 */
+	private static final List<String> LANGUAGE_NAMES = Arrays.asList("English", "Deutsch", "Español", "Polski", "Русский", "Dansk");
 
 	private final ISettings settings;
 	private final Runnable onBack;
@@ -49,6 +64,7 @@ public class SettingsMenuPanel extends UIPanel {
 	private final Slider fpsLimitSlider = new Slider("fps", 0, 240, "timerless redraw", null);
 	private final Slider guiScaleSlider = new Slider("%", 50, 400, "system default", null);
 	private final ToggleButton aiTowerFocusToggle = new ToggleButton("", false, null);
+	private final CycleButton languageButton = new CycleButton(LANGUAGE_NAMES, 0, null);
 
 	/**
 	 * Creates a new settings menu.
@@ -77,6 +93,7 @@ public class SettingsMenuPanel extends UIPanel {
 		addSettingRow(5, "settings-fps-limit", fpsLimitSlider);
 		addSettingRow(6, "settings-gui-scale", guiScaleSlider);
 		addSettingRow(7, "settings-ai-tower-focus", aiTowerFocusToggle);
+		addSettingRow(8, "settings-language", languageButton);
 
 		LabeledButton backButton = new LabeledButton(Labels.getString("settings-back"), new ExecutableAction() {
 			@Override
@@ -115,6 +132,8 @@ public class SettingsMenuPanel extends UIPanel {
 		fpsLimitSlider.setValue(settings.getFpsLimit());
 		guiScaleSlider.setValue(Math.round(settings.getGuiScale() * 100));
 		aiTowerFocusToggle.setChecked(settings.getAiTowerFocus());
+		int languageIndex = LANGUAGE_CODES.indexOf(settings.getLanguage());
+		languageButton.setIndex(languageIndex >= 0 ? languageIndex : 0);
 	}
 
 	private void save() {
@@ -126,5 +145,13 @@ public class SettingsMenuPanel extends UIPanel {
 		settings.setFpsLimit(fpsLimitSlider.getValue());
 		settings.setGuiScale(guiScaleSlider.getValue() / 100f);
 		settings.setAiTowerFocus(aiTowerFocusToggle.isChecked());
+		String language = LANGUAGE_CODES.get(languageButton.getIndex());
+		settings.setLanguage(language);
+		Labels.setLocale(parseLocale(language));
+	}
+
+	private static Locale parseLocale(String language) {
+		String[] parts = language.split("_");
+		return parts.length == 2 ? new Locale(parts[0], parts[1]) : new Locale(parts[0]);
 	}
 }

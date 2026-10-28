@@ -357,6 +357,16 @@ public class SettingsManager implements ISoundSettingsProvider, ISettings {
 		}).orElse(Locale.getDefault());
 	}
 
+	@Override
+	public String getLanguage() {
+		return get(SETTING_LOCALE);
+	}
+
+	@Override
+	public void setLanguage(String language) {
+		set(SETTING_LOCALE, language);
+	}
+
 	public String getMapFile() {
 		return get(SETTING_MAPFILE);
 	}

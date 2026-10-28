@@ -126,4 +126,17 @@ public interface ISettings {
 	 *            The new state.
 	 */
 	void setAiTowerFocus(boolean focus);
+
+	/**
+	 * @return The language code of the UI, e.g. {@code "en"}, {@code "de"} or {@code "da_DK"}.
+	 */
+	String getLanguage();
+
+	/**
+	 * Sets the language code of the UI.
+	 *
+	 * @param language
+	 *            The new language code, e.g. {@code "en"}, {@code "de"} or {@code "da_DK"}.
+	 */
+	void setLanguage(String language);
 }

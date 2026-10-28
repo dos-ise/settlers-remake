@@ -192,4 +192,12 @@ public abstract class AbstractLabels {
 	public static void setPreferredLocale(Locale preferredLocale) {
 		AbstractLabels.preferredLocale = preferredLocale;
 	}
+
+	/**
+	 * Resets the loaded labels so the next access reloads them with the current preferred locale.
+	 */
+	protected synchronized void resetLabels() {
+		labelsLoaded = false;
+		loadedLabels = null;
+	}
 }
