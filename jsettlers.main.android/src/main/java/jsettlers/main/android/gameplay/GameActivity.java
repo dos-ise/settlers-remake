@@ -31,12 +31,10 @@ import jsettlers.main.android.core.navigation.BackPressedListener;
 import jsettlers.main.android.gameplay.navigation.GameNavigator;
 import jsettlers.main.android.gameplay.navigation.MenuNavigator;
 import jsettlers.main.android.gameplay.navigation.MenuNavigatorProvider;
-import jsettlers.main.android.mainmenu.navigation.Actions;
 
 @EActivity(R.layout.activity_game)
 public class GameActivity extends FullScreenAppCompatActivity implements GameNavigator, MenuNavigatorProvider {
 	private static final String TAG_FRAGMENT_MAP = "map_fragment";
-	private static final String TAG_FRAGMENT_LOADING = "loading_fragment";
 	private static final int REQUEST_CODE_NOTIFICATIONS = 1;
 
 	private GameStarter gameStarter;
@@ -56,11 +54,9 @@ public class GameActivity extends FullScreenAppCompatActivity implements GameNav
 			return;
 		}
 
-		if (Actions.ACTION_RESUME_GAME.equals(getIntent().getAction())) {
-			showMap();
-		} else {
-			showLoading();
-		}
+		// The map fragment shows a GL loading panel while the game is starting, so no native loading
+		// fragment is needed.
+		showMap();
 	}
 
 	@Override
@@ -101,12 +97,6 @@ public class GameActivity extends FullScreenAppCompatActivity implements GameNav
 	public void showMap() {
 		getSupportFragmentManager().beginTransaction()
 				.replace(R.id.frame_layout, MapFragment_.builder().build(), TAG_FRAGMENT_MAP)
-				.commit();
-	}
-
-	private void showLoading() {
-		getSupportFragmentManager().beginTransaction()
-				.add(R.id.frame_layout, LoadingFragment.newInstance(), TAG_FRAGMENT_LOADING)
 				.commit();
 	}
 }
