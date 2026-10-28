@@ -99,6 +99,8 @@ import jsettlers.graphics.messages.Messenger;
 import jsettlers.graphics.sound.BackgroundSound;
 import jsettlers.graphics.sound.MusicManager;
 import jsettlers.graphics.sound.SoundManager;
+import jsettlers.graphics.ui.Label;
+import jsettlers.graphics.ui.LabeledButton;
 import jsettlers.graphics.ui.UIInput;
 import jsettlers.graphics.ui.UIPanel;
 import jsettlers.graphics.utils.FocusAction;
@@ -276,6 +278,8 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 	 * 			  The menus on the side (swing) or on the bottom (android)
 	 */
 	public MapContent(IStartedGame game, SoundPlayer soundPlayer, ETextDrawPosition textDrawPosition, IControls controls) {
+		Label.setDefaultTextColor(null);
+		LabeledButton.setDefaultTextColor(null);
 		this.game = game;
 		this.map = game.getMap();
 		if(map instanceof IDirectGridProvider) {

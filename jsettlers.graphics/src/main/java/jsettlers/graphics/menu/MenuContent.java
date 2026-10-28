@@ -39,6 +39,8 @@ import jsettlers.graphics.font.FontDrawerFactory;
 import jsettlers.graphics.map.ReplaceableTextDrawer;
 import java.util.function.Consumer;
 
+import jsettlers.graphics.ui.Label;
+import jsettlers.graphics.ui.LabeledButton;
 import jsettlers.graphics.ui.UIInput;
 import jsettlers.graphics.ui.UIPanel;
 import jsettlers.graphics.utils.FocusAction;
@@ -75,6 +77,8 @@ public class MenuContent implements RegionContent, ActionFireable {
 	public MenuContent(UIPanel rootPanel, ActionFireable actionFireable) {
 		this.rootPanel = rootPanel;
 		this.actionFireable = actionFireable;
+		Label.setDefaultTextColor(MenuColors.TEXT_COLOR);
+		LabeledButton.setDefaultTextColor(MenuColors.TEXT_COLOR);
 	}
 
 	@Override

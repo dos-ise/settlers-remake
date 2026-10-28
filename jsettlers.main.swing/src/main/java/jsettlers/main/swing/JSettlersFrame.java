@@ -14,7 +14,6 @@
  *******************************************************************************/
 package jsettlers.main.swing;
 
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -39,10 +38,12 @@ import go.graphics.sound.SoundPlayer;
 import go.graphics.swing.AreaContainer;
 import go.graphics.swing.contextcreator.EBackendType;
 import go.graphics.swing.sound.SwingSoundPlayer;
+import go.graphics.text.EFontSize;
 
 import jsettlers.common.CommitInfo;
 import jsettlers.common.action.EActionType;
 import jsettlers.common.action.SaveAction;
+import jsettlers.common.menu.EGameError;
 import jsettlers.common.menu.EProgressState;
 import jsettlers.common.menu.IJoinableGame;
 import jsettlers.common.menu.IJoinPhaseMultiplayerGameConnector;
@@ -53,9 +54,11 @@ import jsettlers.common.menu.IMultiplayerConnector;
 import jsettlers.common.menu.IMultiplayerListener;
 import jsettlers.common.menu.IStartedGame;
 import jsettlers.common.menu.IStartingGame;
+import jsettlers.common.menu.IStartingGameListener;
 import jsettlers.graphics.localization.Labels;
 import jsettlers.graphics.map.ETextDrawPosition;
 import jsettlers.graphics.map.MapContent;
+import jsettlers.graphics.map.draw.ImageProvider;
 import jsettlers.graphics.menu.GameDataActions;
 import jsettlers.graphics.menu.GameDataPanel;
 import jsettlers.graphics.menu.MainMenuActions;
@@ -66,7 +69,9 @@ import jsettlers.graphics.menu.MenuContent;
 import jsettlers.graphics.menu.MenuImageProvider;
 import jsettlers.graphics.menu.MultiplayerPickerPanel;
 import jsettlers.graphics.menu.SettingsMenuPanel;
+import jsettlers.graphics.ui.Label;
 import jsettlers.graphics.ui.TextInputDialog;
+import jsettlers.graphics.ui.UIPanel;
 import jsettlers.logic.map.loading.EMapStartResources;
 import jsettlers.logic.map.loading.MapLoader;
 import jsettlers.logic.map.loading.list.MapList;
@@ -77,7 +82,6 @@ import jsettlers.logic.player.PlayerSetting;
 import jsettlers.main.JSettlersGame;
 import jsettlers.main.MultiplayerConnector;
 import jsettlers.main.swing.menu.SwingMenuImageDecoder;
-import jsettlers.main.swing.menu.startinggamemenu.StartingGamePanel;
 import jsettlers.main.swing.settings.SettingsManager;
 import jsettlers.network.infrastructure.log.ConsoleConsumerLogger;
 import jsettlers.network.infrastructure.log.Logger;
@@ -88,7 +92,6 @@ import jsettlers.network.infrastructure.log.Logger;
 public class JSettlersFrame extends JFrame {
 	private static final long serialVersionUID = 2607082717493797224L;
 
-	private final StartingGamePanel startingGamePanel = new StartingGamePanel(this);
 	private final SwingSoundPlayer soundPlayer = new SwingSoundPlayer(SettingsManager.getInstance());
 
 	private Timer redrawTimer;
@@ -306,17 +309,6 @@ public class JSettlersFrame extends JFrame {
 		});
 	}
 
-	/**
-	 * Stops the render thread and destroys the native window of the current {@link AreaContainer}, if any.
-	 * Only needed when the content pane is replaced by a plain Swing panel.
-	 */
-	private void disposeAreaContainer() {
-		if (areaContainer != null) {
-			areaContainer.disposeAll();
-			areaContainer = null;
-		}
-	}
-
 	private void showSettingsPanel() {
 		SettingsMenuPanel settingsPanel = new SettingsMenuPanel(SettingsManager.getInstance(), this::showSharedMainMenu);
 		settingsPanel.initializeValues();
@@ -337,26 +329,58 @@ public class JSettlersFrame extends JFrame {
 		}
 	}
 
+	/**
+	 * Shows a GL loading panel on the same surface as the game while it is starting, like on Android.
+	 * The native Swing loading panel is not needed anymore.
+	 */
 	public void showStartingGamePanel(IStartingGame startingGame) {
-		startingGamePanel.setStartingGame(startingGame);
-		if (!isGlfwBackend()) {
-			setNewContentPane(startingGamePanel);
+		UIPanel loadingPanel = new UIPanel();
+		MenuImageProvider images = MenuImageProvider.getInstance();
+		if (images != null) {
+			loadingPanel.setBackgroundImage(images.getBackground());
 		}
-		// With the GLFW backend the menu window is reused for the game, so the Swing loading
-		// panel is skipped and the menu stays visible until the game content replaces it.
-	}
+		Label loadingLabel = new Label(Labels.getProgress(EProgressState.LOADING), EFontSize.HEADLINE);
+		loadingPanel.addChild(loadingLabel, 0.1f, 0.4f, 0.9f, 0.6f);
+		showMenuContent(new MenuContent(loadingPanel, action -> {
+		}));
 
-	private void setNewContentPane(Container newContent) {
-		abortRedrawTimerIfPresent();
-		disposeAreaContainer();
-		// The GLFW window is destroyed when the area container is disposed, so the Swing frame
-		// becomes the only window again and must be shown (e.g. for the LAN connection panel).
-		if (isDisplayable() && !isVisible()) {
-			setVisible(true);
-		}
-		setContentPane(newContent);
-		revalidate();
-		repaint();
+		startingGame.setListener(new IStartingGameListener() {
+			@Override
+			public void startProgressChanged(EProgressState state, float progress) {
+				SwingUtilities.invokeLater(() -> loadingLabel.setText(Labels.getProgress(state)));
+			}
+
+			@Override
+			public IMapInterfaceConnector preLoadFinished(IStartedGame game) {
+				return showStartedGame(game);
+			}
+
+			@Override
+			public void startFailed(EGameError errorType, Exception exception) {
+				String errorMessage;
+				if (errorType == EGameError.MAPLOADING_ERROR) {
+					errorMessage = Labels.getString("errordlg-map-loading-failed");
+				} else {
+					errorMessage = Labels.getString("errordlg-start-failed") + " " + exception.getMessage();
+				}
+				JOptionPane.showMessageDialog(JSettlersFrame.this, errorMessage, Labels.getString("errordlg-header"), JOptionPane.ERROR_MESSAGE);
+				showSharedMainMenu();
+			}
+
+			@Override
+			public void startFinished() {
+			}
+
+			@Override
+			public void startingLoadingGame() {
+				ImageProvider.getInstance().startPreloading();
+			}
+
+			@Override
+			public void waitForPreloading() {
+				ImageProvider.getInstance().waitForPreloadingFinish();
+			}
+		});
 	}
 
 	public void exit() {
@@ -394,7 +418,7 @@ public class JSettlersFrame extends JFrame {
 			revalidate();
 			repaint();
 			// The game is rendered in its own (GLFW) window. Hide this menu window so only the
-			// game window is visible during the match; it is shown again in setNewContentPane.
+			// game window is visible during the match; it is shown again when a menu is shown.
 			if (isGlfwBackend()) {
 				setVisible(false);
 			}

@@ -40,6 +40,7 @@ public class LabeledButton extends Button {
 
 	private final EFontSize size;
 	private final AbstractColor textColor;
+	private static AbstractColor defaultTextColor = null;
 	private boolean enabled = true;
 
 	public LabeledButton(String text, Action action, EFontSize size) {
@@ -70,6 +71,16 @@ public class LabeledButton extends Button {
 		this(text, action, EFontSize.NORMAL);
 	}
 
+	/**
+	 * Sets the default text color used by all buttons that do not have an explicit color set.
+	 * 
+	 * @param textColor
+	 *            The default color or <code>null</code> to use the standard white color.
+	 */
+	public static void setDefaultTextColor(AbstractColor textColor) {
+		defaultTextColor = textColor;
+	}
+
 	@Override
 	public void drawAt(GLDrawContext gl) {
 		super.drawAt(gl);
@@ -77,8 +88,9 @@ public class LabeledButton extends Button {
 		TextDrawer drawer = gl.getTextDrawer(size);
 		float cx = getPosition().getCenterX();
 		float cy = getPosition().getCenterY();
-		if (textColor != null) {
-			drawer.drawString(cx - drawer.getWidth(text) / 2, cy - drawer.getHeight(text) / 2, textColor, text);
+		AbstractColor color = textColor != null ? textColor : defaultTextColor;
+		if (color != null) {
+			drawer.drawString(cx - drawer.getWidth(text) / 2, cy - drawer.getHeight(text) / 2, color, text);
 		} else {
 			drawer.renderCentered(cx, cy, getText());
 		}

@@ -17,7 +17,6 @@ package jsettlers.graphics.menu;
 import java.util.function.Consumer;
 
 import go.graphics.text.EFontSize;
-import jsettlers.common.Color;
 import jsettlers.graphics.action.ExecutableAction;
 import jsettlers.graphics.localization.Labels;
 import jsettlers.graphics.ui.AspectRatioImagePanel;
@@ -33,11 +32,6 @@ import jsettlers.graphics.ui.UIPanel;
  * @author Copilot
  */
 public class MainMenuPanel extends UIPanel {
-	/**
-	 * The gold-yellow text color of the old desktop menu buttons.
-	 */
-	private static final Color BUTTON_TEXT_COLOR = new Color(1, 1, 0, 1);
-
 	private final UIPanel contentPanel = new UIPanel();
 	private final MainMenuActions actions;
 
@@ -92,7 +86,7 @@ public class MainMenuPanel extends UIPanel {
 			public void execute() {
 				action.run();
 			}
-		}, EFontSize.HEADLINE, BUTTON_TEXT_COLOR);
+		}, EFontSize.HEADLINE, MenuColors.TEXT_COLOR);
 		panel.addChild(button, left, bottom, right, top);
 	}
 

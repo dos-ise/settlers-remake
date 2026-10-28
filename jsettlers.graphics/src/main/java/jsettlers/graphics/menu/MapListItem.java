@@ -31,7 +31,7 @@ import jsettlers.graphics.ui.UIListItem;
  * @author Copilot
  */
 public class MapListItem extends UIPanel implements UIListItem {
-	private static final Color HIGHLIGHT_COLOR = new Color(1, 1, 0, 1);
+	private static final Color HIGHLIGHT_COLOR = new Color(1, 1, 0.5f, 1);
 
 	private final Label nameLabel;
 
