@@ -33,6 +33,7 @@ public class ImageData {
 
 	public IntBuffer getReadData32() {
 		convertTo32();
+		data32.rewind();
 		return data32;
 	}
 
