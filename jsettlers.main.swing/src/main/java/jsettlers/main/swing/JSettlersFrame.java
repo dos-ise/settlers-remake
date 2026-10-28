@@ -43,7 +43,11 @@ import go.graphics.swing.sound.SwingSoundPlayer;
 import jsettlers.common.CommitInfo;
 import jsettlers.common.action.EActionType;
 import jsettlers.common.action.SaveAction;
+import jsettlers.common.menu.EProgressState;
+import jsettlers.common.menu.IJoinableGame;
 import jsettlers.common.menu.IJoinPhaseMultiplayerGameConnector;
+import jsettlers.common.menu.IJoiningGame;
+import jsettlers.common.menu.IJoiningGameListener;
 import jsettlers.common.menu.IMapInterfaceConnector;
 import jsettlers.common.menu.IMultiplayerConnector;
 import jsettlers.common.menu.IMultiplayerListener;
@@ -60,6 +64,7 @@ import jsettlers.graphics.menu.MapMenuItem;
 import jsettlers.graphics.menu.MapPreviewImage;
 import jsettlers.graphics.menu.MenuContent;
 import jsettlers.graphics.menu.MenuImageProvider;
+import jsettlers.graphics.menu.MultiplayerPickerPanel;
 import jsettlers.graphics.menu.SettingsMenuPanel;
 import jsettlers.graphics.ui.TextInputDialog;
 import jsettlers.logic.map.loading.EMapStartResources;
@@ -70,10 +75,12 @@ import jsettlers.logic.map.loading.savegame.SavegameLoader;
 import jsettlers.logic.player.InitialGameState;
 import jsettlers.logic.player.PlayerSetting;
 import jsettlers.main.JSettlersGame;
+import jsettlers.main.MultiplayerConnector;
 import jsettlers.main.swing.menu.SwingMenuImageDecoder;
-import jsettlers.main.swing.menu.multiplayer.lan.LANConnectionPanel;
 import jsettlers.main.swing.menu.startinggamemenu.StartingGamePanel;
 import jsettlers.main.swing.settings.SettingsManager;
+import jsettlers.network.infrastructure.log.ConsoleConsumerLogger;
+import jsettlers.network.infrastructure.log.Logger;
 
 /**
  * @author codingberlin
@@ -89,6 +96,7 @@ public class JSettlersFrame extends JFrame {
 	private boolean fullScreen = false;
 	private boolean textInputDialogOpen = false;
 	private AreaContainer areaContainer;
+	private IMultiplayerConnector currentMultiplayerConnector;
 
 	JSettlersFrame() throws HeadlessException {
 		setTitle("JSettlers - Version: " + CommitInfo.COMMIT_HASH_SHORT);
@@ -173,6 +181,7 @@ public class JSettlersFrame extends JFrame {
 	 * Shows the shared, GL rendered main menu. The same menu code runs on desktop and Android.
 	 */
 	public void showSharedMainMenu() {
+		closeMultiplayerConnector();
 		MenuImageProvider.setInstance(new MenuImageProvider(new SwingMenuImageDecoder()));
 		MapList mapList = MapList.getDefaultList();
 		MapListProvider freshMaps = () -> mapList.getFreshMaps().getItems().stream()
@@ -433,19 +442,53 @@ public class JSettlersFrame extends JFrame {
 	}
 
 	/**
-	 * Shows the Swing LAN multiplayer connection panel. This is the temporary entry point for the
-	 * multiplayer until the shared multiplayer panels are fully wired up.
+	 * Shows the shared, GL rendered multiplayer picker. The player can host a new game (by picking a fresh map) or
+	 * join an existing game on the local server. The same panel code runs on desktop and Android.
 	 */
 	private void showMultiplayerConnection() {
-		abortRedrawTimerIfPresent();
-		LANConnectionPanel lanConnectionPanel = new LANConnectionPanel(this);
-		setNewContentPane(lanConnectionPanel);
-		multiplayerUpdateTimer = new Timer(500, e -> {
-			lanConnectionPanel.update();
-			lanConnectionPanel.repaint();
+		closeMultiplayerConnector();
+		Logger logger = new ConsoleConsumerLogger("jsettlers-swing-multiplayer", line -> {
+		});		currentMultiplayerConnector = new MultiplayerConnector("localhost", SettingsManager.getInstance().getUUID(),
+				SettingsManager.getInstance().getUserName(), logger);
+		MapList mapList = MapList.getDefaultList();
+		MapListProvider freshMaps = () -> mapList.getFreshMaps().getItems().stream()
+				.map(loader -> toMapMenuItem(loader, false)).collect(Collectors.toList());
+		MultiplayerPickerPanel picker = new MultiplayerPickerPanel(currentMultiplayerConnector, freshMaps,
+				map -> {
+					MapLoader loader = resolveMap(map);
+					if (loader != null) {
+						showNewMultiPlayerGameMenu(loader, currentMultiplayerConnector);
+					}
+				},
+				game -> joinMultiplayerGame(currentMultiplayerConnector, game),
+				this::showSharedMainMenu);
+		showMenuContent(new MenuContent(picker, action -> {
+		}));
+	}
+
+	private void joinMultiplayerGame(IMultiplayerConnector connector, IJoinableGame game) {
+		IJoiningGame joiningGame = connector.joinMultiplayerGame(game);
+		joiningGame.setListener(new IJoiningGameListener() {
+			@Override
+			public void joinProgressChanged(EProgressState state, float progress) {
+			}
+
+			@Override
+			public void gameJoined(IJoinPhaseMultiplayerGameConnector joinConnector) {
+				MapLoader mapLoader = MapList.getDefaultList().getMapById(game.getMap().getMapId());
+				if (mapLoader != null) {
+					showJoinMultiplayerMenu(joinConnector, mapLoader, connector.getPlayerUUID());
+				}
+			}
 		});
-		multiplayerUpdateTimer.setInitialDelay(0);
-		multiplayerUpdateTimer.start();
+	}
+
+	private void closeMultiplayerConnector() {
+		if (currentMultiplayerConnector != null) {
+			((jsettlers.network.client.IClientConnection) currentMultiplayerConnector)
+					.action(jsettlers.network.client.IClientConnection.EClientAction.CLOSE, null);
+			currentMultiplayerConnector = null;
+		}
 	}
 
 	public void showNewMultiPlayerGameMenu(MapLoader mapLoader, IMultiplayerConnector connector) {

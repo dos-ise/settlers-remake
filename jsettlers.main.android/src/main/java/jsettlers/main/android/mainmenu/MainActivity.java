@@ -27,10 +27,6 @@ import android.support.v7.app.AppCompatActivity;
 import jsettlers.main.android.R;
 import jsettlers.main.android.core.resources.scanner.AndroidResourcesLoader;
 import jsettlers.main.android.gameplay.GameActivity_;
-import jsettlers.main.android.mainmenu.gamesetup.JoinMultiPlayerSetupFragment;
-import jsettlers.main.android.mainmenu.gamesetup.NewMultiPlayerSetupFragment;
-import jsettlers.main.android.mainmenu.mappicker.JoinMultiPlayerPickerFragment;
-import jsettlers.main.android.mainmenu.mappicker.NewMultiPlayerPickerFragment;
 import jsettlers.main.android.mainmenu.navigation.Actions;
 import jsettlers.main.android.mainmenu.navigation.MainMenuNavigator;
 
@@ -75,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements MainMenuNavigator
 	@Override
 	public void showNewMultiPlayerPicker() {
 		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.frame_layout, NewMultiPlayerPickerFragment.newInstance())
+				.replace(R.id.frame_layout, MultiplayerPickerFragment.create())
 				.addToBackStack(null)
 				.commit();
 	}
@@ -83,23 +79,7 @@ public class MainActivity extends AppCompatActivity implements MainMenuNavigator
 	@Override
 	public void showJoinMultiPlayerPicker() {
 		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.frame_layout, JoinMultiPlayerPickerFragment.create())
-				.addToBackStack(null)
-				.commit();
-	}
-
-	@Override
-	public void showJoinMultiPlayerSetup(String mapId) {
-		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.frame_layout, JoinMultiPlayerSetupFragment.create(mapId))
-				.addToBackStack(null)
-				.commit();
-	}
-
-	@Override
-	public void showNewMultiPlayerSetup(String mapId) {
-		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.frame_layout, NewMultiPlayerSetupFragment.create(mapId))
+				.replace(R.id.frame_layout, MultiplayerPickerFragment.create())
 				.addToBackStack(null)
 				.commit();
 	}

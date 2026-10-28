@@ -30,7 +30,7 @@ import jsettlers.common.action.Action;
  * @author Michael Zangl
  */
 public class LabeledButton extends Button {
-	private final String text;
+	private String text;
 	private final Action action;
 
 	private static final OriginalImageLink BUTTON = new OriginalImageLink(EImageLinkType.GUI,
@@ -86,6 +86,16 @@ public class LabeledButton extends Button {
 
 	protected String getText() {
 		return text;
+	}
+
+	/**
+	 * Changes the text shown on the button.
+	 *
+	 * @param text
+	 *            The new text.
+	 */
+	public void setText(String text) {
+		this.text = text;
 	}
 	
 	@Override
