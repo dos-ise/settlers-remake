@@ -80,7 +80,6 @@
 	<string name="halt">Alto</string>
 	<string name="join_multi_player_game">Unirse a partida multijugador</string>
 	<string name="load_single_player_game">Cargar partida de un jugador</string>
-	<string name="menu_game_in_progress">Partida en proceso</string>
 	<string name="menu_join">Unirse</string>
 	<string name="menu_load">Cargar</string>
 	<string name="menu_multi_player_info">Desafía a tus amigos en móvil, tablet u ordenador.</string>
@@ -90,19 +89,13 @@
 	<string name="menu_single_player_title">Un Jugador</string>
 	<string name="new_multi_player_game">Nueva Partida Multijugador</string>
 	<string name="new_single_player_game">Nueva Partida de Un Jugador</string>
-	<string name="no_saved_games">No se encuentran partidas guardadas</string>
 	<string name="notification_game_in_progress">Partida en Progreso</string>
 	<string name="number_of_players">Jugadores</string>
 	<string name="ok">OK</string>
 	<string name="peacetime">Tregua</string>
-	<string name="resource_directory_button">Localizar carpeta</string>
-	<string name="resource_directory_info">JSettlers requiere las carpetas GFX y SND de una instalación original de Settlers III. Copia estas carpetas a tu dispositivo Android para jugar.</string>
 	<string name="resource_directory_title">Archivos gráficos y de audio.</string>
 	<string name="resource_selection_dialog_title">Localiza los archivos gráficos y de audio</string>
 	<string name="searching_for_multiplayer_games">Buscando partidas…</string>
-	<string name="settings">Configuración</string>
-	<string name="settings_name">Nombre</string>
-	<string name="settings_player_name">Nombre de Jugador</string>
 	<string name="start_game">Iniciar Partida</string>
 	<string name="start_resources">Recursos</string>
 	<string name="work_here">Trabajar aquí</string>

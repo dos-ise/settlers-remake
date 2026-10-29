@@ -19,6 +19,7 @@ import go.graphics.event.GOEventHandlerProvider;
 import go.graphics.swing.contextcreator.BackendSelector;
 import go.graphics.swing.contextcreator.ContextCreator;
 import go.graphics.swing.contextcreator.EBackendType;
+import go.graphics.swing.contextcreator.GLFWContextCreator;
 import go.graphics.swing.contextcreator.JAWTContextCreator;
 import go.graphics.swing.contextcreator.ContextException;
 import go.graphics.swing.opengl.LWJGLDrawContext;
@@ -159,6 +160,16 @@ public abstract class ContextContainer extends JPanel implements GOEventHandlerP
 	public void removeSurface() {
 		if(vkOutput instanceof VulkanSurfaceOutput) {
 			((VulkanSurfaceOutput)vkOutput).removeSurface();
+		}
+	}
+
+	/**
+	 * Toggles fullscreen for the native window. Only the GLFW backend has its own window, so this
+	 * is a no-op for all other backends (which render into the Swing frame).
+	 */
+	public void toggleFullscreen() {
+		if (cc instanceof GLFWContextCreator) {
+			((GLFWContextCreator) cc).toggleFullscreen();
 		}
 	}
 }

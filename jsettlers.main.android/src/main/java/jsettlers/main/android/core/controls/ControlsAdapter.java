@@ -34,7 +34,6 @@ import jsettlers.common.position.ShortPoint2D;
 import jsettlers.common.selectable.ISelectionSet;
 import jsettlers.graphics.map.ETextDrawPosition;
 import jsettlers.graphics.map.MapContent;
-import jsettlers.graphics.map.controls.IControls;
 import jsettlers.main.android.core.AndroidPreferences;
 import jsettlers.main.android.gameplay.gamemenu.GameSpeedLiveData;
 import jsettlers.network.client.interfaces.IGameClock;
@@ -44,7 +43,6 @@ public class ControlsAdapter implements ActionControls, DrawControls, SelectionC
 
 	private final IStartedGame game;
 	private final IInGamePlayer player;
-	private final AndroidControls androidControls;
 	private final MapContent mapContent;
 	private final GameMenu gameMenu;
 	private final IGraphicsGrid graphicsGrid;
@@ -71,15 +69,14 @@ public class ControlsAdapter implements ActionControls, DrawControls, SelectionC
 		preferences = new AndroidPreferences(context);
 		SOUND_PLAYER.setVolume(preferences.getSoundVolume());
 
-		androidControls = new AndroidControls(this, context.getResources().getDisplayMetrics().density, preferences.isShowMinimap());
-		mapContent = new MapContent(game, SOUND_PLAYER, ETextDrawPosition.MOBILE, androidControls);
+		// The shared OriginalControls render the full in-game UI (main panel, minimap, chat) on all platforms.
+		mapContent = new MapContent(game, SOUND_PLAYER, ETextDrawPosition.MOBILE);
+		// Widen the control panel so the buttons are large enough to be tapped reliably on a touch screen.
+		mapContent.setUiScale(1.5f);
+		mapContent.setTextInputProvider(new AndroidTextInputProvider(context));
 		gameMenu = new GameMenu(context, SOUND_PLAYER, this, new GameSpeedLiveData(gameClock, this), game.isMultiplayerGame(),
 				mapContent.getMusicManager(), preferences, game);
 		graphicsGrid = game.getMap();
-	}
-
-	public IControls getControls() {
-		return androidControls;
 	}
 
 	public MapContent getMapContent() {
@@ -96,12 +93,11 @@ public class ControlsAdapter implements ActionControls, DrawControls, SelectionC
 
 	@Override
 	public boolean isMinimapVisible() {
-		return androidControls.isMinimapVisible();
+		return preferences.isShowMinimap();
 	}
 
 	@Override
 	public void setMinimapVisible(boolean visible) {
-		androidControls.setMinimapVisible(visible);
 		preferences.setShowMinimap(visible);
 	}
 
@@ -179,7 +175,8 @@ public class ControlsAdapter implements ActionControls, DrawControls, SelectionC
 	 */
 	@Override
 	public void fireAction(IAction action) {
-		androidControls.fireAction(action);
+		mapContent.fireAction(action);
+		onAction(action);
 	}
 
 	@Override
@@ -268,12 +265,12 @@ public class ControlsAdapter implements ActionControls, DrawControls, SelectionC
 	 */
 	@Override
 	public boolean isTaskActive() {
-		return androidControls.isTaskActive();
+		return false;
 	}
 
 	@Override
 	public void endTask() {
-		androidControls.endTask();
+		fireAction(new Action(EActionType.ABORT));
 	}
 
 	/**

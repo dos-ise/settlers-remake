@@ -21,6 +21,7 @@ import go.graphics.DrawmodeListener;
 import go.graphics.RedrawListener;
 import go.graphics.area.Area;
 import go.graphics.event.GOEvent;
+import go.graphics.region.Region;
 import go.graphics.swing.contextcreator.EBackendType;
 import go.graphics.swing.contextcreator.ContextException;
 
@@ -68,6 +69,14 @@ public class AreaContainer extends ContextContainer implements RedrawListener {
 		area.setWidth(width);
 		area.setHeight(height);
 
+	}
+
+	/**
+	 * Replaces the content of this container's area. The native window (and its GL context) is kept,
+	 * so switching between menu and game does not create a new window.
+	 */
+	public void setAreaContent(Region region) {
+		area.set(region);
 	}
 
 	public void draw() throws ContextException {

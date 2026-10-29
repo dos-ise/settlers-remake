@@ -57,6 +57,17 @@ public final class Labels extends AbstractLabels {
 	}
 
 	/**
+	 * Changes the UI language at runtime and reloads all labels.
+	 * 
+	 * @param locale
+	 *            The new locale to use.
+	 */
+	public static void setLocale(Locale locale) {
+		setPreferredLocale(locale);
+		INSTANCE.resetLabels();
+	}
+
+	/**
 	 * Gets a formatted string.
 	 * 
 	 * @param string

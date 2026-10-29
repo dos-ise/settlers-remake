@@ -80,7 +80,6 @@
 	<string name="halt">Stop</string>
 	<string name="join_multi_player_game">Deltag i netværksspil</string>
 	<string name="load_single_player_game">Hent spil</string>
-	<string name="menu_game_in_progress">Spillet er i gang</string>
 	<string name="menu_join">Deltag</string>
 	<string name="menu_load">Hent</string>
 	<string name="menu_multi_player_info">Udfordr dine venner på mobil, tablet og desktop</string>
@@ -90,19 +89,13 @@
 	<string name="menu_single_player_title">Spil</string>
 	<string name="new_multi_player_game">Nyt netværksspil</string>
 	<string name="new_single_player_game">Nyt spil</string>
-	<string name="no_saved_games">Ingen score tilgængelig</string>
 	<string name="notification_game_in_progress">JSettlers kører</string>
 	<string name="number_of_players">Spillere</string>
 	<string name="ok">OK</string>
 	<string name="peacetime">Fredstid</string>
-	<string name="resource_directory_button">Lokaliser mappen</string>
-	<string name="resource_directory_info">Settlers brug for GFX og SND mapperne fra installationsmappen af det originale The Settlers III. Find disse mapper og kopier dem til din Android-enhed, så de kan bruges til JSettlers.</string>
 	<string name="resource_directory_title">Grafik- og lydfiler</string>
 	<string name="resource_selection_dialog_title">Find grafik- og lydfiler</string>
 	<string name="searching_for_multiplayer_games">Søg efter spil...</string>
-	<string name="settings">Indstillinger</string>
-	<string name="settings_name">Navn</string>
-	<string name="settings_player_name">Spillernavn</string>
 	<string name="start_game">Start spil</string>
 	<string name="start_resources">Ressourcer</string>
 	<string name="work_here">Arbejd</string>

@@ -142,8 +142,14 @@ public abstract class AbstractTextDrawer<T extends GLDrawContext> {
 		int[] pixels = getRGB();
 		endDraw();
 
+		// The backends expect the game's 0xRRGGBBAA layout (red in the highest byte), the drawers provide the
+		// standard 0xAARRGGBB layout.
 		for (int y = 0; y != tex_height; y++) {
-			data.put(pixels, (tex_height - y - 1) * tex_width, tex_width);
+			int row = (tex_height - y - 1) * tex_width;
+			for (int x = 0; x != tex_width; x++) {
+				int pixel = pixels[row + x];
+				data.put(((pixel >> 16) & 0xFF) << 24 | ((pixel >> 8) & 0xFF) << 16 | (pixel & 0xFF) << 8 | (pixel >>> 24) & 0xFF);
+			}
 		}
 
 		data.rewind();

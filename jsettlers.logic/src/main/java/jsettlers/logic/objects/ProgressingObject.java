@@ -35,6 +35,11 @@ public abstract class ProgressingObject extends AbstractObjectsManagerObject {
 
 	@Override
 	public float getStateProgress() {
+		if (MatchConstants.clock() == null) {
+			// The game is shutting down and the clock has already been cleared. The render thread may
+			// still draw a frame, so do not fail here.
+			return 1;
+		}
 		float progress = (MatchConstants.clock().getTime() - startTime) / ((float) duration);
 		if (progress < 1) {
 			return progress;

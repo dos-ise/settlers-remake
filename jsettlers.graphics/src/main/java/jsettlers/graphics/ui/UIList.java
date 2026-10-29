@@ -19,11 +19,15 @@ import go.graphics.GLDrawContext;
 import java.util.List;
 import java.util.Optional;
 
+import jsettlers.common.Color;
 import jsettlers.common.images.EImageLinkType;
 import jsettlers.common.images.OriginalImageLink;
 import jsettlers.common.position.FloatRectangle;
 import jsettlers.common.action.Action;
 import jsettlers.graphics.action.ExecutableAction;
+import jsettlers.graphics.image.Image;
+import jsettlers.graphics.image.SingleImage;
+import jsettlers.graphics.image.reader.ImageMetadata;
 import jsettlers.graphics.map.draw.ImageProvider;
 
 public class UIList<T> implements UIElement {
@@ -33,6 +37,36 @@ public class UIList<T> implements UIElement {
 			new OriginalImageLink(EImageLinkType.GUI, 2, 3, 0);
 	private static final OriginalImageLink SCROLLBAR_BOTTOM =
 			new OriginalImageLink(EImageLinkType.GUI, 2, 4, 0);
+
+	/**
+	 * A solid black background so the list entries are readable on the menu background.
+	 */
+	private final Image background = createBackground(new Color(0, 0, 0, 1), "list-background");
+
+	/**
+	 * Background of every second list entry so the touch area of each row is visible.
+	 */
+	private final Image evenItemBackground = createBackground(new Color(0.1f, 0.1f, 0.1f, 1), "list-item-even");
+
+	/**
+	 * Background of the other list entries.
+	 */
+	private final Image oddItemBackground = createBackground(new Color(0.16f, 0.16f, 0.16f, 1), "list-item-odd");
+
+	/**
+	 * Background of the currently selected list entry.
+	 */
+	private final Image selectedItemBackground = createBackground(new Color(0.25f, 0.3f, 0.4f, 1), "list-item-selected");
+
+	private static Image createBackground(Color color, String name) {
+		ImageMetadata metadata = new ImageMetadata();
+		metadata.width = 1;
+		metadata.height = 1;
+		metadata.offsetX = 0;
+		metadata.offsetY = 0;
+		int[] rgba = new int[] { color.getRGBA() };
+		return new SingleImage(metadata, rgba, name);
+	}
 
 	private static final float RIGHTBORDER = .97f;
 	private static final float EDGEPART = .02f;
@@ -104,6 +138,8 @@ public class UIList<T> implements UIElement {
 			float height = position.getHeight();
 			float width = position.getWidth();
 
+			background.drawImageAtRect(gl, minX, minY, width, height, 1);
+
 			int startindex = (int) (listoffset / itemheight);
 
 			int itemsperpage = (int) (1 / itemheight);
@@ -116,6 +152,11 @@ public class UIList<T> implements UIElement {
 				// relative
 				float itemtop = 1 - i * itemheight + listoffset;
 				float itembottom = itemtop - itemheight;
+
+				Image itemBackground = activeItem == item ? selectedItemBackground
+						: (i % 2 == 0 ? evenItemBackground : oddItemBackground);
+				itemBackground.drawImageAtRect(gl, minX, minY + itembottom * height,
+						RIGHTBORDER * width, itemheight * height, 1);
 
 				listItem.setHighlighted(activeItem == item);
 				listItem.setPosition(new FloatRectangle(minX, minY + itembottom
@@ -138,15 +179,17 @@ public class UIList<T> implements UIElement {
 
 			// side
 			ImageProvider provider = ImageProvider.getInstance();
+			float scrollbarWidth = width * (1 - RIGHTBORDER);
+			float scrollbarX = minX + width * RIGHTBORDER;
 			provider.getImage(SCROLLBAR_TOP).drawImageAtRect(gl,
-					minX + width * RIGHTBORDER, sliderMaxY - edgeHeight,
-					 width, sliderMaxY, 1);
+					scrollbarX, sliderMaxY - edgeHeight,
+					scrollbarWidth, edgeHeight, 1);
 			provider.getImage(SCROLLBAR_MIDDLE).drawImageAtRect(gl,
-					minX + width * RIGHTBORDER, edgeHeight,
-					 width, sliderMaxY - edgeHeight, 1);
+					scrollbarX, sliderMinY + edgeHeight,
+					scrollbarWidth, Math.max(0, sliderMaxY - sliderMinY - 2 * edgeHeight), 1);
 			provider.getImage(SCROLLBAR_BOTTOM).drawImageAtRect(gl,
-					minX + width * RIGHTBORDER, sliderMinY, width,
-					 edgeHeight, 1);
+					scrollbarX, sliderMinY,
+					scrollbarWidth, edgeHeight, 1);
 		}
 	}
 
@@ -173,6 +216,33 @@ public class UIList<T> implements UIElement {
 
 	protected void scrollBy(int offset) {
 		listoffset = itemheight * offset;
+	}
+
+	@Override
+	public void handleZoom(float relativex, float relativey, float zoomFactor) {
+		// The mouse wheel is converted to a zoom event. Scroll the list by one item per wheel step.
+		scrollBy(zoomFactor > 1 ? -1 : 1);
+	}
+
+	private float panStartOffset = Float.NaN;
+
+	@Override
+	public void handlePanStart(float relativex, float relativey) {
+		panStartOffset = listoffset;
+	}
+
+	@Override
+	public void handlePan(float relativex, float relativey, float panDistanceX, float panDistanceY) {
+		float height = position.getHeight();
+		if (height > 0 && !Float.isNaN(panStartOffset)) {
+			// Dragging up (positive y) scrolls down, so the offset grows with the pan distance.
+			listoffset = panStartOffset + panDistanceY / height;
+		}
+	}
+
+	@Override
+	public void handlePanEnd(float relativex, float relativey) {
+		panStartOffset = Float.NaN;
 	}
 
 	private class SelectAction extends ExecutableAction {

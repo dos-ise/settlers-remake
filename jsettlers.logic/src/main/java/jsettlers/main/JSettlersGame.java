@@ -98,7 +98,7 @@ public class JSettlersGame {
 
 	private boolean started = false;
 	private boolean stopped = false;
-	private boolean shutdownFinished;
+	private volatile boolean shutdownFinished;
 
 	private PrintStream systemErrorStream;
 	private PrintStream systemOutStream;
@@ -302,6 +302,9 @@ public class JSettlersGame {
 				connector.shutdown();
 				guiInterface.stop();
 				mainGrid.recordFinalStatistics(); // the movables and buildings are removed by clearState()
+				// Mark the shutdown as finished before clearState() clears the game clock, so the render
+				// thread stops drawing before the clock becomes null (see MapContent.drawContent).
+				shutdownFinished = true;
 				clearState();
 
 				System.setErr(systemErrorStream);

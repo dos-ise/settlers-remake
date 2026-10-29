@@ -21,8 +21,9 @@ import android.content.SharedPreferences;
 import android.os.Build;
 
 import jsettlers.common.CommonConstants;
+import jsettlers.graphics.settings.ISettings;
 
-public class AndroidPreferences {
+public class AndroidPreferences implements ISettings {
 	private static final String PREFS = "prefs";
 	private static final String PREF_PLAYER_ID = "playerid";
 	private static final String PREF_PLAYER_NAME = "playername";
@@ -32,6 +33,7 @@ public class AndroidPreferences {
 	private static final String PREF_MUSIC_ENABLED = "music_enabled";
 	private static final String PREF_MUSIC_VOLUME = "music_volume";
 	private static final String PREF_SOUND_VOLUME = "sound_volume";
+	private static final String PREF_LANGUAGE = "language";
 
 	private static final float DEFAULT_MUSIC_VOLUME = 0.5f;
 	private static final float DEFAULT_SOUND_VOLUME = 1f;
@@ -79,8 +81,18 @@ public class AndroidPreferences {
 		return preferences.getBoolean(PREF_PLAYALL_MUSIC, false);
 	}
 
+	@Override
+	public boolean isMusicPlayAll() {
+		return isPlayAllMusic();
+	}
+
 	public void setPlayAllMusic(boolean playAll) {
 		preferences.edit().putBoolean(PREF_PLAYALL_MUSIC, playAll).apply();
+	}
+
+	@Override
+	public void setMusicPlayAll(boolean playAll) {
+		setPlayAllMusic(playAll);
 	}
 
 	public boolean isShowMinimap() {
@@ -119,6 +131,56 @@ public class AndroidPreferences {
 
 	public void setSoundVolume(float volume) {
 		preferences.edit().putFloat(PREF_SOUND_VOLUME, clampVolume(volume)).apply();
+	}
+
+	@Override
+	public float getVolume() {
+		return getSoundVolume();
+	}
+
+	@Override
+	public void setVolume(float volume) {
+		setSoundVolume(volume);
+	}
+
+	@Override
+	public int getFpsLimit() {
+		return 0; // not configurable on Android
+	}
+
+	@Override
+	public void setFpsLimit(int fps) {
+		// not configurable on Android
+	}
+
+	@Override
+	public float getGuiScale() {
+		return 1;
+	}
+
+	@Override
+	public void setGuiScale(float scale) {
+		// not configurable on Android
+	}
+
+	@Override
+	public boolean getAiTowerFocus() {
+		return false;
+	}
+
+	@Override
+	public void setAiTowerFocus(boolean focus) {
+		// not configurable on Android
+	}
+
+	@Override
+	public String getLanguage() {
+		return preferences.getString(PREF_LANGUAGE, null);
+	}
+
+	@Override
+	public void setLanguage(String language) {
+		preferences.edit().putString(PREF_LANGUAGE, language).apply();
 	}
 
 	private static float clampVolume(float volume) {

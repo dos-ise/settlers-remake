@@ -95,8 +95,6 @@
 
 	<!-- Main Menus -->
 	<!-- Settings -->
-	<string name="settings_player_name">Player name</string>
-	<string name="settings_name">Name</string>
 
 	<!-- Map picker -->
 	<string name="new_single_player_game">New Single-Player Game</string>
@@ -114,13 +112,9 @@
 	<!-- Other -->
 	<string name="ok">OK</string>
 	<string name="cancel">Cancel</string>
-	<string name="settings">Settings</string>
 
 	<string name="resource_directory_title">Graphics and sound folders</string>
-	<string name="resource_directory_info">JSettlers requires the GFX and SND folders from an original copy of Settlers 3. Install Settlers 3 on your computer and find those folders, then copy them to your Android device.</string>
-	<string name="resource_directory_button">Locate folders</string>
 
-	<string name="ubisoft_download_button">Download from Ubisoft</string>
 	<string name="ubisoft_login_title">Ubisoft Connect Login</string>
 	<string name="ubisoft_retry">Retry</string>
 	<string name="ubisoft_logging_in">Logging in...</string>
@@ -131,7 +125,6 @@
 	<string name="ubisoft_network_error">Cannot reach the Ubisoft login page.\nPlease check your internet connection.</string>
 	<string name="ubisoft_ssl_error">A secure connection to the Ubisoft login page could not be established.</string>
 	<string name="ubisoft_storage_permission_needed">All files access is required to download the game data to /storage/emulated/0/JSettlers. Please grant it in the system settings and try again.</string>
-	<string name="gog_download_button">Download from GOG</string>
 	<string name="gog_login_title">GOG Login</string>
 	<string name="gog_retry">Retry</string>
 	<string name="gog_logging_in">Logging in...</string>
@@ -149,7 +142,6 @@
 	<string name="menu_multi_player_title">Multi-Player</string>
 	<string name="menu_multi_player_info">Challenge your friends on phone, tablet or desktop.</string>
 
-	<string name="menu_game_in_progress">Game in progress</string>
 	<string name="menu_new">Start</string>
 	<string name="menu_load">Load</string>
 	<string name="menu_join">Join</string>
@@ -175,7 +167,6 @@
 	<string name="players_close">Close</string>
 	<string name="players_team">Team %d</string>
 
-	<string name="no_saved_games">No saved games available</string>
 	<string name="resource_selection_dialog_title">Locate GFX and SND folders</string>
 	<string name="empty_directory">This directory is empty</string>
 	<string name="notification_game_in_progress">JSettlers game in progress</string>
@@ -203,10 +194,7 @@
 	<string name="ask_dock">Choose dock position</string>
 	<string name="ask_spell">Choose spell position</string>
 	<string name="menu_multi_player_start_server">Start server</string>
-	<string name="settings_server_address">Server address</string>
-	<string name="settings_address">Address</string>
 	<string name="menu_multi_player_stop_server">Stop server</string>
-	<string name="settings_play_all_music">play all music</string>
 	<string name="move_to_title">Move</string>
 	<string name="move_to_normal">Normal</string>
 	<string name="move_to_forced">Forced</string>
@@ -214,14 +202,9 @@
 	<string name="move_to_patrol">Patrol</string>
 	<string name="game_menu_statistics">Statistics</string>
 	<string name="statistics_title">Statistics</string>
-	<string name="statistics_endgame_title">Game result</string>
-	<string name="statistics_continue">Continue</string>
 	<string name="statistics_no_data">No statistics recorded yet</string>
 	<string name="statistics_time_axis">Game time (h:mm), recorded every game minute</string>
 	<string name="statistics_rank" translatable="false">%d.</string>
-	<string name="statistics_game_ended">Game ended after %s</string>
-	<string name="statistics_game_ended_no_time">Game ended</string>
-	<string name="settings_audio">Audio</string>
 	<string name="settings_music_enabled">Play music</string>
 	<string name="settings_music_volume">Music volume</string>
 	<string name="settings_sound_volume">Sound effects volume</string>

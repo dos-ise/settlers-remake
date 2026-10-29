@@ -42,4 +42,59 @@ public interface UIElement {
 	 * The opposite of {@link #onAttach()}.
 	 */
 	void onDetach();
+
+	/**
+	 * Handles a zoom event (usually created by the mouse wheel) at the given relative position.
+	 * <p>
+	 * Menus use this to scroll lists. The default implementation does nothing.
+	 *
+	 * @param relativex
+	 *            The relative x position of the event (0..1).
+	 * @param relativey
+	 *            The relative y position of the event (0..1).
+	 * @param zoomFactor
+	 *            The zoom factor, 1 means no zoom, values &gt; 1 zoom in, values &lt; 1 zoom out.
+	 */
+	default void handleZoom(float relativex, float relativey, float zoomFactor) {
+	}
+
+	/**
+	 * Handles a pan (drag) event at the given relative position.
+	 * <p>
+	 * Menus use this to scroll lists with touch. The pan distance is the cumulative distance from the start of the
+	 * pan. The default implementation does nothing.
+	 *
+	 * @param relativex
+	 *            The relative x position of the pan start (0..1).
+	 * @param relativey
+	 *            The relative y position of the pan start (0..1).
+	 * @param panDistanceX
+	 *            The cumulative x distance of the pan in pixels.
+	 * @param panDistanceY
+	 *            The cumulative y distance of the pan in pixels.
+	 */
+	default void handlePan(float relativex, float relativey, float panDistanceX, float panDistanceY) {
+	}
+
+	/**
+	 * Called when a pan (drag) gesture starts at the given relative position.
+	 *
+	 * @param relativex
+	 *            The relative x position of the pan start (0..1).
+	 * @param relativey
+	 *            The relative y position of the pan start (0..1).
+	 */
+	default void handlePanStart(float relativex, float relativey) {
+	}
+
+	/**
+	 * Called when a pan (drag) gesture ends at the given relative position.
+	 *
+	 * @param relativex
+	 *            The relative x position of the pan start (0..1).
+	 * @param relativey
+	 *            The relative y position of the pan start (0..1).
+	 */
+	default void handlePanEnd(float relativex, float relativey) {
+	}
 }

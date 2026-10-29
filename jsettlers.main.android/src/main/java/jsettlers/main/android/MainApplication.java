@@ -19,20 +19,24 @@ import jsettlers.network.infrastructure.log.ConsoleLogger;
 import org.androidannotations.annotations.EApplication;
 
 import android.app.Application;
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.multidex.MultiDexApplication;
 
 import java.io.IOException;
 
+import jsettlers.common.action.EActionType;
+import jsettlers.common.action.SaveAction;
 import jsettlers.common.menu.IJoinPhaseMultiplayerGameConnector;
 import jsettlers.common.menu.IJoiningGame;
 import jsettlers.common.menu.IMapInterfaceConnector;
 import jsettlers.common.menu.IMultiplayerConnector;
 import jsettlers.common.menu.IStartedGame;
 import jsettlers.common.menu.IStartingGame;
-import jsettlers.common.statistics.GameStatistics;
+import jsettlers.graphics.localization.Labels;
+import jsettlers.graphics.map.MapContent;
+import jsettlers.graphics.ui.TextInputDialog;
 import jsettlers.logic.constants.Constants;
 import jsettlers.logic.constants.MatchConstants;
 import jsettlers.logic.map.loading.list.MapList;
@@ -60,7 +64,7 @@ public class MainApplication extends MultiDexApplication implements GameStarter,
 	private IJoiningGame joiningGame;
 
 	private ControlsAdapter controlsAdapter;
-	private final MutableLiveData<GameStatistics> endgameStatistics = new MutableLiveData<>();
+	private IStartedGame endgameGame;
 
 	@Override
 	public void onCreate() {
@@ -156,18 +160,42 @@ public class MainApplication extends MultiDexApplication implements GameStarter,
 	@Override
 	public IMapInterfaceConnector gameStarted(IStartedGame game) {
 		controlsAdapter = new ControlsAdapter(getApplicationContext(), game, MatchConstants.clock());
-		endgameStatistics.postValue(null);
+		endgameGame = null;
 		GameMenu gameMenu = controlsAdapter.getGameMenu();
 		game.setGameExitListener(exitedGame -> {
-			// the statistics are posted before the game menu reports the quit, so they are available when the game is gone
-			endgameStatistics.postValue(createStatistics(exitedGame));
+			// The finished game is kept so the endgame statistics panel can read the player results.
+			endgameGame = exitedGame;
 			gameMenu.accept(exitedGame);
 		});
 		controlsAdapter.getGameMenu().getGameState().observeForever(gameStateObserver);
 
 		GameService_.intent(this).start();
 
-		return controlsAdapter.getMapContent().getInterfaceConnector();
+		IMapInterfaceConnector connector = controlsAdapter.getMapContent().getInterfaceConnector();
+		// A bare SAVE request (SaveAction with a null description) is intercepted here to ask for a
+		// description and re-fired as a committed SaveAction; only the committed one is written by the
+		// game logic (see GuiInterface). The shared GL dialog is used on all platforms. The action
+		// arrives on the action firerer thread, so the dialog must be shown on the main thread.
+		connector.addListener(action -> {
+			if (action.getActionType() != EActionType.SAVE) {
+				return;
+			}
+			boolean needsPrompt = !(action instanceof SaveAction) || ((SaveAction) action).getDescription() == null;
+			if (!needsPrompt) {
+				return; // already the committed save; let the logic handle it (avoid a prompt loop)
+			}
+			MapContent mapContent = controlsAdapter.getMapContent();
+			new Handler(Looper.getMainLooper()).post(() -> {
+				mapContent.showDialog(new TextInputDialog(Labels.getString("save-game-description"), description -> {
+					mapContent.hideDialog();
+					// An empty description falls back to the map name in MainGrid.generateSaveHeader.
+					connector.fireAction(new SaveAction(description));
+				}, mapContent::hideDialog));
+				// Android has no physical keyboard: open the text entry dialog for the input field.
+				mapContent.requestDialogTextInput();
+			});
+		});
+		return connector;
 	}
 
 	/**
@@ -193,22 +221,8 @@ public class MainApplication extends MultiDexApplication implements GameStarter,
 	}
 
 	@Override
-	public LiveData<GameStatistics> getEndgameStatistics() {
-		return endgameStatistics;
-	}
-
-	@Override
-	public void clearEndgameStatistics() {
-		endgameStatistics.setValue(null);
-	}
-
-	private static GameStatistics createStatistics(IStartedGame game) {
-		try {
-			return GameStatistics.create(game);
-		} catch (RuntimeException e) {
-			e.printStackTrace(); // the game must be quit even if the statistics are not available
-			return null;
-		}
+	public IStartedGame getEndgameGame() {
+		return endgameGame;
 	}
 
 	private Observer<GameMenu.GameState> gameStateObserver = gameState -> {

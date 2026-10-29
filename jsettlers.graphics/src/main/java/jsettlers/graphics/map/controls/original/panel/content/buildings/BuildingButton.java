@@ -42,6 +42,11 @@ import jsettlers.graphics.ui.Label.EVerticalAlignment;
 public class BuildingButton extends Button implements UiContentUpdater.IUiContentReceiver<IBuildingCounts> {
 	private static final OriginalImageLink activeMark = new OriginalImageLink(EImageLinkType.GUI, 3, 123, 0);
 	private static final float ICON_BUTTON_RATIO = 0.85f;
+	/**
+	 * Height of the area at the bottom of the button that is reserved for the building name. Touch devices never fire
+	 * hover events, so the name has to be visible all the time instead of being shown as a tooltip.
+	 */
+	private static final float NAME_LABEL_HEIGHT = 0.32f;
 
 	private final ImageLink buildingImageLink;
 	private final BuildingVariant building;
@@ -56,11 +61,15 @@ public class BuildingButton extends Button implements UiContentUpdater.IUiConten
 	private float iconWidth;
 	private float iconHeight;
 	private final Label constructedLabel = new Label("", EFontSize.SMALL, EHorizontalAlignment.RIGHT, EVerticalAlignment.TOP);
+	private final Label nameLabel = new Label("", EFontSize.SMALL, EHorizontalAlignment.CENTER, EVerticalAlignment.CENTER);
 
 	public BuildingButton(BuildingVariant building) {
 		super(new ShowConstructionMarksAction(building.getType()), null, null, Labels.getName(building.getType()));
 		this.building = building;
 		buildingImageLink = building.getGuiImage();
+
+		nameLabel.setText(Labels.getName(building.getType()));
+		addChild(nameLabel, 0.02f, 0, 0.98f, NAME_LABEL_HEIGHT);
 		addChild(constructedLabel, 0.05f, 0.05f, .95f, .95f);
 	}
 
@@ -88,23 +97,30 @@ public class BuildingButton extends Button implements UiContentUpdater.IUiConten
 			} else {
 				buildingImage = ImageProvider.getInstance().getImage(buildingImageLink);
 			}
-			calculateIconCoords(buttonHeight, buttonWidth, position.getCenterX(), position.getCenterY(), imageHeight, imageWidth);
+			imageHeight = buildingImage.getHeight();
+			imageWidth = buildingImage.getWidth();
+
+			// Keep the bottom part of the button free for the always visible building name.
+			float iconAreaHeight = buttonHeight * (1 - NAME_LABEL_HEIGHT);
+			float iconCenterY = position.getMaxY() - iconAreaHeight / 2;
+			calculateIconCoords(iconAreaHeight, buttonWidth, position.getCenterX(), iconCenterY, imageHeight, imageWidth);
+
+			lastButtonHeight = buttonHeight;
+			lastButtonWidth = buttonWidth;
+			lastImageHeight = imageHeight;
+			lastImageWidth = imageWidth;
 		}
 
 		buildingImage.drawImageAtRect(gl, iconLeft, iconTop, iconWidth, iconHeight, 1);
 	}
 
-	private void calculateIconCoords(float buttonHeight, float buttonWidth, float btnXMid, float btnYMid,
+	private void calculateIconCoords(float iconAreaHeight, float buttonWidth, float btnXMid, float iconAreaCenterY,
 			float imageHeight, float imageWidth) {
-		float scaling = Math.min(buttonHeight * ICON_BUTTON_RATIO / imageHeight, buttonWidth * ICON_BUTTON_RATIO / imageWidth);
+		float scaling = Math.min(iconAreaHeight * ICON_BUTTON_RATIO / imageHeight, buttonWidth * ICON_BUTTON_RATIO / imageWidth);
 		iconWidth = imageWidth * scaling;
 		iconHeight = imageHeight * scaling;
 		iconLeft = btnXMid - iconWidth / 2;
-		iconTop = btnYMid - iconHeight / 2;
-		lastButtonHeight = buttonHeight;
-		lastButtonWidth = buttonWidth;
-		lastImageHeight = imageHeight;
-		lastImageWidth = imageWidth;
+		iconTop = iconAreaCenterY - iconHeight / 2;
 	}
 
 	public BuildingVariant getBuilding() {

@@ -35,8 +35,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import go.graphics.swing.contextcreator.BackendSelector;
+import jsettlers.graphics.settings.ISettings;
 
-public class SettingsManager implements ISoundSettingsProvider {
+public class SettingsManager implements ISoundSettingsProvider, ISettings {
 	private static final String CONFIGURATION_FILE = ".jsettlers";
 
 	private static final String ENV_PREFIX = "SETTLERS_";
@@ -175,6 +176,16 @@ public class SettingsManager implements ISoundSettingsProvider {
 		return getOrDefault(SETTING_USERNAME, () -> System.getProperty("user.name"));
 	}
 
+	@Override
+	public String getPlayerName() {
+		return getUserName();
+	}
+
+	@Override
+	public void setPlayerName(String name) {
+		setUserName(name);
+	}
+
 	public synchronized String getUUID() {
 		String id = get(SETTING_UUID);
 		if (id == null) {
@@ -263,6 +274,11 @@ public class SettingsManager implements ISoundSettingsProvider {
   public void setAiNoPioneers(boolean aiNoPioneers) {
 		set(SETTING_AI_TOWER_FOCUS, Boolean.toString(aiNoPioneers));
   }
+
+  @Override
+  public void setAiTowerFocus(boolean focus) {
+		setAiNoPioneers(focus);
+  }
 	public void setVolume(float volume) {
 		set(SETTING_VOLUME, Float.toString(volume));
 	}
@@ -339,6 +355,16 @@ public class SettingsManager implements ISoundSettingsProvider {
 				return Locale.getDefault();
 			}
 		}).orElse(Locale.getDefault());
+	}
+
+	@Override
+	public String getLanguage() {
+		return get(SETTING_LOCALE);
+	}
+
+	@Override
+	public void setLanguage(String language) {
+		set(SETTING_LOCALE, language);
 	}
 
 	public String getMapFile() {

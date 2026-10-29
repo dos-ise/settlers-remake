@@ -16,6 +16,7 @@ package jsettlers.graphics.ui;
 
 import go.graphics.EPrimitiveType;
 import java.util.Optional;
+import java.util.function.Consumer;
 import go.graphics.GLDrawContext;
 import go.graphics.UnifiedDrawHandle;
 import go.graphics.event.GOEvent;
@@ -37,6 +38,7 @@ public class UIInput extends UIPanel implements GOEventHandler {
 
 	private StringBuffer inputString = new StringBuffer();
 	private int carret = 0;
+	private Consumer<String> textChangedListener;
 
 	@Override
 	public void phaseChanged(GOEvent event) {
@@ -56,6 +58,55 @@ public class UIInput extends UIPanel implements GOEventHandler {
 			carret--;
 		} else if (code.equals("RIGHT") && carret < inputString.length()) {
 			carret++;
+		} else {
+			return;
+		}
+		if (textChangedListener != null) {
+			textChangedListener.accept(inputString.toString());
+		}
+	}
+
+	/**
+	 * Sets a listener that is called whenever the text of this input changes.
+	 * 
+	 * @param textChangedListener
+	 *            The listener or <code>null</code> to remove it.
+	 */
+	public void setTextChangedListener(Consumer<String> textChangedListener) {
+		this.textChangedListener = textChangedListener;
+	}
+
+	/**
+	 * Gets the current text of this input.
+	 * 
+	 * @return The text.
+	 */
+	public String getText() {
+		return inputString.toString();
+	}
+
+	/**
+	 * Sets the text of this input.
+	 * 
+	 * @param text
+	 *            The new text.
+	 */
+	public void setText(String text) {
+		inputString = new StringBuffer(text);
+		carret = text.length();
+	}
+
+	/**
+	 * Sets the text of this input and notifies the text changed listener. Used by platforms that
+	 * enter text through a dialog or soft keyboard instead of key events.
+	 * 
+	 * @param text
+	 *            The new text.
+	 */
+	public void setTextAndNotify(String text) {
+		setText(text);
+		if (textChangedListener != null) {
+			textChangedListener.accept(inputString.toString());
 		}
 	}
 

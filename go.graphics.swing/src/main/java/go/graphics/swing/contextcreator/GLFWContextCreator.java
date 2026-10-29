@@ -21,11 +21,16 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWKeyCallbackI;
 import org.lwjgl.glfw.GLFWMouseButtonCallbackI;
 import org.lwjgl.glfw.GLFWScrollCallbackI;
+import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.glfw.GLFWWindowCloseCallbackI;
 import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
+import org.lwjgl.system.MemoryStack;
 
 import java.awt.Window;
+import java.awt.event.ComponentEvent;
 import java.awt.event.WindowEvent;
+import java.awt.geom.AffineTransform;
+import java.nio.IntBuffer;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Set;
@@ -113,8 +118,63 @@ public class GLFWContextCreator extends AsyncContextCreator {
 		GLFW.glfwSwapBuffers(glfw_wnd);
 	}
 
+	@Override
+	public void componentResized(ComponentEvent componentEvent) {
+		// The GLFW window is a separate native window, so the Swing frame's focus must not
+		// gate its size. Otherwise the window stays at its initial tiny size until the user
+		// resizes it manually.
+		synchronized (wnd_lock) {
+			AffineTransform scaleInfo = canvas.getGraphicsConfiguration().getDefaultTransform();
+
+			double scaleX = 1;
+			double scaleY = 1;
+			if(scaleInfo != null) {
+				scaleX = scaleInfo.getScaleX();
+				scaleY = scaleInfo.getScaleX();
+			}
+			new_width = (int) (canvas.getWidth()*scaleX);
+			new_height = (int) (canvas.getHeight()*scaleY);
+			change_res = true;
+
+			if(new_width == 0) new_width = 1;
+			if(new_height == 0) new_height = 1;
+		}
+	}
+
 	public void async_stop() {
-		GLFW.glfwTerminate();
+		GLFW.glfwDestroyWindow(glfw_wnd);
+	}
+
+	private boolean fullscreen = false;
+	private int windowedX, windowedY, windowedWidth, windowedHeight;
+
+	/**
+	 * Toggles between windowed and fullscreen mode for the GLFW window. Only used on desktop;
+	 * Android renders into its own surface and never calls this.
+	 */
+	public void toggleFullscreen() {
+		if (fullscreen) {
+			GLFW.glfwSetWindowMonitor(glfw_wnd, 0, windowedX, windowedY, windowedWidth, windowedHeight,
+					GLFW.GLFW_DONT_CARE);
+			fullscreen = false;
+		} else {
+			try (MemoryStack stack = MemoryStack.stackPush()) {
+				IntBuffer x = stack.mallocInt(1);
+				IntBuffer y = stack.mallocInt(1);
+				IntBuffer w = stack.mallocInt(1);
+				IntBuffer h = stack.mallocInt(1);
+				GLFW.glfwGetWindowPos(glfw_wnd, x, y);
+				GLFW.glfwGetWindowSize(glfw_wnd, w, h);
+				windowedX = x.get(0);
+				windowedY = y.get(0);
+				windowedWidth = w.get(0);
+				windowedHeight = h.get(0);
+			}
+			long monitor = GLFW.glfwGetPrimaryMonitor();
+			GLFWVidMode mode = GLFW.glfwGetVideoMode(monitor);
+			GLFW.glfwSetWindowMonitor(glfw_wnd, monitor, 0, 0, mode.width(), mode.height(), mode.refreshRate());
+			fullscreen = true;
+		}
 	}
 
 	private static final HashMap<Integer, String> keys = new HashMap<>();
@@ -163,7 +223,14 @@ public class GLFWContextCreator extends AsyncContextCreator {
 
 		private final EnumSet<EModifier> activeMods = EnumSet.noneOf(EModifier.class);
 
-		private GLFWKeyCallbackI key_callback = (window, key, scancode, action, modsUNUSUED) -> {
+		private GLFWKeyCallbackI key_callback = (window, key, scancode, action, keyMods) -> {
+			// Alt+Enter toggles fullscreen. The Swing frame is hidden with the GLFW backend, so
+			// the Swing KeyboardFocusManager never sees this key combination.
+			if (action == GLFW.GLFW_PRESS && key == GLFW.GLFW_KEY_ENTER && (keyMods & GLFW.GLFW_MOD_ALT) != 0) {
+				toggleFullscreen();
+				return;
+			}
+
 			String name = GLFW.glfwGetKeyName(key, scancode);
 			if(name == null) {
 				name = keys.get(key);

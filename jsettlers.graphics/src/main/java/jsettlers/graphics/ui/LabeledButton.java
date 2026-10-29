@@ -16,6 +16,7 @@ package jsettlers.graphics.ui;
 
 import java.util.Optional;
 
+import go.graphics.AbstractColor;
 import go.graphics.GLDrawContext;
 import go.graphics.text.EFontSize;
 import go.graphics.text.TextDrawer;
@@ -29,7 +30,7 @@ import jsettlers.common.action.Action;
  * @author Michael Zangl
  */
 public class LabeledButton extends Button {
-	private final String text;
+	private String text;
 	private final Action action;
 
 	private static final OriginalImageLink BUTTON = new OriginalImageLink(EImageLinkType.GUI,
@@ -38,17 +39,46 @@ public class LabeledButton extends Button {
 			EImageLinkType.GUI, 3, 327, 0);
 
 	private final EFontSize size;
+	private final AbstractColor textColor;
+	private static AbstractColor defaultTextColor = null;
 	private boolean enabled = true;
 
 	public LabeledButton(String text, Action action, EFontSize size) {
+		this(text, action, size, null);
+	}
+
+	/**
+	 * Creates a new labeled button.
+	 *
+	 * @param text
+	 *            The text to show on the button.
+	 * @param action
+	 *            The action to fire when the button is pressed.
+	 * @param size
+	 *            The font size of the text.
+	 * @param textColor
+	 *            The color of the text, or <code>null</code> to use the default color.
+	 */
+	public LabeledButton(String text, Action action, EFontSize size, AbstractColor textColor) {
 		super(action, BUTTON, BUTTON_ACTIVE, null);
 		this.size = size;
 		this.text = text;
 		this.action = action;
+		this.textColor = textColor;
 	}
 
 	public LabeledButton(String text, Action action) {
 		this(text, action, EFontSize.NORMAL);
+	}
+
+	/**
+	 * Sets the default text color used by all buttons that do not have an explicit color set.
+	 * 
+	 * @param textColor
+	 *            The default color or <code>null</code> to use the standard white color.
+	 */
+	public static void setDefaultTextColor(AbstractColor textColor) {
+		defaultTextColor = textColor;
 	}
 
 	@Override
@@ -56,11 +86,28 @@ public class LabeledButton extends Button {
 		super.drawAt(gl);
 
 		TextDrawer drawer = gl.getTextDrawer(size);
-		drawer.renderCentered(getPosition().getCenterX(), getPosition().getCenterY(), getText());
+		float cx = getPosition().getCenterX();
+		float cy = getPosition().getCenterY();
+		AbstractColor color = textColor != null ? textColor : defaultTextColor;
+		if (color != null) {
+			drawer.drawString(cx - drawer.getWidth(text) / 2, cy - drawer.getHeight(text) / 2, color, text);
+		} else {
+			drawer.renderCentered(cx, cy, getText());
+		}
 	}
 
 	protected String getText() {
 		return text;
+	}
+
+	/**
+	 * Changes the text shown on the button.
+	 *
+	 * @param text
+	 *            The new text.
+	 */
+	public void setText(String text) {
+		this.text = text;
 	}
 	
 	@Override

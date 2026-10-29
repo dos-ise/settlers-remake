@@ -25,15 +25,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 
 import jsettlers.main.android.R;
+import jsettlers.main.android.core.resources.scanner.AndroidResourcesLoader;
 import jsettlers.main.android.gameplay.GameActivity_;
-import jsettlers.main.android.mainmenu.gamesetup.JoinMultiPlayerSetupFragment;
-import jsettlers.main.android.mainmenu.gamesetup.NewMultiPlayerSetupFragment;
-import jsettlers.main.android.mainmenu.gamesetup.NewSinglePlayerSetupFragment;
-import jsettlers.main.android.mainmenu.home.MainMenuFragment;
-import jsettlers.main.android.mainmenu.mappicker.JoinMultiPlayerPickerFragment;
-import jsettlers.main.android.mainmenu.mappicker.LoadSinglePlayerPickerFragment;
-import jsettlers.main.android.mainmenu.mappicker.NewMultiPlayerPickerFragment;
-import jsettlers.main.android.mainmenu.mappicker.NewSinglePlayerPickerFragment;
 import jsettlers.main.android.mainmenu.navigation.Actions;
 import jsettlers.main.android.mainmenu.navigation.MainMenuNavigator;
 
@@ -48,8 +41,12 @@ public class MainActivity extends AppCompatActivity implements MainMenuNavigator
 		if (savedInstanceState != null)
 			return;
 
+		// The shared GL menu needs the original game assets. If they are not set up yet, show the shared
+		// game data setup panel which offers the directory picker and the GOG/Ubisoft downloads.
+		boolean resourcesLoaded = new AndroidResourcesLoader(this).setup();
+		Fragment startFragment = resourcesLoaded ? SharedMainMenuFragment.create() : GameDataSetupFragment.create();
 		getSupportFragmentManager().beginTransaction()
-				.add(R.id.frame_layout, MainMenuFragment.create())
+				.add(R.id.frame_layout, startFragment)
 				.commit();
 	}
 
@@ -66,44 +63,15 @@ public class MainActivity extends AppCompatActivity implements MainMenuNavigator
 
 	@Override
 	public void onBackPressed() {
-		Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frame_layout);
-		if (fragment instanceof MainMenuFragment && ((MainMenuFragment) fragment).onBackPressed()) {
-			return;
-		}
 		super.onBackPressed();
 	}
-
 	/**
 	 * MainMenu Navigation
 	 */
 	@Override
-	public void showNewSinglePlayerPicker() {
-		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.frame_layout, NewSinglePlayerPickerFragment.newInstance())
-				.addToBackStack(null)
-				.commit();
-	}
-
-	@Override
-	public void showLoadSinglePlayerPicker() {
-		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.frame_layout, LoadSinglePlayerPickerFragment.newInstance())
-				.addToBackStack(null)
-				.commit();
-	}
-
-	@Override
-	public void showNewSinglePlayerSetup(String mapId) {
-		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.frame_layout, NewSinglePlayerSetupFragment.create(mapId))
-				.addToBackStack(null)
-				.commit();
-	}
-
-	@Override
 	public void showNewMultiPlayerPicker() {
 		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.frame_layout, NewMultiPlayerPickerFragment.newInstance())
+				.replace(R.id.frame_layout, MultiplayerPickerFragment.create())
 				.addToBackStack(null)
 				.commit();
 	}
@@ -111,23 +79,7 @@ public class MainActivity extends AppCompatActivity implements MainMenuNavigator
 	@Override
 	public void showJoinMultiPlayerPicker() {
 		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.frame_layout, JoinMultiPlayerPickerFragment.create())
-				.addToBackStack(null)
-				.commit();
-	}
-
-	@Override
-	public void showJoinMultiPlayerSetup(String mapId) {
-		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.frame_layout, JoinMultiPlayerSetupFragment.create(mapId))
-				.addToBackStack(null)
-				.commit();
-	}
-
-	@Override
-	public void showNewMultiPlayerSetup(String mapId) {
-		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.frame_layout, NewMultiPlayerSetupFragment.create(mapId))
+				.replace(R.id.frame_layout, MultiplayerPickerFragment.create())
 				.addToBackStack(null)
 				.commit();
 	}
@@ -150,6 +102,9 @@ public class MainActivity extends AppCompatActivity implements MainMenuNavigator
 	}
 
 	private void setUpButton() {
+		if (getSupportActionBar() == null) {
+			return;
+		}
 		boolean isAtRootOfBackStack = getSupportFragmentManager().getBackStackEntryCount() == 0;
 		getSupportActionBar().setDisplayHomeAsUpEnabled(!isAtRootOfBackStack);
 	}

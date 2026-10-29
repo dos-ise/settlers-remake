@@ -24,7 +24,8 @@
 
 		<activity
 			android:name=".mainmenu.MainActivity_"
-			android:exported="true">
+			android:exported="true"
+			android:screenOrientation="landscape">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN"/>
 				<category android:name="android.intent.category.LAUNCHER"/>
@@ -34,6 +35,7 @@
 		<activity
 			android:name=".gameplay.GameActivity_"
 			android:launchMode="singleTask"
+			android:screenOrientation="landscape"
 			android:theme="@style/InGameTheme"/>
 
 		<service
@@ -44,15 +46,12 @@
 
 		<activity
 			android:name=".gameplay.statistics.EndgameStatisticsActivity_"
-			android:label="@string/statistics_endgame_title"/>
-
-		<activity
-			android:name=".mainmenu.settings.SettingsActivity_"
-			android:label="@string/settings"/>
+			android:screenOrientation="landscape"/>
 
 		<activity
 			android:name=".mainmenu.ubisoft.UbisoftLoginActivity"
 			android:label="@string/ubisoft_login_title"
+			android:screenOrientation="landscape"
 			android:theme="@style/SettlersTheme"/>
 
 		<activity

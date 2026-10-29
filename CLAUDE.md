@@ -12,6 +12,8 @@ JSettlers is a Java remake of the 1998 strategy game *The Settlers 3*. It target
 
 Gradle multi-module build. Use the wrapper (`./gradlew` / `gradlew.bat`). The Gradle daemon is disabled (`gradle.properties`), so builds start a fresh JVM each time.
 
+> **Before building locally, read `docs/LOCAL_BUILD.md`.** It documents machine-specific workarounds that are *not* in this file: the corporate proxy setup for the Gradle distribution and dependencies, the null-safe `findGitRevision` fix and the `GIT_DIR` override needed to build in linked git worktrees, and the exact Android SDK paths. Builds fail with confusing JGit errors (`Cannot get property 'name' on null`, `Missing commit <sha>`) if these are skipped.
+
 - **JDK 17** (the code targets Java 11 source-compat, but the Gradle toolchain builds with JDK 17). Always pass `--no-daemon` for test/CI-style runs — background daemons from earlier runs otherwise starve later ones and look like regressions.
 - Compile logic only (fast feedback): `./gradlew :jsettlers.logic:compileJava :jsettlers.logic:compileTestJava --no-daemon`
 - Run a single test: `./gradlew :jsettlers.logic:test --tests 'jsettlers.integration.ai.ColonizationIT' --no-daemon --info`

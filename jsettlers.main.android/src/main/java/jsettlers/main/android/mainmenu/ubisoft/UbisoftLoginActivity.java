@@ -340,6 +340,7 @@ public class UbisoftLoginActivity extends AppCompatActivity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		mainHandler.removeCallbacksAndMessages(null);
 		executorService.shutdownNow();
 	}
 
@@ -387,7 +388,7 @@ public class UbisoftLoginActivity extends AppCompatActivity {
 		}
 
 		private void checkForLogin() {
-			if (checking) {
+			if (checking || loginWebView == null) {
 				return;
 			}
 			checking = true;
@@ -396,6 +397,10 @@ public class UbisoftLoginActivity extends AppCompatActivity {
 				@Override
 				public void onReceiveValue(String result) {
 					checking = false;
+					if (loginWebView == null) {
+						// The activity was closed while the check was running.
+						return;
+					}
 					Log.d(TAG, "Web login check result: " + result);
 
 					if (result != null && !result.isEmpty() && !"null".equals(result)) {

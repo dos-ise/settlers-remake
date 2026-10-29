@@ -113,12 +113,6 @@ public class JSettlersLookAndFeel {
 			};
 			UIManager.getDefaults().putDefaults(uiFactories);
 
-			// Map Cell renderer
-			UIManager.put("MapListCellRenderer.backgroundColor1", new Color(0xff, 120, 120, 40));
-			UIManager.put("MapListCellRenderer.backgroundColor2", new Color(0, 0, 0, 60));
-			UIManager.put("MapListCellRenderer.backgroundSelected", new Color(0xff, 0xff, 0, 80));
-			UIManager.put("MapListCellRenderer.foregroundColor", Color.WHITE);
-
 			// ServerEntry Cell renderer
 			UIManager.put("ServerEntryCellRenderer.backgroundColorEven", new Color(0xff, 0xff, 0xff, 40));
 			UIManager.put("ServerEntryCellRenderer.backgroundColorOdd", new Color(0, 0, 0, 60));
@@ -127,17 +121,6 @@ public class JSettlersLookAndFeel {
 
 			UIManager.put("ServerEntryCellRenderer.featureMissing", Color.GRAY);
 			UIManager.put("ServerEntryCellRenderer.featurePresent", Color.GREEN);
-
-			// AgingServerList Cell renderer (ServerListCellRenderer)
-			UIManager.put("ServerListCellRenderer.backgroundColorEven", new Color(0xff, 0xff, 0xff, 40));
-			UIManager.put("ServerListCellRenderer.backgroundColorOdd", new Color(0, 0, 0, 60));
-			UIManager.put("ServerListCellRenderer.backgroundSelected", new Color(0xff, 0xff, 0, 80));
-			UIManager.put("ServerListCellRenderer.foregroundColor", Color.WHITE);
-
-			// Search Field
-			UIManager.put("ClearSearchIcon.foregroundColor", Color.WHITE);
-			UIManager.put("ClearSearchIcon.backgroundColor", null);
-			UIManager.put("ClearSearchIcon.backgroundColorHover", null);
 
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
 			throw new JSettlersLookAndFeelExecption(e);

@@ -17,6 +17,7 @@ package jsettlers.main.swing;
 import java.io.File;
 import java.io.IOException;
 
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
@@ -39,7 +40,6 @@ import jsettlers.logic.player.PlayerSetting;
 import jsettlers.main.JSettlersGame;
 import jsettlers.main.ReplayStartInformation;
 import jsettlers.main.replay.ReplayUtils;
-import jsettlers.main.swing.foldertree.SelectSettlersFolderDialog;
 import jsettlers.main.swing.lookandfeel.JSettlersLookAndFeel;
 import jsettlers.main.swing.lookandfeel.JSettlersLookAndFeelExecption;
 import jsettlers.main.swing.resources.SwingResourceLoader;
@@ -61,9 +61,13 @@ public class SwingManagedJSettlers {
   		// removes screen flickering
 		System.setProperty("sun.awt.noerasebackground", "true");
 
-		setupResources(true, args);
+		ResourceManager.setProvider(new SwingResourceProvider());
+		SettingsManager.setup(args);
+		loadCommandLineSettings();
 
 		JSettlersFrame settlersFrame = createJSettlersFrame();
+		setupResourceManagers(true, settlersFrame);
+		settlersFrame.showMainMenu();
 		handleStartOptions(settlersFrame);
 	}
 
@@ -90,6 +94,10 @@ public class SwingManagedJSettlers {
 	 * If the parameter is not given, the defaultConfigFile is used.
 	 */
 	private static void setupResourceManagers(boolean interactive) {
+		setupResourceManagers(interactive, null);
+	}
+
+	private static void setupResourceManagers(boolean interactive, JSettlersFrame frame) {
 		boolean wasSuccessful = false;
 		boolean firstRun = true;
 		while (!wasSuccessful) {
@@ -99,7 +107,7 @@ public class SwingManagedJSettlers {
 			} catch (ResourceSetupException e) {
 				// ask the user if we should continue...
 				if (interactive) {
-					askUserToSetResources(firstRun);
+					askUserToSetResources(firstRun, frame);
 				} else {
 					throw new RuntimeException(e);
 				}
@@ -108,12 +116,12 @@ public class SwingManagedJSettlers {
 		}
 	}
 
-	private static void askUserToSetResources(boolean firstRun) {
+	private static void askUserToSetResources(boolean firstRun, JSettlersFrame frame) {
 		if (!firstRun) {
 			JOptionPane.showMessageDialog(null, Labels.getString("settlers-folder-still-invalid"));
 		}
 
-		File selectedFolder = SelectSettlersFolderDialog.askForFolder();
+		File selectedFolder = frame != null ? frame.askForGameDataFolder() : askForFolderWithFileChooser();
 		if (selectedFolder == null) {
 			String noFolderSelectedMessage = Labels.getString("error-no-settlers-3-folder-selected");
 			JOptionPane.showMessageDialog(null, noFolderSelectedMessage);
@@ -123,6 +131,20 @@ public class SwingManagedJSettlers {
 
 		System.out.println(selectedFolder);
 		SettingsManager.getInstance().setSettlersFolder(selectedFolder);
+	}
+
+	/**
+	 * Lets the user pick the Settlers 3 installation folder with a simple file chooser. Used by the
+	 * tools that have no GL window; the game itself shows the shared GL game data panel.
+	 */
+	private static File askForFolderWithFileChooser() {
+		JFileChooser chooser = new JFileChooser();
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		chooser.setDialogTitle(Labels.getString("game-data-choose-directory"));
+		if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+			return chooser.getSelectedFile();
+		}
+		return null;
 	}
 
 	private static void handleStartOptions(JSettlersFrame settlersFrame) throws MapLoadException {
