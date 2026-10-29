@@ -7,7 +7,7 @@ A follow-up to v0.7.0.0 that unifies the Android and desktop menus on shared Ope
 - **JSettlers.zip** – desktop game for Windows/Linux (includes the Map Editor and tools)
 - **JSettlers-0.7.0.1-windows.zip** – portable Windows build (bundled JRE, unzip and double-click `JSettlers.exe`, no installation needed)
 - **JSettlers-0.7.0.1-linux.zip** – portable Linux build (bundled JRE, unzip and run `JSettlers/bin/JSettlers`, works on any distro)
-- **JSettlers-1.7.1-macos.zip** – portable macOS build (bundled JRE, unzip and open `JSettlers.app`; macOS requires a version that does not start with 0, so 0.7.0.1 is reported as 1.7.1)
+- **JSettlers-1.7.0-macos.zip** – portable macOS build (bundled JRE, unzip and open `JSettlers.app`; macOS requires a version that does not start with 0, so 0.7.0.1 is reported as 1.7.0)
 - **JSettlers-Android.apk** – Android app
 - **DedicatedJSettlersServer.jar** – dedicated multiplayer server
 
