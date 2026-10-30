@@ -68,15 +68,19 @@ public class BackendSelector extends JComboBox<EBackendType> {
 		return availableBackends().filter(backend -> backend.cc_name.equalsIgnoreCase(name)).findFirst().orElse(EBackendType.DEFAULT);
 	}
 
-	public static ContextCreator<?> createBackend(ContextContainer container, EBackendType backend, boolean debug) throws Exception {
-		EBackendType real_backend = backend;
-
+	/**
+	 * Resolves the backend that is really used for the given setting, including the platform default.
+	 */
+	public static EBackendType resolveBackend(EBackendType backend) {
 		if(backend == null || backend == EBackendType.DEFAULT) {
 			// first of all usable and suitable backends sorted for being default
-			real_backend = availableBackends().filter(current_backend -> current_backend.default_for == Platform.get()).sorted().findFirst().orElse(FALLBACK_BACKEND);
+			return availableBackends().filter(current_backend -> current_backend.default_for == Platform.get()).sorted().findFirst().orElse(FALLBACK_BACKEND);
 		}
+		return backend;
+	}
 
-		return real_backend.createContext(container, debug);
+	public static ContextCreator<?> createBackend(ContextContainer container, EBackendType backend, boolean debug) throws Exception {
+		return resolveBackend(backend).createContext(container, debug);
 	}
 
 }

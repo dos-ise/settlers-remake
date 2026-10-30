@@ -36,6 +36,7 @@ import go.graphics.area.Area;
 import go.graphics.region.Region;
 import go.graphics.sound.SoundPlayer;
 import go.graphics.swing.AreaContainer;
+import go.graphics.swing.contextcreator.BackendSelector;
 import go.graphics.swing.contextcreator.EBackendType;
 import go.graphics.swing.sound.SwingSoundPlayer;
 import go.graphics.text.EFontSize;
@@ -162,7 +163,7 @@ public class JSettlersFrame extends JFrame {
 	 * container. Showing it would produce a second, empty window next to the game window.
 	 */
 	private boolean isGlfwBackend() {
-		return SettingsManager.getInstance().getBackend() == EBackendType.GLFW;
+		return BackendSelector.resolveBackend(SettingsManager.getInstance().getBackend()) == EBackendType.GLFW;
 	}
 
 	private void abortRedrawTimerIfPresent() {
