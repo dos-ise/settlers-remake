@@ -71,6 +71,11 @@ public class Label extends UIPanel {
 		}
 	}
 
+	/**
+	 * Inset of left-aligned text from the label's left edge, relative to its width, so text does not sit on the frame border.
+	 */
+	private static final double LEFT_PADDING_FACTOR = 0.04;
+
 	private final EFontSize size;
 	private List<Word> words = new ArrayList<>();
 	private double spaceWidth = Double.NaN;
@@ -233,7 +238,7 @@ public class Label extends UIPanel {
 		float left;
 		switch (horizontalAlignment) {
 		case LEFT:
-			left = getPosition().getMinX();
+			left = (float) (getPosition().getMinX() + getPosition().getWidth() * LEFT_PADDING_FACTOR);
 			break;
 		case RIGHT:
 			left = (float) (getPosition().getMaxX() - line.linewidth);

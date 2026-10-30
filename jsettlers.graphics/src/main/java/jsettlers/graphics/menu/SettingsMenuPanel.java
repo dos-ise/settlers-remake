@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.Locale;
 
 import go.graphics.text.EFontSize;
+import jsettlers.common.Color;
+import jsettlers.common.images.EImageLinkType;
+import jsettlers.common.images.OriginalImageLink;
 import jsettlers.graphics.action.ExecutableAction;
 import jsettlers.graphics.localization.Labels;
 import jsettlers.graphics.settings.ISettings;
@@ -39,10 +42,11 @@ import jsettlers.graphics.ui.UIPanel;
  * @author Copilot
  */
 public class SettingsMenuPanel extends UIPanel {
-	private static final int ROW_COUNT = 9;
-	private static final float CONTENT_TOP = 0.88f;
-	private static final float CONTENT_BOTTOM = 0.15f;
-	private static final float ROW_HEIGHT = (CONTENT_TOP - CONTENT_BOTTOM) / ROW_COUNT;
+	private static final int BASE_ROW_COUNT = 9;
+	private static final float CONTENT_TOP = 0.84f;
+	private static final float CONTENT_BOTTOM = 0.14f;
+	private static final OriginalImageLink FRAME = new OriginalImageLink(EImageLinkType.GUI, 3, 324, 0);
+	private static final Color TITLE_COLOR = new Color(1, 0.6f, 0, 1);
 
 	/**
 	 * The language codes of the available translations, matching the {@code labels_*.properties} files.
@@ -65,6 +69,10 @@ public class SettingsMenuPanel extends UIPanel {
 	private final Slider guiScaleSlider = new Slider("%", 50, 400, "system default", null);
 	private final ToggleButton aiTowerFocusToggle = new ToggleButton("", false, null);
 	private final CycleButton languageButton = new CycleButton(LANGUAGE_NAMES, 0, null);
+	private final List<String> backendNames;
+	private final CycleButton backendButton;
+	private final int rowCount;
+	private final float rowHeight;
 
 	/**
 	 * Creates a new settings menu.
@@ -78,22 +86,28 @@ public class SettingsMenuPanel extends UIPanel {
 		this.settings = settings;
 		this.onBack = onBack;
 
-		MenuImageProvider images = MenuImageProvider.getInstance();
-		if (images != null) {
-			setBackgroundImage(images.getBackground());
+		backendNames = settings.getBackendNames();
+		rowCount = BASE_ROW_COUNT + (backendNames.isEmpty() ? 0 : 1);
+		rowHeight = (CONTENT_TOP - CONTENT_BOTTOM) / rowCount;
+		backendButton = backendNames.isEmpty() ? null : new CycleButton(backendNames, 0, null);
+
+		Label title = new Label(Labels.getString("settings-title"), EFontSize.HEADLINE);
+		title.setTextColor(TITLE_COLOR);
+		title.setBackground(FRAME);
+		addChild(title, 0.05f, 0.9f, 0.95f, 0.98f);
+
+		addSettingRow(0, Labels.getString("settings-name"), playerNameInput);
+		addSettingRow(1, Labels.getString("settings-volume"), volumeSlider);
+		addSettingRow(2, Labels.getString("settings-music-enabled"), musicEnabledToggle);
+		addSettingRow(3, Labels.getString("settings-volume-music"), musicVolumeSlider);
+		addSettingRow(4, Labels.getString("settings-music-playall"), playAllMusicToggle);
+		addSettingRow(5, Labels.getString("settings-fps-limit"), fpsLimitSlider);
+		addSettingRow(6, Labels.getString("settings-gui-scale"), guiScaleSlider);
+		addSettingRow(7, Labels.getString("settings-ai-tower-focus"), aiTowerFocusToggle);
+		addSettingRow(8, Labels.getString("settings-language"), languageButton);
+		if (backendButton != null) {
+			addSettingRow(9, Labels.getString("settings-backend") + " (" + Labels.getString("settings-backend-restart") + ")", backendButton);
 		}
-
-		addChild(new Label(Labels.getString("settings-title"), EFontSize.HEADLINE), 0.1f, 0.92f, 0.9f, 1f);
-
-		addSettingRow(0, "settings-name", playerNameInput);
-		addSettingRow(1, "settings-volume", volumeSlider);
-		addSettingRow(2, "settings-music-enabled", musicEnabledToggle);
-		addSettingRow(3, "settings-volume-music", musicVolumeSlider);
-		addSettingRow(4, "settings-music-playall", playAllMusicToggle);
-		addSettingRow(5, "settings-fps-limit", fpsLimitSlider);
-		addSettingRow(6, "settings-gui-scale", guiScaleSlider);
-		addSettingRow(7, "settings-ai-tower-focus", aiTowerFocusToggle);
-		addSettingRow(8, "settings-language", languageButton);
 
 		LabeledButton backButton = new LabeledButton(Labels.getString("settings-back"), new ExecutableAction() {
 			@Override
@@ -101,7 +115,7 @@ public class SettingsMenuPanel extends UIPanel {
 				onBack.run();
 			}
 		});
-		addChild(backButton, 0.1f, 0.02f, 0.45f, 0.1f);
+		addChild(backButton, 0.05f, 0.02f, 0.47f, 0.1f);
 
 		LabeledButton saveButton = new LabeledButton(Labels.getString("settings-ok"), new ExecutableAction() {
 			@Override
@@ -110,14 +124,16 @@ public class SettingsMenuPanel extends UIPanel {
 				onBack.run();
 			}
 		});
-		addChild(saveButton, 0.5f, 0.02f, 0.9f, 0.1f);
+		addChild(saveButton, 0.53f, 0.02f, 0.95f, 0.1f);
 	}
 
-	private void addSettingRow(int row, String labelKey, UIElement control) {
-		float bottom = CONTENT_BOTTOM + (ROW_COUNT - 1 - row) * ROW_HEIGHT;
-		float top = bottom + ROW_HEIGHT;
-		addChild(new Label(Labels.getString(labelKey), EFontSize.NORMAL, Label.EHorizontalAlignment.LEFT), 0.1f, bottom, 0.45f, top);
-		addChild(control, 0.5f, bottom, 0.9f, top);
+	private void addSettingRow(int row, String labelText, UIElement control) {
+		float bottom = CONTENT_BOTTOM + (rowCount - 1 - row) * rowHeight;
+		float top = bottom + rowHeight;
+		Label label = new Label(labelText, EFontSize.NORMAL, Label.EHorizontalAlignment.LEFT);
+		label.setBackground(FRAME);
+		addChild(label, 0.05f, bottom, 0.5f, top);
+		addChild(control, 0.53f, bottom, 0.95f, top);
 	}
 
 	/**
@@ -134,6 +150,10 @@ public class SettingsMenuPanel extends UIPanel {
 		aiTowerFocusToggle.setChecked(settings.getAiTowerFocus());
 		int languageIndex = LANGUAGE_CODES.indexOf(settings.getLanguage());
 		languageButton.setIndex(languageIndex >= 0 ? languageIndex : 0);
+		if (backendButton != null) {
+			int backendIndex = backendNames.indexOf(settings.getBackendName());
+			backendButton.setIndex(backendIndex >= 0 ? backendIndex : 0);
+		}
 	}
 
 	private void save() {
@@ -145,6 +165,9 @@ public class SettingsMenuPanel extends UIPanel {
 		settings.setFpsLimit(fpsLimitSlider.getValue());
 		settings.setGuiScale(guiScaleSlider.getValue() / 100f);
 		settings.setAiTowerFocus(aiTowerFocusToggle.isChecked());
+		if (backendButton != null) {
+			settings.setBackendName(backendNames.get(backendButton.getIndex()));
+		}
 		String language = LANGUAGE_CODES.get(languageButton.getIndex());
 		settings.setLanguage(language);
 		Labels.setLocale(parseLocale(language));

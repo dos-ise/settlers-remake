@@ -14,6 +14,9 @@
  *******************************************************************************/
 package jsettlers.graphics.settings;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * The settings that are shared between the desktop and Android versions of the game.
  * <p>
@@ -139,4 +142,27 @@ public interface ISettings {
 	 *            The new language code, e.g. {@code "en"}, {@code "de"} or {@code "da_DK"}.
 	 */
 	void setLanguage(String language);
+
+	/**
+	 * @return The names of the selectable drawing backends. Empty if the platform has no backend choice (e.g. Android).
+	 */
+	default List<String> getBackendNames() {
+		return Collections.emptyList();
+	}
+
+	/**
+	 * @return The name of the selected drawing backend.
+	 */
+	default String getBackendName() {
+		return "";
+	}
+
+	/**
+	 * Sets the drawing backend. Takes effect after a restart.
+	 *
+	 * @param name
+	 *            The name of the backend, one of {@link #getBackendNames()}.
+	 */
+	default void setBackendName(String name) {
+	}
 }

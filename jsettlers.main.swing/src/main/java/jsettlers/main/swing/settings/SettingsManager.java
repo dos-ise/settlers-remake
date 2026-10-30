@@ -27,12 +27,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import go.graphics.swing.contextcreator.BackendSelector;
 import jsettlers.graphics.settings.ISettings;
@@ -300,6 +302,21 @@ public class SettingsManager implements ISoundSettingsProvider, ISettings {
 	public void setGuiScale(float scale) {set(SETTINGS_GUI_SCALE, ""+scale);}
 
 	public void setBackend(String backend) {set(SETTING_BACKEND, backend);}
+
+	@Override
+	public List<String> getBackendNames() {
+		return BackendSelector.availableBackends().map(backend -> backend.cc_name).collect(Collectors.toList());
+	}
+
+	@Override
+	public String getBackendName() {
+		return getBackend().cc_name;
+	}
+
+	@Override
+	public void setBackendName(String name) {
+		setBackend(name);
+	}
 
 	public void setFullScreenMode(boolean fullScreenMode) {
 		set(SETTING_FULL_SCREEN_MODE, "" + fullScreenMode);

@@ -47,11 +47,6 @@ public interface MainMenuActions {
 	void deleteSavegame(MapMenuItem map);
 
 	/**
-	 * Shows the settings.
-	 */
-	void showSettings();
-
-	/**
 	 * Shows the multiplayer setup to host a new network game.
 	 */
 	void showNewMultiplayerGame();

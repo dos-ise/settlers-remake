@@ -58,9 +58,9 @@ public class Slider extends UIPanel {
 		this.onChange = onChange;
 		this.value = min;
 
-		addChild(barFill, 0, 0, 0.72f, 1);
-		valueLabel = new Label("", EFontSize.NORMAL, Label.EHorizontalAlignment.LEFT);
-		addChild(valueLabel, 0.75f, 0, 1, 1);
+		addChild(barFill, 0, 0, 1, 1);
+		valueLabel = new Label("", EFontSize.NORMAL, Label.EHorizontalAlignment.CENTER);
+		addChild(valueLabel, 0, 0, 1, 1);
 
 		barFill.setAction(new ExecutableAction() {
 			@Override

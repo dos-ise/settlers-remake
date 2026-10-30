@@ -51,7 +51,7 @@ public class CycleButton extends LabeledButton {
 
 	@Override
 	protected String getText() {
-		return options.get(index);
+		return "<  " + options.get(index) + "  >";
 	}
 
 	@Override

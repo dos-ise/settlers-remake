@@ -60,7 +60,7 @@ public class BackendSelector extends JComboBox<EBackendType> {
 		addActionListener(this);
 	}
 
-	private static Stream<EBackendType> availableBackends() {
+	public static Stream<EBackendType> availableBackends() {
 		return Arrays.stream(EBackendType.values()).filter(backend -> backend.available(Platform.get()));
 	}
 

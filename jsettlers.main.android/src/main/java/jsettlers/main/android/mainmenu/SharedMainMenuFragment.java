@@ -44,7 +44,6 @@ import jsettlers.graphics.menu.MapMenuItem;
 import jsettlers.graphics.menu.MapPreviewImage;
 import jsettlers.graphics.menu.MenuContent;
 import jsettlers.graphics.menu.MenuImageProvider;
-import jsettlers.graphics.menu.SettingsMenuPanel;
 import jsettlers.graphics.ui.UIInput;
 import jsettlers.graphics.ui.UIPanel;
 import jsettlers.logic.map.loading.EMapStartResources;
@@ -103,7 +102,7 @@ public class SharedMainMenuFragment extends Fragment implements MainMenuActions 
 	}
 
 	private void showMainMenu() {
-		showMenu(new jsettlers.graphics.menu.MainMenuPanel(this, freshMaps, savedMaps));
+		showMenu(new jsettlers.graphics.menu.MainMenuPanel(this, new AndroidPreferences(getActivity()), freshMaps, savedMaps));
 	}
 
 	private void showMenu(UIPanel panel) {
@@ -207,14 +206,6 @@ public class SharedMainMenuFragment extends Fragment implements MainMenuActions 
 			loader.getListedMap().delete();
 			gameStarter.getMapList().reload();
 		}
-	}
-
-	@Override
-	public void showSettings() {
-		AndroidPreferences preferences = new AndroidPreferences(getActivity());
-		SettingsMenuPanel settingsPanel = new SettingsMenuPanel(preferences, this::showMainMenu);
-		settingsPanel.initializeValues();
-		showMenu(settingsPanel);
 	}
 
 	@Override

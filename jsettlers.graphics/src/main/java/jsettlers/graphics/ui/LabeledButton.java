@@ -90,7 +90,8 @@ public class LabeledButton extends Button {
 		float cy = getPosition().getCenterY();
 		AbstractColor color = textColor != null ? textColor : defaultTextColor;
 		if (color != null) {
-			drawer.drawString(cx - drawer.getWidth(text) / 2, cy - drawer.getHeight(text) / 2, color, text);
+			String shownText = getText();
+			drawer.drawString(cx - drawer.getWidth(shownText) / 2, cy - drawer.getHeight(shownText) / 2, color, shownText);
 		} else {
 			drawer.renderCentered(cx, cy, getText());
 		}

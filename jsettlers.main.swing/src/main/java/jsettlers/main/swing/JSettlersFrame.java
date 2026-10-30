@@ -70,7 +70,6 @@ import jsettlers.graphics.menu.MapPreviewImage;
 import jsettlers.graphics.menu.MenuContent;
 import jsettlers.graphics.menu.MenuImageProvider;
 import jsettlers.graphics.menu.MultiplayerPickerPanel;
-import jsettlers.graphics.menu.SettingsMenuPanel;
 import jsettlers.graphics.ui.Label;
 import jsettlers.graphics.ui.TextInputDialog;
 import jsettlers.graphics.ui.UIPanel;
@@ -222,11 +221,6 @@ public class JSettlersFrame extends JFrame {
 			}
 
 			@Override
-			public void showSettings() {
-				showSettingsPanel();
-			}
-
-			@Override
 			public void showNewMultiplayerGame() {
 				showMultiplayerConnection();
 			}
@@ -240,7 +234,7 @@ public class JSettlersFrame extends JFrame {
 			public void exit() {
 				exit();
 			}
-		}, freshMaps, savedMaps);
+		}, SettingsManager.getInstance(), freshMaps, savedMaps);
 
 		MenuContent menuContent = new MenuContent(mainMenuPanel, action -> {
 		});
@@ -310,13 +304,6 @@ public class JSettlersFrame extends JFrame {
 				setVisible(true);
 			}
 		});
-	}
-
-	private void showSettingsPanel() {
-		SettingsMenuPanel settingsPanel = new SettingsMenuPanel(SettingsManager.getInstance(), this::showSharedMainMenu);
-		settingsPanel.initializeValues();
-		showMenuContent(new MenuContent(settingsPanel, action -> {
-		}));
 	}
 
 	private void loadSavegame(MapLoader map) {

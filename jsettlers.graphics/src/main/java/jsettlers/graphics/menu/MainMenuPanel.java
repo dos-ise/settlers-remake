@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 import go.graphics.text.EFontSize;
 import jsettlers.graphics.action.ExecutableAction;
 import jsettlers.graphics.localization.Labels;
+import jsettlers.graphics.settings.ISettings;
 import jsettlers.graphics.ui.AspectRatioImagePanel;
 import jsettlers.graphics.ui.BorderPanel;
 import jsettlers.graphics.ui.ImagePanel;
@@ -34,6 +35,7 @@ import jsettlers.graphics.ui.UIPanel;
 public class MainMenuPanel extends UIPanel {
 	private final UIPanel contentPanel = new UIPanel();
 	private final MainMenuActions actions;
+	private final ISettings settings;
 
 	/**
 	 * Creates a new main menu.
@@ -45,8 +47,9 @@ public class MainMenuPanel extends UIPanel {
 	 * @param savedMaps
 	 *            Provides the savegames to load.
 	 */
-	public MainMenuPanel(MainMenuActions actions, MapListProvider freshMaps, MapListProvider savedMaps) {
+	public MainMenuPanel(MainMenuActions actions, ISettings settings, MapListProvider freshMaps, MapListProvider savedMaps) {
 		this.actions = actions;
+		this.settings = settings;
 		MenuImageProvider images = MenuImageProvider.getInstance();
 		if (images != null) {
 			setBackgroundImage(images.getBackground());
@@ -61,7 +64,7 @@ public class MainMenuPanel extends UIPanel {
 				() -> showOpenPanel(Labels.getString("start-loadgame"), savedMaps, Labels.getString("start-loadgame-start"), actions::startLoadGame, actions::deleteSavegame));
 		addMenuButton(buttonPanel, "start-newmultiplayer", 0f, 0.5f, 1f, 0.65f, actions::showNewMultiplayerGame);
 		addMenuButton(buttonPanel, "start-joinmultiplayer", 0f, 0.35f, 1f, 0.5f, actions::showJoinMultiplayerGame);
-		addMenuButton(buttonPanel, "settings-title", 0f, 0.2f, 1f, 0.35f, actions::showSettings);
+		addMenuButton(buttonPanel, "settings-title", 0f, 0.2f, 1f, 0.35f, this::showSettings);
 		addMenuButton(buttonPanel, "main-panel-exit-button", 0f, 0.05f, 1f, 0.2f, actions::exit);
 
 		addChild(contentPanel, 0.32f, 0.1f, 0.97f, 0.9f);
@@ -104,6 +107,15 @@ public class MainMenuPanel extends UIPanel {
 	public void setContent(UIPanel panel) {
 		contentPanel.removeAll();
 		contentPanel.addChild(panel, 0, 0, 1, 1);
+	}
+
+	/**
+	 * Shows the settings in the right hand side of the menu frame.
+	 */
+	public void showSettings() {
+		SettingsMenuPanel settingsPanel = new SettingsMenuPanel(settings, this::showMainContent);
+		settingsPanel.initializeValues();
+		setContent(settingsPanel);
 	}
 
 	/**
