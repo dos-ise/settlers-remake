@@ -38,6 +38,7 @@ import go.graphics.sound.SoundPlayer;
 import go.graphics.swing.AreaContainer;
 import go.graphics.swing.contextcreator.BackendSelector;
 import go.graphics.swing.contextcreator.EBackendType;
+import go.graphics.swing.contextcreator.GLFWContextCreator;
 import go.graphics.swing.sound.SwingSoundPlayer;
 import go.graphics.text.EFontSize;
 
@@ -105,6 +106,7 @@ public class JSettlersFrame extends JFrame {
 	JSettlersFrame() throws HeadlessException {
 		setTitle("JSettlers - Version: " + CommitInfo.COMMIT_HASH_SHORT);
 		setIconImage(JSettlersSwingUtil.APP_ICON);
+		GLFWContextCreator.setWindowIcon(JSettlersSwingUtil.APP_ICON);
 
 		SettingsManager settingsManager = SettingsManager.getInstance();
 

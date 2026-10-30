@@ -16,6 +16,7 @@ package go.graphics.swing.contextcreator;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWCursorEnterCallbackI;
+import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.glfw.GLFWCursorPosCallbackI;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWKeyCallbackI;
@@ -26,10 +27,14 @@ import org.lwjgl.glfw.GLFWWindowCloseCallbackI;
 import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
 import org.lwjgl.system.MemoryStack;
 
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Window;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -53,6 +58,14 @@ public class GLFWContextCreator extends AsyncContextCreator {
 
 	protected long glfw_wnd;
 	private GLFWErrorCallback ec;
+	private static volatile Image windowIcon;
+
+	/**
+	 * Sets the icon used for GLFW windows (title bar and taskbar). Applies to windows created after this call.
+	 */
+	public static void setWindowIcon(Image icon) {
+		windowIcon = icon;
+	}
 
 	public void async_init() {
 		if(debug) {
@@ -64,16 +77,48 @@ public class GLFWContextCreator extends AsyncContextCreator {
 
 		configureWindow();
 		synchronized (wnd_lock) {
+			GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
 			glfw_wnd = GLFW.glfwCreateWindow(width, height, "JSettlers", 0, 0);
+			applyWindowIcon(glfw_wnd);
 			setupContext();
 			try {
 				parent.resizeContext(width, height);
 			} catch (ContextException e) {
 				e.printStackTrace();
 			}
+			GLFW.glfwShowWindow(glfw_wnd);
 		}
 
 		event_converter.registerCallbacks();
+	}
+
+	private static void applyWindowIcon(long window) {
+		Image icon = windowIcon;
+		if(icon == null) return;
+
+		int w = icon.getWidth(null);
+		int h = icon.getHeight(null);
+		if(w <= 0 || h <= 0) return;
+
+		BufferedImage argb = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = argb.createGraphics();
+		g.drawImage(icon, 0, 0, null);
+		g.dispose();
+
+		int[] pixels = argb.getRGB(0, 0, w, h, null, 0, w);
+		ByteBuffer rgba = ByteBuffer.allocateDirect(w * h * 4);
+		for(int pixel : pixels) {
+			rgba.put((byte) (pixel >> 16 & 0xFF));
+			rgba.put((byte) (pixel >> 8 & 0xFF));
+			rgba.put((byte) (pixel & 0xFF));
+			rgba.put((byte) (pixel >> 24 & 0xFF));
+		}
+		rgba.flip();
+
+		GLFWImage.Buffer images = GLFWImage.create(1);
+		images.get(0).set(w, h, rgba);
+		GLFW.glfwSetWindowIcon(window, images);
+		images.free();
 	}
 
 	protected void configureWindow() {
