@@ -29,6 +29,17 @@ import jsettlers.graphics.image.Image;
  * @author Copilot
  */
 public class BorderPanel implements UIElement {
+	/**
+	 * Shadow offset relative to the panel height, as in the desktop BorderDrawer (2 px / 3 px).
+	 */
+	private static final float SHADOW_OFFSET_X = 0.004f;
+	private static final float SHADOW_OFFSET_Y = 0.005f;
+
+	/**
+	 * Darkens the yellow texture towards a more golden tone. The texture shader can only scale brightness, not change the hue.
+	 */
+	private static final float GOLD_INTENSITY = 0.85f;
+
 	private final Image texture;
 	private FloatRectangle position;
 
@@ -94,10 +105,21 @@ public class BorderPanel implements UIElement {
 	@Override
 	public void drawAt(GLDrawContext gl) {
 		FloatRectangle pos = getPosition();
-		float x1 = pos.getMinX();
-		float y1 = pos.getMinY();
-		float x2 = pos.getMaxX();
-		float y2 = pos.getMaxY();
+		float height = pos.getHeight();
+
+		// Like the desktop BorderDrawer: a black, shifted copy of the frame lies behind the gold lines.
+		drawFrame(gl, pos, SHADOW_OFFSET_X * height, -SHADOW_OFFSET_Y * height, 0f);
+		drawFrame(gl, pos, 0, 0, GOLD_INTENSITY);
+	}
+
+	/**
+	 * Draws the whole frame shifted by (dx, dy), with the given color intensity of the texture.
+	 */
+	private void drawFrame(GLDrawContext gl, FloatRectangle pos, float dx, float dy, float intensity) {
+		float x1 = pos.getMinX() + dx;
+		float y1 = pos.getMinY() + dy;
+		float x2 = pos.getMaxX() + dx;
+		float y2 = pos.getMaxY() + dy;
 		float width = pos.getWidth();
 		float height = pos.getHeight();
 
@@ -108,14 +130,14 @@ public class BorderPanel implements UIElement {
 		float half = corner / 2;
 
 		// top and bottom edge (the corners are attached by the side pieces)
-		drawHorizontalSegment(gl, x1 + pad + half, x2 - pad - half, y2 - pad, t);
-		drawHorizontalSegment(gl, x1 + pad + half, x2 - pad - half, y1 + pad, t);
+		drawHorizontalSegment(gl, x1 + pad + half, x2 - pad - half, y2 - pad, t, intensity);
+		drawHorizontalSegment(gl, x1 + pad + half, x2 - pad - half, y1 + pad, t, intensity);
 
-		drawFrameSide(gl, x1 + pad, false, y2, pad, height, corner, t);
-		drawFrameSide(gl, x2 - pad, true, y2, pad, height, corner, t);
+		drawFrameSide(gl, x1 + pad, false, y2, pad, height, corner, t, intensity);
+		drawFrameSide(gl, x2 - pad, true, y2, pad, height, corner, t, intensity);
 
 		if (dividerX >= 0) {
-			drawFrameSide(gl, x1 + dividerX * width, true, y2, pad, height, corner, t);
+			drawFrameSide(gl, x1 + dividerX * width, true, y2, pad, height, corner, t, intensity);
 		}
 	}
 
@@ -129,7 +151,8 @@ public class BorderPanel implements UIElement {
 	 * @param top
 	 *            GL y coordinate of the top edge of the panel
 	 */
-	private void drawFrameSide(GLDrawContext gl, float x, boolean right, float top, float pad, float height, float corner, float t) {
+	private void drawFrameSide(GLDrawContext gl, float x, boolean right, float top, float pad, float height, float corner, float t,
+			float intensity) {
 		float half = corner / 2;
 		float far = right ? x - corner : x + corner;
 		float near = x;
@@ -140,35 +163,35 @@ public class BorderPanel implements UIElement {
 		float yA = pad + half; // upper corner line, measured from the top
 		float yB = height - pad - half; // lower corner line, measured from the top
 
-		drawVerticalSegment(gl, x, yA, yB, top, t);
+		drawVerticalSegment(gl, x, yA, yB, top, t, intensity);
 		// upper corner
-		drawVerticalSegment(gl, mid, pad, pad + corner, top, t);
-		drawHorizontalSegment(gl, lo, hi, top - yA, t);
-		drawVerticalSegment(gl, far, pad - half, pad + half, top, t);
+		drawVerticalSegment(gl, mid, pad, pad + corner, top, t, intensity);
+		drawHorizontalSegment(gl, lo, hi, top - yA, t, intensity);
+		drawVerticalSegment(gl, far, pad - half, pad + half, top, t, intensity);
 		// lower corner
-		drawVerticalSegment(gl, mid, yB - half, yB + half, top, t);
-		drawHorizontalSegment(gl, lo, hi, top - yB, t);
-		drawVerticalSegment(gl, far, yB, yB + corner, top, t);
+		drawVerticalSegment(gl, mid, yB - half, yB + half, top, t, intensity);
+		drawHorizontalSegment(gl, lo, hi, top - yB, t, intensity);
+		drawVerticalSegment(gl, far, yB, yB + corner, top, t, intensity);
 	}
 
 	/**
 	 * Draws a horizontal line segment, centered on the given GL y coordinate.
 	 */
-	private void drawHorizontalSegment(GLDrawContext gl, float xFrom, float xTo, float y, float t) {
+	private void drawHorizontalSegment(GLDrawContext gl, float xFrom, float xTo, float y, float t, float intensity) {
 		float length = Math.abs(xTo - xFrom);
 		if (length > 0) {
-			texture.drawImageAtRect(gl, Math.min(xFrom, xTo), y - t / 2, length, t, 1);
+			texture.drawImageAtRect(gl, Math.min(xFrom, xTo), y - t / 2, length, t, intensity);
 		}
 	}
 
 	/**
 	 * Draws a vertical line segment centered on x, between two distances measured downwards from the top edge.
 	 */
-	private void drawVerticalSegment(GLDrawContext gl, float x, float fromTop, float toTop, float top, float t) {
+	private void drawVerticalSegment(GLDrawContext gl, float x, float fromTop, float toTop, float top, float t, float intensity) {
 		float length = Math.abs(toTop - fromTop);
 		if (length > 0) {
 			float bottom = top - Math.max(fromTop, toTop);
-			texture.drawImageAtRect(gl, x - t / 2, bottom, t, length, 1);
+			texture.drawImageAtRect(gl, x - t / 2, bottom, t, length, intensity);
 		}
 	}
 
