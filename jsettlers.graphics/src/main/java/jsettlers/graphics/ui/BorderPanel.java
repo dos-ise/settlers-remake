@@ -101,52 +101,74 @@ public class BorderPanel implements UIElement {
 		float width = pos.getWidth();
 		float height = pos.getHeight();
 
-		float in = inset * height;
+		// Geometry mirrors the desktop BorderDrawer. Vertical positions below are measured downwards from the top edge.
+		float pad = inset * height;
 		float t = thickness * height;
-		float clen = cornerSize * height;
-		float cl = clen / 2;
+		float corner = cornerSize * height;
+		float half = corner / 2;
 
-		// edge lines
-		texture.drawImageAtRect(gl, x1 + in, y2 - in - t, width - 2 * in, t, 1); // top
-		texture.drawImageAtRect(gl, x1 + in, y1 + in, width - 2 * in, t, 1); // bottom
-		texture.drawImageAtRect(gl, x1 + in, y1 + in + t, t, height - 2 * in - 2 * t, 1); // left
-		texture.drawImageAtRect(gl, x2 - in - t, y1 + in + t, t, height - 2 * in - 2 * t, 1); // right
+		// top and bottom edge (the corners are attached by the side pieces)
+		drawHorizontalSegment(gl, x1 + pad + half, x2 - pad - half, y2 - pad, t);
+		drawHorizontalSegment(gl, x1 + pad + half, x2 - pad - half, y1 + pad, t);
 
-		// corner decorations: L-shaped hooks like the original BorderDrawer
-		// top-left
-		drawLine(gl, x1 + in + cl, y2 - in - clen, x1 + in + cl, y2 - in, t);
-		drawLine(gl, x1 + in, y2 - in - cl, x1 + in + clen, y2 - in - cl, t);
-		drawLine(gl, x1 + in + clen, y2 - in - cl, x1 + in + clen, y2 - in + cl, t);
-		// top-right
-		drawLine(gl, x2 - in - cl, y2 - in - clen, x2 - in - cl, y2 - in, t);
-		drawLine(gl, x2 - in - clen, y2 - in - cl, x2 - in, y2 - in - cl, t);
-		drawLine(gl, x2 - in - clen, y2 - in - cl, x2 - in - clen, y2 - in + cl, t);
-		// bottom-left
-		drawLine(gl, x1 + in + cl, y1 + in, x1 + in + cl, y1 + in + clen, t);
-		drawLine(gl, x1 + in, y1 + in + cl, x1 + in + clen, y1 + in + cl, t);
-		drawLine(gl, x1 + in + clen, y1 + in - cl, x1 + in + clen, y1 + in + cl, t);
-		// bottom-right
-		drawLine(gl, x2 - in - cl, y1 + in, x2 - in - cl, y1 + in + clen, t);
-		drawLine(gl, x2 - in - clen, y1 + in + cl, x2 - in, y1 + in + cl, t);
-		drawLine(gl, x2 - in - clen, y1 + in - cl, x2 - in - clen, y1 + in + cl, t);
+		drawFrameSide(gl, x1 + pad, false, y2, pad, height, corner, t);
+		drawFrameSide(gl, x2 - pad, true, y2, pad, height, corner, t);
 
-		// vertical divider
 		if (dividerX >= 0) {
-			float dx = x1 + dividerX * width;
-			texture.drawImageAtRect(gl, dx - t / 2, y1 + in + t, t, height - 2 * in - 2 * t, 1);
+			drawFrameSide(gl, x1 + dividerX * width, true, y2, pad, height, corner, t);
 		}
 	}
 
 	/**
-	 * Draws a thin horizontal or vertical line segment with the border texture.
+	 * Draws one vertical side of the frame including its two corner hooks, like BorderDrawer.drawVertical0.
+	 *
+	 * @param x
+	 *            x position of the vertical line
+	 * @param right
+	 *            whether the hooks extend to the left (right side of a panel) or to the right (left side)
+	 * @param top
+	 *            GL y coordinate of the top edge of the panel
 	 */
-	private void drawLine(GLDrawContext gl, float x1, float y1, float x2, float y2, float t) {
-		if (Math.abs(x2 - x1) < Math.abs(y2 - y1)) {
-			// vertical
-			texture.drawImageAtRect(gl, x1 - t / 2, Math.min(y1, y2), t, Math.abs(y2 - y1), 1);
-		} else {
-			// horizontal
-			texture.drawImageAtRect(gl, Math.min(x1, x2), y1 - t / 2, Math.abs(x2 - x1), t, 1);
+	private void drawFrameSide(GLDrawContext gl, float x, boolean right, float top, float pad, float height, float corner, float t) {
+		float half = corner / 2;
+		float far = right ? x - corner : x + corner;
+		float near = x;
+		float mid = right ? x - half : x + half;
+		float lo = Math.min(near, far);
+		float hi = Math.max(near, far);
+
+		float yA = pad + half; // upper corner line, measured from the top
+		float yB = height - pad - half; // lower corner line, measured from the top
+
+		drawVerticalSegment(gl, x, yA, yB, top, t);
+		// upper corner
+		drawVerticalSegment(gl, mid, pad, pad + corner, top, t);
+		drawHorizontalSegment(gl, lo, hi, top - yA, t);
+		drawVerticalSegment(gl, far, pad - half, pad + half, top, t);
+		// lower corner
+		drawVerticalSegment(gl, mid, yB - half, yB + half, top, t);
+		drawHorizontalSegment(gl, lo, hi, top - yB, t);
+		drawVerticalSegment(gl, far, yB, yB + corner, top, t);
+	}
+
+	/**
+	 * Draws a horizontal line segment, centered on the given GL y coordinate.
+	 */
+	private void drawHorizontalSegment(GLDrawContext gl, float xFrom, float xTo, float y, float t) {
+		float length = Math.abs(xTo - xFrom);
+		if (length > 0) {
+			texture.drawImageAtRect(gl, Math.min(xFrom, xTo), y - t / 2, length, t, 1);
+		}
+	}
+
+	/**
+	 * Draws a vertical line segment centered on x, between two distances measured downwards from the top edge.
+	 */
+	private void drawVerticalSegment(GLDrawContext gl, float x, float fromTop, float toTop, float top, float t) {
+		float length = Math.abs(toTop - fromTop);
+		if (length > 0) {
+			float bottom = top - Math.max(fromTop, toTop);
+			texture.drawImageAtRect(gl, x - t / 2, bottom, t, length, 1);
 		}
 	}
 
