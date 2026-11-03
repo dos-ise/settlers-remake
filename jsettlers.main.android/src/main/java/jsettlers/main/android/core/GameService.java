@@ -73,6 +73,13 @@ public class GameService extends Service {
 
 		createNotificationChannel();
 
+		if (gameMenu == null) {
+			// No active game (e.g. the system restarted the service after the game quit). There is
+			// nothing to show a notification for, so stop immediately instead of crashing.
+			stopSelf();
+			return;
+		}
+
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 			startForeground(NOTIFICATION_ID, createNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
 		} else {
@@ -92,8 +99,10 @@ public class GameService extends Service {
 	public void onDestroy() {
 		super.onDestroy();
 		unregisterReceiver(broadcastReceiver);
-		gameMenu.isPausedState().removeObserver(pauseObserver);
-		gameMenu.getGameState().removeObserver(gameStateObserver);
+		if (gameMenu != null) {
+			gameMenu.isPausedState().removeObserver(pauseObserver);
+			gameMenu.getGameState().removeObserver(gameStateObserver);
+		}
 	}
 
 	@Override

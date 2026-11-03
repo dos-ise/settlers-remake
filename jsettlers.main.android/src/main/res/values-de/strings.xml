@@ -103,6 +103,8 @@
 	<string name="ok">OK</string>
 	<string name="peacetime">Friedenszeit</string>
 	<string name="resource_directory_title">Grafik- und Audio-Dateien</string>
+	<string name="select_directory">Diesen Ordner auswählen</string>
+	<string name="invalid_settlers_folder">Dieser Ordner enthält keine Settlers-3-Spieldaten (GFX/SND/Map/Theme).</string>
 	<string name="resource_selection_dialog_title">Lokalisiere die Grafik- und Audio-Dateien</string>
 	<string name="searching_for_multiplayer_games">Suche Spiele…</string>
 	<string name="start_game">Starte Spiel</string>

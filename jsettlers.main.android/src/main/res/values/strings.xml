@@ -114,6 +114,8 @@
 	<string name="cancel">Cancel</string>
 
 	<string name="resource_directory_title">Graphics and sound folders</string>
+	<string name="select_directory">Select this folder</string>
+	<string name="invalid_settlers_folder">This folder does not contain the Settlers 3 game data (GFX/SND/Map/Theme).</string>
 
 	<string name="ubisoft_login_title">Ubisoft Connect Login</string>
 	<string name="ubisoft_retry">Retry</string>

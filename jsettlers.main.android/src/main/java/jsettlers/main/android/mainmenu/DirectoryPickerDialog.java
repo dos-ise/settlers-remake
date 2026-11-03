@@ -59,6 +59,7 @@ public class DirectoryPickerDialog {
 		new AlertDialog.Builder(context)
 				.setTitle(R.string.resource_directory_title)
 				.setView(listView)
+				.setPositiveButton(R.string.select_directory, (dialog, which) -> adapter.confirmCurrentDirectory())
 				.setNegativeButton(android.R.string.cancel, null)
 				.create()
 				.show();
@@ -94,6 +95,18 @@ public class DirectoryPickerDialog {
 				updateList();
 			} catch (IOException e) {
 				// ignore this exception
+			}
+		}
+
+		/**
+		 * Confirms the currently displayed directory as the selected installation folder. Only
+		 * accepts folders that contain the original Settlers 3 data (GFX/SND/Map/Theme).
+		 */
+		void confirmCurrentDirectory() {
+			if (SettlersFolderChecker.checkSettlersFolder(currentDirectory).isValidSettlersFolder()) {
+				listener.onDirectorySelected(currentDirectory);
+			} else {
+				android.widget.Toast.makeText(getContext(), R.string.invalid_settlers_folder, android.widget.Toast.LENGTH_LONG).show();
 			}
 		}
 

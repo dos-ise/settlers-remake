@@ -17,16 +17,7 @@ package jsettlers.gog;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import com.google.gson.Gson;
 
@@ -43,9 +34,6 @@ import jsettlers.gog.GogModels.GogUserData;
 public class GogDownloaderTest {
 
 	private static final Gson GSON = new Gson();
-
-	@Rule
-	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 	@Test
 	public void parsesTokenResponse() {
@@ -129,71 +117,13 @@ public class GogDownloaderTest {
 	}
 
 	@Test
-	public void extractsDataDirectoriesFromStubbedInstaller() throws IOException {
-		File installer = createStubbedInstaller();
-		File target = temporaryFolder.newFolder("target");
-
-		int written = GogDownloader.extractDataDirectories(installer, target);
-
-		assertEquals(4, written);
-		assertTrue(new File(target, "GFX/foo.bmp").isFile());
-		assertTrue(new File(target, "SND/bar.wav").isFile());
-		assertTrue(new File(target, "Map/baz.map").isFile());
-		assertTrue(new File(target, "Theme/theme.txt").isFile());
-		assertTrue(!new File(target, "README.txt").exists());
-	}
-
-	@Test
-	public void extractsDataDirectoriesFromNestedInstaller() throws IOException {
-		File installer = createNestedInstaller();
-		File target = temporaryFolder.newFolder("target");
-
-		int written = GogDownloader.extractDataDirectories(installer, target);
-
-		assertEquals(2, written);
-		assertTrue(new File(target, "GFX/foo.bmp").isFile());
-		assertTrue(new File(target, "SND/bar.wav").isFile());
-	}
-
-	/**
-	 * Creates a fake GOG installer: a zip with a self-extracting stub prepended, data directories at
-	 * the root.
-	 */
-	private File createStubbedInstaller() throws IOException {
-		File installer = temporaryFolder.newFile("setup.exe");
-		try (FileOutputStream out = new FileOutputStream(installer)) {
-			// Self-extracting stub (like a GOG installer).
-			out.write("MZ fake stub".getBytes(StandardCharsets.UTF_8));
-			try (ZipOutputStream zip = new ZipOutputStream(out)) {
-				writeEntry(zip, "GFX/foo.bmp", "gfx-data");
-				writeEntry(zip, "SND/bar.wav", "snd-data");
-				writeEntry(zip, "Map/baz.map", "map-data");
-				writeEntry(zip, "Theme/theme.txt", "theme-data");
-				writeEntry(zip, "README.txt", "readme");
-			}
-		}
-		return installer;
-	}
-
-	/**
-	 * Creates a fake GOG installer with the data directories nested under an "app" folder.
-	 */
-	private File createNestedInstaller() throws IOException {
-		File installer = temporaryFolder.newFile("setup2.exe");
-		try (FileOutputStream out = new FileOutputStream(installer)) {
-			out.write("MZ fake stub".getBytes(StandardCharsets.UTF_8));
-			try (ZipOutputStream zip = new ZipOutputStream(out)) {
-				writeEntry(zip, "app/GFX/foo.bmp", "gfx-data");
-				writeEntry(zip, "app/SND/bar.wav", "snd-data");
-				writeEntry(zip, "app/README.txt", "readme");
-			}
-		}
-		return installer;
-	}
-
-	private static void writeEntry(ZipOutputStream zip, String name, String content) throws IOException {
-		zip.putNextEntry(new ZipEntry(name));
-		zip.write(content.getBytes(StandardCharsets.UTF_8));
-		zip.closeEntry();
+	public void keepsOnlyGameDataDirectories() {
+		assertTrue(GogInstallerExtractor.isNeeded("GFX\\Siedler3_00.f8007e01f.dat"));
+		assertTrue(GogInstallerExtractor.isNeeded("SND/voice.wav"));
+		assertTrue(GogInstallerExtractor.isNeeded("Map/SINGLE/crusade.map"));
+		assertTrue(GogInstallerExtractor.isNeeded("Theme/theme.txt"));
+		assertTrue(!GogInstallerExtractor.isNeeded("README.txt"));
+		assertTrue(!GogInstallerExtractor.isNeeded("app/S3.DAT"));
+		assertTrue(!GogInstallerExtractor.isNeeded("commonappdata/GOG.com/supportInstaller/uninstall.dll"));
 	}
 }
