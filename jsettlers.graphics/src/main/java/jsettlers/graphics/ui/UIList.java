@@ -41,22 +41,10 @@ public class UIList<T> implements UIElement {
 	/**
 	 * A solid black background so the list entries are readable on the menu background.
 	 */
-	private final Image background = createBackground(new Color(0, 0, 0, 1), "list-background");
-
-	/**
-	 * Background of every second list entry so the touch area of each row is visible.
-	 */
-	private final Image evenItemBackground = createBackground(new Color(0.1f, 0.1f, 0.1f, 1), "list-item-even");
-
-	/**
-	 * Background of the other list entries.
-	 */
-	private final Image oddItemBackground = createBackground(new Color(0.16f, 0.16f, 0.16f, 1), "list-item-odd");
-
-	/**
-	 * Background of the currently selected list entry.
-	 */
-	private final Image selectedItemBackground = createBackground(new Color(0.25f, 0.3f, 0.4f, 1), "list-item-selected");
+	private final Image background;
+	private final Image evenItemBackground;
+	private final Image oddItemBackground;
+	private final Image selectedItemBackground;
 
 	private static Image createBackground(Color color, String name) {
 		ImageMetadata metadata = new ImageMetadata();
@@ -68,10 +56,11 @@ public class UIList<T> implements UIElement {
 		return new SingleImage(metadata, rgba, name);
 	}
 
-	private static final float RIGHTBORDER = .97f;
+	private static final float RIGHTBORDER = .975f;
+	private static final float SCROLLBAR_HIT_AREA = .9f;
 	private static final float EDGEPART = .02f;
 	private static final float SLIDER_MIN_HEIGHT = 0.1f;
-	private final float itemheight;
+	private final float minimumItemHeight;
 	private FloatRectangle position;
 
 	private float listoffset = 0; // relative in UI space
@@ -89,7 +78,7 @@ public class UIList<T> implements UIElement {
 
 		@Override
 		public void execute() {
-			scrollBy(destinationOffset);
+			scrollTo(destinationOffset);
 		}
 	}
 
@@ -98,9 +87,19 @@ public class UIList<T> implements UIElement {
 	}
 
 	public UIList(List<? extends T> items, ListItemGenerator<T> generator, float itemheight) {
-		setItems(items);
+		this(items, generator, itemheight, new Color(0, 0, 0, 1), new Color(0.1f, 0.1f, 0.1f, 1),
+				new Color(0.16f, 0.16f, 0.16f, 1), new Color(0.25f, 0.3f, 0.4f, 1));
+	}
+
+	public UIList(List<? extends T> items, ListItemGenerator<T> generator, float itemheight, Color backgroundColor,
+			Color evenItemColor, Color oddItemColor, Color selectedItemColor) {
 		this.generator = generator;
-		this.itemheight = itemheight;
+		this.minimumItemHeight = itemheight;
+		background = createBackground(backgroundColor, "list-background");
+		evenItemBackground = createBackground(evenItemColor, "list-item-even");
+		oddItemBackground = createBackground(oddItemColor, "list-item-odd");
+		selectedItemBackground = createBackground(selectedItemColor, "list-item-selected");
+		setItems(items);
 	}
 
 	public void setItems(List<? extends T> list) {
@@ -113,6 +112,7 @@ public class UIList<T> implements UIElement {
 				} else {
 					activeItem = null;
 				}
+				clampListOffset();
 			}
 		}
 	}
@@ -125,12 +125,8 @@ public class UIList<T> implements UIElement {
 	@Override
 	public void drawAt(GLDrawContext gl) {
 		synchronized (itemsMutex) {
-			float totallistheigt = itemheight * items.size(); // relative
-			if (listoffset < 0) {
-				listoffset = 0;
-			} else if (listoffset + 1 > totallistheigt) {
-				listoffset = Math.max(0, totallistheigt - 1);
-			}
+			float itemHeight = getItemHeight();
+			clampListOffset();
 
 			float minY = position.getMinY();
 			float minX = position.getMinX();
@@ -140,9 +136,9 @@ public class UIList<T> implements UIElement {
 
 			background.drawImageAtRect(gl, minX, minY, width, height, 1);
 
-			int startindex = (int) (listoffset / itemheight);
+			int startindex = (int) (listoffset / itemHeight);
 
-			int itemsperpage = (int) (1 / itemheight);
+			int itemsperpage = getVisibleItemCount(itemHeight);
 
 			for (int i = startindex; i < startindex + itemsperpage
 					&& i < items.size(); i++) {
@@ -150,13 +146,13 @@ public class UIList<T> implements UIElement {
 				// TODO: Cache
 				UIListItem listItem = generator.getItem(item);
 				// relative
-				float itemtop = 1 - i * itemheight + listoffset;
-				float itembottom = itemtop - itemheight;
+				float itemtop = 1 - i * itemHeight + listoffset;
+				float itembottom = itemtop - itemHeight;
 
 				Image itemBackground = activeItem == item ? selectedItemBackground
 						: (i % 2 == 0 ? evenItemBackground : oddItemBackground);
 				itemBackground.drawImageAtRect(gl, minX, minY + itembottom * height,
-						RIGHTBORDER * width, itemheight * height, 1);
+						RIGHTBORDER * width, itemHeight * height, 1);
 
 				listItem.setHighlighted(activeItem == item);
 				listItem.setPosition(new FloatRectangle(minX, minY + itembottom
@@ -165,10 +161,12 @@ public class UIList<T> implements UIElement {
 				listItem.drawAt(gl);
 			}
 
-			float sliderHeight =
-					Math.min(1, Math.max(SLIDER_MIN_HEIGHT, 1 / totallistheigt));
-			float slide =
-					(1 - sliderHeight) * listoffset / (totallistheigt - 1);
+			int visibleItems = getVisibleItemCount(itemHeight);
+			float maxListOffset = getMaxListOffset(itemHeight, visibleItems);
+			float sliderHeight = items.isEmpty() ? 1
+					: Math.min(1, Math.max(SLIDER_MIN_HEIGHT, (float) visibleItems / items.size()));
+			float slide = maxListOffset == 0 ? 0
+					: (1 - sliderHeight) * listoffset / maxListOffset;
 			float sliderMax = 1 - slide;
 
 			float sliderMin = sliderMax - sliderHeight;
@@ -196,26 +194,55 @@ public class UIList<T> implements UIElement {
 	@Override
 	public Optional<Action> getAction(float relativex, float relativey) {
 		synchronized (itemsMutex) {
-			if (relativex < RIGHTBORDER) {
+			if (relativex < SCROLLBAR_HIT_AREA) {
+				float itemHeight = getItemHeight();
 				float listy = 1 - relativey + listoffset;
-				int itemIndex = (int) (listy / itemheight);
+				int itemIndex = (int) (listy / itemHeight);
 				if (itemIndex >= 0 && itemIndex < items.size()) {
 					return Optional.of(new SelectAction(items.get(itemIndex)));
 				} else {
 					return Optional.empty();
 				}
 			} else {
-				final float halfNumberOfDisplayedItems = (int) (0.5f / itemheight);
-				final int destinationOffset = (int) ((1 - relativey) * items.size()
-						- halfNumberOfDisplayedItems); // subtract this to get the center of the scrollbar where the player klicked.
-
+				float itemHeight = getItemHeight();
+				int visibleItems = getVisibleItemCount(itemHeight);
+				int destinationOffset = Math.round((1 - relativey) * items.size() - visibleItems / 2f);
 				return Optional.of(new ScrollToExecutableAction(destinationOffset));
 			}
 		}
 	}
 
 	protected void scrollBy(int offset) {
-		listoffset = itemheight * offset;
+		listoffset += getItemHeight() * offset;
+		clampListOffset();
+	}
+
+	private void scrollTo(int itemIndex) {
+		listoffset = getItemHeight() * itemIndex;
+		clampListOffset();
+	}
+
+	private float getItemHeight() {
+		if (position == null || position.getHeight() <= 0) {
+			return minimumItemHeight;
+		}
+		return Math.max(minimumItemHeight, Math.min(0.5f, 48f / position.getHeight()));
+	}
+
+	private int getVisibleItemCount(float itemHeight) {
+		return Math.max(1, (int) (1 / itemHeight));
+	}
+
+	private void clampListOffset() {
+		float itemHeight = getItemHeight();
+		int visibleItems = getVisibleItemCount(itemHeight);
+		float maxOffset = getMaxListOffset(itemHeight, visibleItems);
+		listoffset = Math.max(0, Math.min(listoffset, maxOffset));
+		listoffset = Math.min(maxOffset, Math.round(listoffset / itemHeight) * itemHeight);
+	}
+
+	private float getMaxListOffset(float itemHeight, int visibleItems) {
+		return Math.max(0, items.size() - visibleItems) * itemHeight;
 	}
 
 	@Override
@@ -225,24 +252,94 @@ public class UIList<T> implements UIElement {
 	}
 
 	private float panStartOffset = Float.NaN;
+	private boolean panOnScrollbar;
 
 	@Override
 	public void handlePanStart(float relativex, float relativey) {
 		panStartOffset = listoffset;
+		panOnScrollbar = relativex >= SCROLLBAR_HIT_AREA;
 	}
 
 	@Override
 	public void handlePan(float relativex, float relativey, float panDistanceX, float panDistanceY) {
 		float height = position.getHeight();
 		if (height > 0 && !Float.isNaN(panStartOffset)) {
-			// Dragging up (positive y) scrolls down, so the offset grows with the pan distance.
-			listoffset = panStartOffset + panDistanceY / height;
+			if (panOnScrollbar) {
+				float itemHeight = getItemHeight();
+				int visibleItems = getVisibleItemCount(itemHeight);
+				float maxOffset = getMaxListOffset(itemHeight, visibleItems);
+				float sliderHeight = items.isEmpty() ? 1
+						: Math.min(1, Math.max(SLIDER_MIN_HEIGHT, (float) visibleItems / items.size()));
+				float trackHeight = height * (1 - sliderHeight);
+				if (trackHeight > 0) {
+					listoffset = panStartOffset - panDistanceY / trackHeight * maxOffset;
+				}
+			} else {
+				// Dragging up (positive y) scrolls down, so the offset grows with the pan distance.
+				listoffset = panStartOffset + panDistanceY / height;
+			}
+			clampListOffset();
 		}
 	}
 
 	@Override
 	public void handlePanEnd(float relativex, float relativey) {
 		panStartOffset = Float.NaN;
+		panOnScrollbar = false;
+	}
+
+	@Override
+	public boolean handleKey(String keyCode) {
+		synchronized (itemsMutex) {
+			if (items.isEmpty()) {
+				return false;
+			}
+
+			int activeIndex = items.indexOf(activeItem);
+			if (activeIndex < 0) {
+				activeIndex = 0;
+			}
+			int nextIndex;
+			switch (keyCode) {
+			case "UP":
+				nextIndex = Math.max(0, activeIndex - 1);
+				break;
+			case "DOWN":
+				nextIndex = Math.min(items.size() - 1, activeIndex + 1);
+				break;
+			case "PAGE_UP":
+			case "PAGEUP":
+				nextIndex = Math.max(0, activeIndex - getVisibleItemCount(getItemHeight()));
+				break;
+			case "PAGE_DOWN":
+			case "PAGEDOWN":
+				nextIndex = Math.min(items.size() - 1, activeIndex + getVisibleItemCount(getItemHeight()));
+				break;
+			case "HOME":
+				nextIndex = 0;
+				break;
+			case "END":
+				nextIndex = items.size() - 1;
+				break;
+			default:
+				return false;
+			}
+			activeItem = items.get(nextIndex);
+			ensureActiveItemVisible(nextIndex);
+			return true;
+		}
+	}
+
+	private void ensureActiveItemVisible(int activeIndex) {
+		float itemHeight = getItemHeight();
+		int firstVisible = (int) (listoffset / itemHeight);
+		int visibleItems = getVisibleItemCount(itemHeight);
+		if (activeIndex < firstVisible) {
+			listoffset = activeIndex * itemHeight;
+		} else if (activeIndex >= firstVisible + visibleItems) {
+			listoffset = (activeIndex - visibleItems + 1) * itemHeight;
+		}
+		clampListOffset();
 	}
 
 	private class SelectAction extends ExecutableAction {

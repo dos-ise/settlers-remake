@@ -25,6 +25,7 @@ import go.graphics.event.GOKeyEvent;
 import go.graphics.text.EFontSize;
 import go.graphics.text.TextDrawer;
 
+import jsettlers.common.Color;
 import jsettlers.common.action.Action;
 import jsettlers.graphics.utils.FocusAction;
 
@@ -39,6 +40,7 @@ public class UIInput extends UIPanel implements GOEventHandler {
 	private StringBuffer inputString = new StringBuffer();
 	private int carret = 0;
 	private Consumer<String> textChangedListener;
+	private String placeholder;
 
 	@Override
 	public void phaseChanged(GOEvent event) {
@@ -74,6 +76,16 @@ public class UIInput extends UIPanel implements GOEventHandler {
 	 */
 	public void setTextChangedListener(Consumer<String> textChangedListener) {
 		this.textChangedListener = textChangedListener;
+	}
+
+	/**
+	 * Sets the text shown while the input is empty.
+	 *
+	 * @param placeholder
+	 *            The placeholder, or <code>null</code> to disable it.
+	 */
+	public void setPlaceholder(String placeholder) {
+		this.placeholder = placeholder;
 	}
 
 	/**
@@ -120,10 +132,15 @@ public class UIInput extends UIPanel implements GOEventHandler {
 		super.drawAt(gl);
 		TextDrawer drawer = gl.getTextDrawer(EFontSize.NORMAL);
 
-		float textHeight = drawer.getHeight(inputString.toString() + "X");
+		String text = inputString.length() == 0 && placeholder != null ? placeholder : inputString.toString();
+		float textHeight = drawer.getHeight(text + "X");
 		float y = getPosition().getCenterY() - textHeight / 2;
 		float x = getPosition().getMinX() + 2;
-		drawer.drawString(x, y, inputString.toString());
+		if (inputString.length() == 0 && placeholder != null) {
+			drawer.drawString(x, y, new Color(0.7f, 0.7f, 0.7f, 1), text);
+		} else {
+			drawer.drawString(x, y, text);
+		}
 
 		if(geometry == null || !geometry.isValid()) geometry = gl.createUnifiedDrawCall(2, "uiinput-line", null, null, new float[] {0, 0, 0, 1});
 

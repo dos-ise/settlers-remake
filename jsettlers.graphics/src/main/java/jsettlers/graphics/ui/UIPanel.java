@@ -232,6 +232,16 @@ public class UIPanel implements UIElement {
 	}
 
 	@Override
+	public boolean handleKey(String keyCode) {
+		for (int i = children.size() - 1; i >= 0; i--) {
+			if (children.get(i).child.handleKey(keyCode)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
 	public String getDescription(float relativex, float relativey) {
 		for (ChildLink link : children) {
 			String description = link.getDesctiptionRelative(relativex, relativey);

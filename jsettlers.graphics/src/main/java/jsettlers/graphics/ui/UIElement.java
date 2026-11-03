@@ -34,6 +34,17 @@ public interface UIElement {
 	String getDescription(float relativex, float relativey);
 
 	/**
+	 * Handles a keyboard key when the element is active.
+	 *
+	 * @param keyCode
+	 *            The key code.
+	 * @return Whether the key was handled.
+	 */
+	default boolean handleKey(String keyCode) {
+		return false;
+	}
+
+	/**
 	 * Called once to indicate that this element is not attached to the gui and could be visible.
 	 */
 	void onAttach();

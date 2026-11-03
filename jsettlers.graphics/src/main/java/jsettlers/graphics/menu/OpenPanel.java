@@ -21,8 +21,13 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import go.graphics.text.EFontSize;
+import jsettlers.common.Color;
 import jsettlers.graphics.action.ExecutableAction;
+import jsettlers.graphics.image.Image;
+import jsettlers.graphics.image.SingleImage;
+import jsettlers.graphics.image.reader.ImageMetadata;
 import jsettlers.graphics.localization.Labels;
+import jsettlers.graphics.ui.AspectRatioImagePanel;
 import jsettlers.graphics.ui.Label;
 import jsettlers.graphics.ui.LabeledButton;
 import jsettlers.graphics.ui.UIInput;
@@ -71,11 +76,21 @@ public class OpenPanel extends UIPanel {
 		Label titleLabel = new Label(title, EFontSize.HEADLINE);
 		addChild(titleLabel, 0.1f, 0.9f, 0.9f, 1f);
 
+		UIPanel searchBar = new UIPanel();
+		searchBar.setBackgroundImage(createSolidImage(Color.WHITE, "map-search-border"));
+		UIPanel searchField = new UIPanel();
+		searchField.setBackgroundImage(createSolidImage(new Color(0.02f, 0.02f, 0.03f, 0.95f), "map-search-background"));
 		searchInput = new UIInput();
+		searchInput.setPlaceholder(Labels.getString("general.search"));
 		searchInput.setTextChangedListener(text -> updateList());
-		addChild(searchInput, 0.1f, 0.8f, 0.9f, 0.88f);
+		searchField.addChild(searchInput, 0.065f, 0, 1, 1);
+		Image searchIcon = createSearchIcon();
+		searchField.addChild(new AspectRatioImagePanel(searchIcon), 0.015f, 0.15f, 0.06f, 0.85f);
+		searchBar.addChild(searchField, 0.004f, 0.1f, 0.996f, 0.9f);
+		addChild(searchBar, 0.1f, 0.8f, 0.9f, 0.88f);
 
-		mapList = new UIList<>(allMaps, MapListItem::new, 0.15f);
+		mapList = new UIList<>(allMaps, MapListItem::new, 0.12f, MapListItem.LIST_BACKGROUND,
+				MapListItem.EVEN_ROW_BACKGROUND, MapListItem.ODD_ROW_BACKGROUND, MapListItem.SELECTED_ROW_BACKGROUND);
 		addChild(mapList, 0.1f, 0.15f, 0.9f, 0.78f);
 
 		LabeledButton openButton = new LabeledButton(openButtonText, new ExecutableAction() {
@@ -124,8 +139,63 @@ public class OpenPanel extends UIPanel {
 	private void updateList() {
 		String filter = searchInput.getText().toLowerCase(Locale.ENGLISH);
 		List<MapMenuItem> filtered = allMaps.stream()
-				.filter(map -> filter.isEmpty() || map.getName().toLowerCase(Locale.ENGLISH).contains(filter))
+				.filter(map -> filter.isEmpty() || containsIgnoreCase(map.getName(), filter)
+						|| containsIgnoreCase(map.getId(), filter) || containsIgnoreCase(map.getDescription(), filter))
 				.collect(Collectors.toList());
 		mapList.setItems(filtered);
+	}
+
+	@Override
+	public boolean handleKey(String keyCode) {
+		if ("ENTER".equals(keyCode) || "RETURN".equals(keyCode)) {
+			MapMenuItem selected = mapList.getActiveItem();
+			if (selected != null) {
+				onOpen.accept(selected);
+				return true;
+			}
+		}
+		return super.handleKey(keyCode);
+	}
+
+	private static boolean containsIgnoreCase(String value, String filter) {
+		return value != null && value.toLowerCase(Locale.ENGLISH).contains(filter);
+	}
+
+	private static Image createSolidImage(Color color, String name) {
+		ImageMetadata metadata = new ImageMetadata();
+		metadata.width = 1;
+		metadata.height = 1;
+		metadata.offsetX = 0;
+		metadata.offsetY = 0;
+		return new SingleImage(metadata, new int[] { color.getRGBA() }, name);
+	}
+
+	private static Image createSearchIcon() {
+		int size = 20;
+		int[] pixels = new int[size * size];
+		int white = Color.WHITE.getRGBA();
+		for (int y = 2; y <= 13; y++) {
+			for (int x = 2; x <= 13; x++) {
+				int distance = (x - 7) * (x - 7) + (y - 7) * (y - 7);
+				if (distance >= 16 && distance <= 25) {
+					pixels[x + y * size] = white;
+				}
+			}
+		}
+		for (int offset = 0; offset < 7; offset++) {
+			int coordinate = 11 + offset;
+			pixels[coordinate + coordinate * size] = white;
+			if (coordinate + 1 < size) {
+				pixels[coordinate + 1 + coordinate * size] = white;
+				pixels[coordinate + (coordinate + 1) * size] = white;
+			}
+		}
+
+		ImageMetadata metadata = new ImageMetadata();
+		metadata.width = size;
+		metadata.height = size;
+		metadata.offsetX = 0;
+		metadata.offsetY = 0;
+		return new SingleImage(metadata, pixels, "map-search-icon");
 	}
 }

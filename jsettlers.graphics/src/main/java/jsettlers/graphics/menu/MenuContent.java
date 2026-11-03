@@ -23,6 +23,7 @@ import go.graphics.event.GOEventHandler;
 import go.graphics.event.GOKeyEvent;
 import go.graphics.event.GOModalEventHandler;
 import go.graphics.event.command.GOCommandEvent;
+import go.graphics.event.mouse.GODrawEvent;
 import go.graphics.event.mouse.GOHoverEvent;
 import go.graphics.event.mouse.GOPanEvent;
 import go.graphics.event.mouse.GOZoomEvent;
@@ -109,7 +110,61 @@ public class MenuContent implements RegionContent, ActionFireable {
 			GOKeyEvent keyEvent = (GOKeyEvent) event;
 			if (focusedInput != null) {
 				keyEvent.setHandler(focusedInput);
+			} else {
+				keyEvent.setHandler(new GOEventHandler() {
+					@Override
+					public void phaseChanged(GOEvent event) {
+					}
+
+					@Override
+					public void finished(GOEvent event) {
+						rootPanel.handleKey(keyEvent.getKeyCode());
+					}
+
+					@Override
+					public void aborted(GOEvent event) {
+					}
+				});
 			}
+		} else if (event instanceof GODrawEvent) {
+			GODrawEvent drawEvent = (GODrawEvent) event;
+			event.setHandler(new GOModalEventHandler() {
+				private UIPoint start;
+
+				@Override
+				public void phaseChanged(GOEvent event) {
+					if (event.getPhase() == GOEvent.PHASE_STARTED) {
+						start = drawEvent.getDrawPosition();
+						rootPanel.handlePanStart((float) (start.getX() / width), (float) (start.getY() / height));
+					}
+				}
+
+				@Override
+				public void eventDataChanged(GOEvent event) {
+					if (start != null) {
+						UIPoint current = drawEvent.getDrawPosition();
+						rootPanel.handlePan((float) (start.getX() / width), (float) (start.getY() / height),
+								(float) (current.getX() - start.getX()), (float) (current.getY() - start.getY()));
+					}
+				}
+
+				@Override
+				public void finished(GOEvent event) {
+					endDrag();
+				}
+
+				@Override
+				public void aborted(GOEvent event) {
+					endDrag();
+				}
+
+				private void endDrag() {
+					if (start != null) {
+						rootPanel.handlePanEnd((float) (start.getX() / width), (float) (start.getY() / height));
+						start = null;
+					}
+				}
+			});
 		} else if (event instanceof GOHoverEvent) {
 			GOHoverEvent hoverEvent = (GOHoverEvent) event;
 			hoverEvent.setHandler(hoverHandler);
@@ -136,10 +191,13 @@ public class MenuContent implements RegionContent, ActionFireable {
 			if (inputFocusListener != null) {
 				inputFocusListener.accept(focusedInput);
 			}
-		} else if (action instanceof ExecutableAction) {
-			((ExecutableAction) action).execute();
 		} else {
-			actionFireable.fireAction(action);
+			focusedInput = null;
+			if (action instanceof ExecutableAction) {
+				((ExecutableAction) action).execute();
+			} else {
+				actionFireable.fireAction(action);
+			}
 		}
 	}
 

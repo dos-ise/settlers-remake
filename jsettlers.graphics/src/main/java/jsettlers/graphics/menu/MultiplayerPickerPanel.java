@@ -64,8 +64,11 @@ public class MultiplayerPickerPanel extends UIPanel {
 
 		addChild(listPanel, 0.1f, 0.15f, 0.9f, 0.78f);
 
-		mapList = new UIList<>(freshMaps.getMaps(), MapListItem::new, 0.15f);
-		gameList = new UIList<>(java.util.Collections.emptyList(), JoinableGameListItem::new, 0.15f);
+		mapList = new UIList<>(freshMaps.getMaps(), MapListItem::new, 0.15f, MapListItem.LIST_BACKGROUND,
+				MapListItem.EVEN_ROW_BACKGROUND, MapListItem.ODD_ROW_BACKGROUND, MapListItem.SELECTED_ROW_BACKGROUND);
+		gameList = new UIList<>(java.util.Collections.emptyList(), JoinableGameListItem::new, 0.15f,
+				MapListItem.LIST_BACKGROUND, MapListItem.EVEN_ROW_BACKGROUND, MapListItem.ODD_ROW_BACKGROUND,
+				MapListItem.SELECTED_ROW_BACKGROUND);
 		connector.getJoinableMultiplayerGames().setListener(new IChangingListListener<IJoinableGame>() {
 			@Override
 			public void listChanged(ChangingList<? extends IJoinableGame> list) {
