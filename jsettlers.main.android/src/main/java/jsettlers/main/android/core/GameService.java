@@ -26,6 +26,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.IBinder;
 
@@ -68,7 +69,11 @@ public class GameService extends Service {
 
 		createNotificationChannel();
 
-		startForeground(NOTIFICATION_ID, createNotification());
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+			startForeground(NOTIFICATION_ID, createNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+		} else {
+			startForeground(NOTIFICATION_ID, createNotification());
+		}
 
 		gameMenu.isPausedState().observeForever(pauseObserver);
 		gameMenu.getGameState().observeForever(gameStateObserver);

@@ -11,6 +11,9 @@
 
 		<item name="windowActionBar">false</item>
 		<item name="windowNoTitle">true</item>
+
+		<!-- Android 15 (targetSdk 35) enforces edge-to-edge; opt out to keep the game rendering below the system bars. -->
+		<item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
 	</style>
 
 	<style name="InGameTheme" parent="SettlersTheme">

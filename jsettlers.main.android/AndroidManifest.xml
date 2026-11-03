@@ -42,7 +42,12 @@
 			android:name=".core.GameService_"
 			android:enabled="true"
 			android:exported="false"
-			android:description="@string/service_description"/>
+			android:description="@string/service_description"
+			android:foregroundServiceType="specialUse">
+			<property
+				android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+				android:value="Keeps the real-time game simulation running while the app is in the background"/>
+		</service>
 
 		<activity
 			android:name=".gameplay.statistics.EndgameStatisticsActivity_"

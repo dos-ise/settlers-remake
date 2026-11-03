@@ -16,7 +16,7 @@ ext {
 
     androidCompileSdkVersion = 35
     androidMinSdkVersion = 19
-    androidTargetSdkVersion = 33
+    androidTargetSdkVersion = 35
 
     lwjglVersion = "3.3.0"
 }
