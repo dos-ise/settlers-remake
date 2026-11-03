@@ -22,10 +22,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Enumeration;
 import java.util.Locale;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import com.google.gson.Gson;
 
@@ -44,9 +41,6 @@ public class GogDownloader {
 
 	// "The Settlers 3 - Ultimate Collection" on GOG.
 	public static final String SETTLERS3_TITLE = "The Settlers 3 - Ultimate Collection";
-
-	// Data directories needed by the game (relative to the install root).
-	public static final String[] DATA_DIRECTORIES = { "GFX", "SND", "Map", "Theme" };
 
 	/**
 	 * Callback for download progress.
@@ -76,7 +70,7 @@ public class GogDownloader {
 			throw new GogException("You do not own " + SETTLERS3_TITLE + " on this account.");
 		}
 
-		// Get the downloads and pick the Windows installer.
+		// Get the downloads and pick the Windows installer (not a patch).
 		progress.onProgress("Getting download info...", 15);
 		GogProduct product = getProduct(settlers.id);
 		GogInstaller installer = pickInstaller(product);
@@ -84,18 +78,28 @@ public class GogDownloader {
 			throw new GogException("No Windows installer found for this game.");
 		}
 
-		// Generate a temporary download link.
+		// Download all installer files (the .exe and the setup-N.bin data files) into a temporary
+		// directory. The extractor needs the .bin files next to the .exe.
 		progress.onProgress("Preparing download...", 20);
-		String downloadUrl = getDownlink(installer.files[0].downlink);
-
-		// Download the installer to a temporary file.
-		File installerFile = File.createTempFile("jsettlers-gog-", ".exe");
+		File tempDir = createTempDir();
 		try {
-			downloadFile(downloadUrl, installerFile, progress, installer.name);
+			File installerFile = null;
+			for (int i = 0; i < installer.files.length; i++) {
+				String downloadUrl = getDownlink(installer.files[i].downlink);
+				String fileName = fileNameFromUrl(downloadUrl);
+				File target = new File(tempDir, fileName);
+				downloadFile(downloadUrl, target, progress, fileName);
+				if (fileName.toLowerCase(Locale.ROOT).endsWith(".exe")) {
+					installerFile = target;
+				}
+			}
+			if (installerFile == null) {
+				throw new GogException("No installer .exe found among the downloaded files.");
+			}
 
-			// Extract the data directories.
+			// Extract the data directories (GFX, SND, Map, Theme) from the Inno Setup installer.
 			progress.onProgress("Extracting game data...", 90);
-			int written = extractDataDirectories(installerFile, targetDirectory);
+			int written = GogInstallerExtractor.extract(installerFile, targetDirectory, progress::onProgress);
 			if (written == 0) {
 				throw new GogException("No game data files found in the installer.");
 			}
@@ -103,7 +107,53 @@ public class GogDownloader {
 			progress.onProgress("Download complete: " + written + " files.", 100);
 			return written;
 		} finally {
-			installerFile.delete();
+			deleteRecursively(tempDir);
+		}
+	}
+
+	/**
+	 * Creates a temporary directory for the downloaded installer files.
+	 */
+	private static File createTempDir() throws IOException {
+		File dir = File.createTempFile("jsettlers-gog-", "");
+		if (!dir.delete() || !dir.mkdirs()) {
+			throw new GogException("Could not create a temporary directory.");
+		}
+		return dir;
+	}
+
+	/**
+	 * Deletes a file or directory recursively.
+	 */
+	private static void deleteRecursively(File file) {
+		if (file.isDirectory()) {
+			File[] children = file.listFiles();
+			if (children != null) {
+				for (File child : children) {
+					deleteRecursively(child);
+				}
+			}
+		}
+		file.delete();
+	}
+
+	/**
+	 * Extracts the file name from a GOG download URL (the last path segment, URL-decoded).
+	 */
+	private static String fileNameFromUrl(String url) {
+		String path = url;
+		int query = path.indexOf('?');
+		if (query >= 0) {
+			path = path.substring(0, query);
+		}
+		int slash = path.lastIndexOf('/');
+		if (slash >= 0) {
+			path = path.substring(slash + 1);
+		}
+		try {
+			return java.net.URLDecoder.decode(path, "UTF-8");
+		} catch (java.io.UnsupportedEncodingException ex) {
+			return path;
 		}
 	}
 
@@ -197,7 +247,8 @@ public class GogDownloader {
 	}
 
 	/**
-	 * Picks the Windows installer, preferring the device language.
+	 * Picks the Windows installer, preferring the device language. Skips patches (their name
+	 * contains "patch"), which only contain update data, not the game files.
 	 */
 	private static GogInstaller pickInstaller(GogProduct product) {
 		if (product == null || product.downloads == null || product.downloads.installers == null) {
@@ -208,6 +259,9 @@ public class GogDownloader {
 		GogInstaller fallback = null;
 		for (GogInstaller installer : product.downloads.installers) {
 			if (!"windows".equals(installer.os) || installer.files == null || installer.files.length == 0) {
+				continue;
+			}
+			if (installer.name != null && installer.name.toLowerCase(Locale.ROOT).contains("patch")) {
 				continue;
 			}
 			if (fallback == null) {
@@ -228,13 +282,20 @@ public class GogDownloader {
 		connection.setConnectTimeout(60000);
 		connection.setReadTimeout(60000);
 		connection.setInstanceFollowRedirects(true);
+		// GOG's download CDN rejects requests without a browser-like User-Agent (Java's default
+		// "Java/..." is blocked and returns an HTML error page instead of the installer).
+		connection.setRequestProperty("User-Agent",
+				"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
 
 		int code = connection.getResponseCode();
 		if (code < 200 || code >= 300) {
 			throw new GogException("Download failed (HTTP " + code + ").");
 		}
 
+		String contentType = connection.getContentType();
 		long total = connection.getContentLength();
+		System.out.println("JSettlersGog download: url=" + url + " code=" + code + " type=" + contentType + " length=" + total);
+
 		try (InputStream in = connection.getInputStream(); OutputStream out = new FileOutputStream(target)) {
 			byte[] buffer = new byte[8192];
 			long downloaded = 0;
@@ -248,82 +309,5 @@ public class GogDownloader {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Extracts the data directories (GFX, SND, Map, Theme) from the installer into the target
-	 * directory. GOG installers are zip archives with a self-extracting stub; {@link ZipFile} reads
-	 * them by scanning for the end-of-central-directory record. Returns the number of files written.
-	 */
-	static int extractDataDirectories(File installer, File targetDirectory) throws IOException {
-		int written = 0;
-		try (ZipFile zip = new ZipFile(installer)) {
-			for (String dataDir : DATA_DIRECTORIES) {
-				String basePath = findBasePath(zip, dataDir);
-				if (basePath == null) {
-					continue;
-				}
-
-				Enumeration<? extends ZipEntry> entries = zip.entries();
-				while (entries.hasMoreElements()) {
-					ZipEntry entry = entries.nextElement();
-					String path = entry.getName().replace('\\', '/');
-					if (!path.toLowerCase(Locale.ROOT).startsWith(basePath.toLowerCase(Locale.ROOT))) {
-						continue;
-					}
-
-					String relative = path.substring(basePath.length());
-					File target = new File(targetDirectory, dataDir + File.separatorChar + relative.replace('/', File.separatorChar));
-					if (entry.isDirectory()) {
-						target.mkdirs();
-					} else {
-						target.getParentFile().mkdirs();
-						try (InputStream in = zip.getInputStream(entry); OutputStream out = new FileOutputStream(target)) {
-							byte[] buffer = new byte[8192];
-							int n;
-							while ((n = in.read(buffer)) != -1) {
-								out.write(buffer, 0, n);
-							}
-						}
-						written++;
-					}
-				}
-			}
-		}
-		return written;
-	}
-
-	/**
-	 * Finds the path prefix of the given data directory inside the installer (e.g. "GFX" or
-	 * "app/GFX"), or null if the directory is not present.
-	 */
-	private static String findBasePath(ZipFile zip, String dataDir) throws IOException {
-		String dataDirLower = dataDir.toLowerCase(Locale.ROOT);
-		Enumeration<? extends ZipEntry> entries = zip.entries();
-		while (entries.hasMoreElements()) {
-			ZipEntry entry = entries.nextElement();
-			String path = entry.getName().replace('\\', '/');
-			String lower = path.toLowerCase(Locale.ROOT);
-			int index = findSegment(lower, dataDirLower);
-			if (index >= 0) {
-				return path.substring(0, index + dataDir.length());
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Returns the index of the given path segment in the path, or -1 if not present.
-	 */
-	private static int findSegment(String path, String segment) {
-		String[] parts = path.split("/");
-		int offset = 0;
-		for (String part : parts) {
-			if (part.equals(segment)) {
-				return offset;
-			}
-			offset += part.length() + 1;
-		}
-		return -1;
 	}
 }

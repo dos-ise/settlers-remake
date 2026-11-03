@@ -2,4 +2,5 @@ apply plugin: 'java'
 
 dependencies {
     implementation 'com.google.code.gson:gson:2.9.0'
+    implementation 'org.tukaani:xz:1.9'
 }
