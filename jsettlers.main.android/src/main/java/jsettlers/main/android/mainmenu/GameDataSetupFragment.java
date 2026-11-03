@@ -103,7 +103,9 @@ public class GameDataSetupFragment extends Fragment implements GameDataActions {
 		loader.setupSingle()
 				.subscribeOn(Schedulers.io())
 				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(() -> showSharedMainMenu());
+				.subscribe(() -> showSharedMainMenu(), error -> {
+					android.widget.Toast.makeText(getActivity(), R.string.invalid_settlers_folder, android.widget.Toast.LENGTH_LONG).show();
+				});
 	}
 
 	@Override
