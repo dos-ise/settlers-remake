@@ -65,7 +65,11 @@ public class GameService extends Service {
 		intentFilter.addAction(ACTION_SAVE);
 		intentFilter.addAction(ACTION_QUIT);
 		intentFilter.addAction(ACTION_QUIT_CONFIRM);
-		registerReceiver(broadcastReceiver, intentFilter);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+			registerReceiver(broadcastReceiver, intentFilter, Context.RECEIVER_NOT_EXPORTED);
+		} else {
+			registerReceiver(broadcastReceiver, intentFilter);
+		}
 
 		createNotificationChannel();
 
