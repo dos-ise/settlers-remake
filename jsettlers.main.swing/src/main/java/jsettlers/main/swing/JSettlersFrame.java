@@ -221,13 +221,8 @@ public class JSettlersFrame extends JFrame {
 			}
 
 			@Override
-			public void showNewMultiplayerGame() {
-				showMultiplayerConnection();
-			}
-
-			@Override
-			public void showJoinMultiplayerGame() {
-				showMultiplayerConnection();
+			public void showMultiplayerGame(Consumer<UIPanel> showContent, Runnable onBack) {
+				showMultiplayerConnection(showContent, onBack);
 			}
 
 			@Override
@@ -459,28 +454,32 @@ public class JSettlersFrame extends JFrame {
 	 * Shows the shared, GL rendered multiplayer picker. The player can host a new game (by picking a fresh map) or
 	 * join an existing game on the local server. The same panel code runs on desktop and Android.
 	 */
-	private void showMultiplayerConnection() {
+	private void showMultiplayerConnection(Consumer<UIPanel> showContent, Runnable onBack) {
 		closeMultiplayerConnector();
 		Logger logger = new ConsoleConsumerLogger("jsettlers-swing-multiplayer", line -> {
-		});		currentMultiplayerConnector = new MultiplayerConnector("localhost", SettingsManager.getInstance().getUUID(),
+		});
+		currentMultiplayerConnector = new MultiplayerConnector("localhost", SettingsManager.getInstance().getUUID(),
 				SettingsManager.getInstance().getUserName(), logger);
 		MapList mapList = MapList.getDefaultList();
 		MapListProvider freshMaps = () -> mapList.getFreshMaps().getItems().stream()
 				.map(loader -> toMapMenuItem(loader, false)).collect(Collectors.toList());
-		MultiplayerPickerPanel picker = new MultiplayerPickerPanel(currentMultiplayerConnector, freshMaps,
+		MultiplayerPickerPanel[] picker = new MultiplayerPickerPanel[1];
+		picker[0] = new MultiplayerPickerPanel(currentMultiplayerConnector, freshMaps,
 				map -> {
 					MapLoader loader = resolveMap(map);
 					if (loader != null) {
-						showNewMultiPlayerGameMenu(loader, currentMultiplayerConnector);
+						showContent.accept(createHostMultiplayerPanel(loader, currentMultiplayerConnector,
+								() -> showContent.accept(picker[0])));
 					}
 				},
-				game -> joinMultiplayerGame(currentMultiplayerConnector, game),
-				this::showSharedMainMenu);
-		showMenuContent(new MenuContent(picker, action -> {
-		}));
+				game -> joinMultiplayerGame(currentMultiplayerConnector, game, showContent,
+						() -> showContent.accept(picker[0])),
+				onBack);
+		showContent.accept(picker[0]);
 	}
 
-	private void joinMultiplayerGame(IMultiplayerConnector connector, IJoinableGame game) {
+	private void joinMultiplayerGame(IMultiplayerConnector connector, IJoinableGame game, Consumer<UIPanel> showContent,
+			Runnable onBack) {
 		IJoiningGame joiningGame = connector.joinMultiplayerGame(game);
 		joiningGame.setListener(new IJoiningGameListener() {
 			@Override
@@ -491,7 +490,7 @@ public class JSettlersFrame extends JFrame {
 			public void gameJoined(IJoinPhaseMultiplayerGameConnector joinConnector) {
 				MapLoader mapLoader = MapList.getDefaultList().getMapById(game.getMap().getMapId());
 				if (mapLoader != null) {
-					showJoinMultiplayerMenu(joinConnector, mapLoader, connector.getPlayerUUID());
+					showContent.accept(createJoinMultiplayerPanel(joinConnector, mapLoader, connector.getPlayerUUID(), onBack));
 				}
 			}
 		});
@@ -506,13 +505,18 @@ public class JSettlersFrame extends JFrame {
 	}
 
 	public void showNewMultiPlayerGameMenu(MapLoader mapLoader, IMultiplayerConnector connector) {
+		showMenuContent(new MenuContent(createHostMultiplayerPanel(mapLoader, connector, this::showSharedMainMenu), action -> {
+		}));
+	}
+
+	private UIPanel createHostMultiplayerPanel(MapLoader mapLoader, IMultiplayerConnector connector, Runnable onBack) {
 		jsettlers.graphics.menu.JoinGameMapInfo mapInfo = new jsettlers.graphics.menu.JoinGameMapInfo(mapLoader.getMapName(),
 				MapPreviewImage.create(mapLoader.getImage()), mapLoader.getMaxPlayers(),
 				toJoinGameSlots(mapLoader.getFileHeader().getPlayerSettings()));
 		jsettlers.common.menu.IOpenMultiplayerGameInfo gameInfo = new jsettlers.graphics.menu.OpenMultiplayerGameInfo(
 				SettingsManager.getInstance().getUserName(), mapLoader);
 		jsettlers.graphics.menu.MultiplayerJoinGamePanel panel = jsettlers.graphics.menu.MultiplayerJoinGamePanel.createHost(
-				mapInfo, connector.getPlayerUUID(), connector, gameInfo, this::showSharedMainMenu, new IMultiplayerListener() {
+				mapInfo, connector.getPlayerUUID(), connector, gameInfo, onBack, new IMultiplayerListener() {
 					@Override
 					public void gameIsStarting(IStartingGame game) {
 						showStartingGamePanel(game);
@@ -520,19 +524,25 @@ public class JSettlersFrame extends JFrame {
 
 					@Override
 					public void gameAborted() {
-						showSharedMainMenu();
+						onBack.run();
 					}
 				});
-		showMenuContent(new MenuContent(panel, action -> {
-		}));
+		return panel;
 	}
 
 	public void showJoinMultiplayerMenu(IJoinPhaseMultiplayerGameConnector joinPhaseMultiplayerGameConnector, MapLoader mapLoader, String playerUUID) {
+		showMenuContent(new MenuContent(createJoinMultiplayerPanel(joinPhaseMultiplayerGameConnector, mapLoader, playerUUID,
+				this::showSharedMainMenu), action -> {
+		}));
+	}
+
+	private UIPanel createJoinMultiplayerPanel(IJoinPhaseMultiplayerGameConnector joinPhaseMultiplayerGameConnector, MapLoader mapLoader,
+			String playerUUID, Runnable onBack) {
 		jsettlers.graphics.menu.JoinGameMapInfo mapInfo = new jsettlers.graphics.menu.JoinGameMapInfo(mapLoader.getMapName(),
 				MapPreviewImage.create(mapLoader.getImage()), mapLoader.getMaxPlayers(),
 				toJoinGameSlots(mapLoader.getFileHeader().getPlayerSettings()));
 		jsettlers.graphics.menu.MultiplayerJoinGamePanel panel = jsettlers.graphics.menu.MultiplayerJoinGamePanel.createJoin(
-				mapInfo, playerUUID, joinPhaseMultiplayerGameConnector, this::showSharedMainMenu, new IMultiplayerListener() {
+				mapInfo, playerUUID, joinPhaseMultiplayerGameConnector, onBack, new IMultiplayerListener() {
 					@Override
 					public void gameIsStarting(IStartingGame game) {
 						showStartingGamePanel(game);
@@ -540,11 +550,10 @@ public class JSettlersFrame extends JFrame {
 
 					@Override
 					public void gameAborted() {
-						showSharedMainMenu();
+						onBack.run();
 					}
 				});
-		showMenuContent(new MenuContent(panel, action -> {
-		}));
+		return panel;
 	}
 
 	public void showEndgameStatistics(IStartedGame game) {

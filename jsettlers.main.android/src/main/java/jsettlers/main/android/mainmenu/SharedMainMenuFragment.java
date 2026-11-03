@@ -16,6 +16,7 @@
 package jsettlers.main.android.mainmenu;
 
 import java.util.HashSet;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.androidannotations.annotations.AfterViews;
@@ -33,6 +34,14 @@ import android.widget.FrameLayout;
 import go.graphics.android.GOSurfaceView;
 import go.graphics.area.Area;
 import go.graphics.region.Region;
+import jsettlers.common.menu.EProgressState;
+import jsettlers.common.menu.IJoinableGame;
+import jsettlers.common.menu.IJoinPhaseMultiplayerGameConnector;
+import jsettlers.common.menu.IJoiningGame;
+import jsettlers.common.menu.IJoiningGameListener;
+import jsettlers.common.menu.IMultiplayerConnector;
+import jsettlers.common.menu.IMultiplayerListener;
+import jsettlers.common.menu.IStartingGame;
 import jsettlers.graphics.localization.Labels;
 import jsettlers.graphics.menu.JoinGameMapInfo;
 import jsettlers.graphics.menu.JoinGamePanel;
@@ -44,6 +53,9 @@ import jsettlers.graphics.menu.MapMenuItem;
 import jsettlers.graphics.menu.MapPreviewImage;
 import jsettlers.graphics.menu.MenuContent;
 import jsettlers.graphics.menu.MenuImageProvider;
+import jsettlers.graphics.menu.MultiplayerJoinGamePanel;
+import jsettlers.graphics.menu.MultiplayerPickerPanel;
+import jsettlers.graphics.menu.OpenMultiplayerGameInfo;
 import jsettlers.graphics.ui.UIInput;
 import jsettlers.graphics.ui.UIPanel;
 import jsettlers.logic.map.loading.EMapStartResources;
@@ -209,17 +221,69 @@ public class SharedMainMenuFragment extends Fragment implements MainMenuActions 
 	}
 
 	@Override
-	public void showNewMultiplayerGame() {
-		((MainMenuNavigator) getActivity()).showNewMultiPlayerPicker();
-	}
+	public void showMultiplayerGame(Consumer<UIPanel> showContent, Runnable onBack) {
+		IMultiplayerConnector connector = gameStarter.getMultiPlayerConnector();
+		MapList mapList = gameStarter.getMapList();
+		MapListProvider freshMaps = () -> mapList.getFreshMaps().getItems().stream()
+				.map(loader -> toMapMenuItem(loader, false)).collect(Collectors.toList());
+		UIPanel[] picker = new UIPanel[1];
+		picker[0] = new MultiplayerPickerPanel(connector, freshMaps,
+				map -> {
+					MapLoader loader = resolveMap(map);
+					if (loader == null) {
+						return;
+					}
+					AndroidPreferences preferences = new AndroidPreferences(getActivity());
+					JoinGameMapInfo mapInfo = new JoinGameMapInfo(loader.getMapName(), MapPreviewImage.create(loader.getImage()),
+							loader.getMaxPlayers(), toJoinGameSlots(loader.getFileHeader().getPlayerSettings()));
+					OpenMultiplayerGameInfo gameInfo = new OpenMultiplayerGameInfo(preferences.getPlayerName(), loader);
+					MultiplayerJoinGamePanel panel = MultiplayerJoinGamePanel.createHost(mapInfo, connector.getPlayerUUID(),
+							connector, gameInfo, () -> showContent.accept(picker[0]), multiplayerListener(picker[0], showContent));
+					showContent.accept(panel);
+				},
+				game -> {
+					IJoiningGame joiningGame = connector.joinMultiplayerGame(game);
+					joiningGame.setListener(new IJoiningGameListener() {
+						@Override
+						public void joinProgressChanged(EProgressState state, float progress) {
+						}
 
-	@Override
-	public void showJoinMultiplayerGame() {
-		((MainMenuNavigator) getActivity()).showJoinMultiPlayerPicker();
+						@Override
+						public void gameJoined(IJoinPhaseMultiplayerGameConnector joinConnector) {
+							MapLoader loader = gameStarter.getMapList().getMapById(game.getMap().getMapId());
+							if (loader == null) {
+								return;
+							}
+							JoinGameMapInfo mapInfo = new JoinGameMapInfo(loader.getMapName(),
+									MapPreviewImage.create(loader.getImage()), loader.getMaxPlayers(),
+									toJoinGameSlots(loader.getFileHeader().getPlayerSettings()));
+							MultiplayerJoinGamePanel panel = MultiplayerJoinGamePanel.createJoin(mapInfo,
+									connector.getPlayerUUID(), joinConnector, () -> showContent.accept(picker[0]),
+									multiplayerListener(picker[0], showContent));
+							showContent.accept(panel);
+						}
+					});
+				}, onBack);
+		showContent.accept(picker[0]);
 	}
 
 	@Override
 	public void exit() {
 		getActivity().finish();
+	}
+
+	private IMultiplayerListener multiplayerListener(UIPanel picker, Consumer<UIPanel> showContent) {
+		return new IMultiplayerListener() {
+			@Override
+			public void gameIsStarting(IStartingGame game) {
+				gameStarter.setStartingGame(game);
+				((MainMenuNavigator) getActivity()).showGame();
+			}
+
+			@Override
+			public void gameAborted() {
+				showContent.accept(picker);
+			}
+		};
 	}
 }

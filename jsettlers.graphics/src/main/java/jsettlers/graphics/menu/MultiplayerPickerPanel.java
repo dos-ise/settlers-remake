@@ -57,19 +57,12 @@ public class MultiplayerPickerPanel extends UIPanel {
 	 */
 	public MultiplayerPickerPanel(IMultiplayerConnector connector, MapListProvider freshMaps, Consumer<MapMenuItem> onHost,
 			Consumer<IJoinableGame> onJoin, Runnable onBack) {
-		MenuImageProvider images = MenuImageProvider.getInstance();
-		if (images != null) {
-			setBackgroundImage(images.getBackground());
-		}
-
 		addChild(new Label(Labels.getString("multiplayer-picker-title"), EFontSize.HEADLINE), 0.1f, 0.9f, 0.9f, 1f);
 
-		UIPanel buttonPanel = new UIPanel();
-		addChild(buttonPanel, 0.03f, 0.1f, 0.28f, 0.85f);
-		addModeButton(buttonPanel, "start-newmultiplayer", 0f, 0.7f, 1f, 0.85f, () -> setHostMode(true));
-		addModeButton(buttonPanel, "start-joinmultiplayer", 0f, 0.55f, 1f, 0.7f, () -> setHostMode(false));
+		addModeButton("start-newmultiplayer", 0.1f, 0.8f, 0.48f, 0.88f, () -> setHostMode(true));
+		addModeButton("start-joinmultiplayer", 0.52f, 0.8f, 0.9f, 0.88f, () -> setHostMode(false));
 
-		addChild(listPanel, 0.32f, 0.15f, 0.97f, 0.85f);
+		addChild(listPanel, 0.1f, 0.15f, 0.9f, 0.78f);
 
 		mapList = new UIList<>(freshMaps.getMaps(), MapListItem::new, 0.15f);
 		gameList = new UIList<>(java.util.Collections.emptyList(), JoinableGameListItem::new, 0.15f);
@@ -96,7 +89,7 @@ public class MultiplayerPickerPanel extends UIPanel {
 				}
 			}
 		});
-		addChild(continueButton, 0.32f, 0.02f, 0.5f, 0.12f);
+		addChild(continueButton, 0.1f, 0.05f, 0.48f, 0.13f);
 
 		LabeledButton backButton = new LabeledButton(Labels.getString("settings-back"), new ExecutableAction() {
 			@Override
@@ -104,20 +97,19 @@ public class MultiplayerPickerPanel extends UIPanel {
 				onBack.run();
 			}
 		});
-		addChild(backButton, 0.55f, 0.02f, 0.7f, 0.12f);
+		addChild(backButton, 0.52f, 0.05f, 0.9f, 0.13f);
 
 		setHostMode(true);
 	}
 
-	private void addModeButton(UIPanel panel, String labelKey, float left, float bottom, float right, float top,
-			Runnable action) {
+	private void addModeButton(String labelKey, float left, float bottom, float right, float top, Runnable action) {
 		LabeledButton button = new LabeledButton(Labels.getString(labelKey), new ExecutableAction() {
 			@Override
 			public void execute() {
 				action.run();
 			}
 		}, EFontSize.HEADLINE);
-		panel.addChild(button, left, bottom, right, top);
+		addChild(button, left, bottom, right, top);
 	}
 
 	private void setHostMode(boolean hostMode) {

@@ -58,14 +58,14 @@ public class MainMenuPanel extends UIPanel {
 		UIPanel buttonPanel = new UIPanel();
 		addChild(buttonPanel, 0.03f, 0.1f, 0.28f, 0.9f);
 
-		addMenuButton(buttonPanel, "main-panel-new-single-player-game-button", 0f, 0.8f, 1f, 0.95f,
+		addMenuButton(buttonPanel, "main-panel-new-single-player-game-button", 0f, 0.7f, 1f, 0.85f,
 				() -> showOpenPanel(Labels.getString("start-newgame"), freshMaps, Labels.getString("start-newgame-start"), actions::startNewSinglePlayerGame, null));
-		addMenuButton(buttonPanel, "start-loadgame", 0f, 0.65f, 1f, 0.8f,
+		addMenuButton(buttonPanel, "start-loadgame", 0f, 0.55f, 1f, 0.7f,
 				() -> showOpenPanel(Labels.getString("start-loadgame"), savedMaps, Labels.getString("start-loadgame-start"), actions::startLoadGame, actions::deleteSavegame));
-		addMenuButton(buttonPanel, "start-newmultiplayer", 0f, 0.5f, 1f, 0.65f, actions::showNewMultiplayerGame);
-		addMenuButton(buttonPanel, "start-joinmultiplayer", 0f, 0.35f, 1f, 0.5f, actions::showJoinMultiplayerGame);
-		addMenuButton(buttonPanel, "settings-title", 0f, 0.2f, 1f, 0.35f, this::showSettings);
-		addMenuButton(buttonPanel, "main-panel-exit-button", 0f, 0.05f, 1f, 0.2f, actions::exit);
+		addMenuButton(buttonPanel, "start-multiplayer", 0f, 0.4f, 1f, 0.55f,
+				() -> actions.showMultiplayerGame(this::setContent, this::showMainContent));
+		addMenuButton(buttonPanel, "settings-title", 0f, 0.25f, 1f, 0.4f, this::showSettings);
+		addMenuButton(buttonPanel, "main-panel-exit-button", 0f, 0.1f, 1f, 0.25f, actions::exit);
 
 		addChild(contentPanel, 0.32f, 0.1f, 0.97f, 0.9f);
 

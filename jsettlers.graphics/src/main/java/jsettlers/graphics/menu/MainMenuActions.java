@@ -14,6 +14,10 @@
  *******************************************************************************/
 package jsettlers.graphics.menu;
 
+import java.util.function.Consumer;
+
+import jsettlers.graphics.ui.UIPanel;
+
 /**
  * The actions the shared main menu can trigger on the host application.
  * <p>
@@ -47,14 +51,14 @@ public interface MainMenuActions {
 	void deleteSavegame(MapMenuItem map);
 
 	/**
-	 * Shows the multiplayer setup to host a new network game.
+	 * Shows the multiplayer setup in the main menu's content area.
+	 *
+	 * @param showContent
+	 *            Displays a panel in the main menu's content area.
+	 * @param onBack
+	 *            Returns to the main menu content.
 	 */
-	void showNewMultiplayerGame();
-
-	/**
-	 * Shows the multiplayer setup to join a network game.
-	 */
-	void showJoinMultiplayerGame();
+	void showMultiplayerGame(Consumer<UIPanel> showContent, Runnable onBack);
 
 	/**
 	 * Exits the application.
