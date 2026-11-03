@@ -135,6 +135,9 @@ public class GameDataSetupFragment extends Fragment implements GameDataActions {
 	}
 
 	private void showSharedMainMenu() {
+		if (!isAdded()) {
+			return;
+		}
 		getFragmentManager().beginTransaction()
 				.replace(R.id.frame_layout, SharedMainMenuFragment.create())
 				.commit();
