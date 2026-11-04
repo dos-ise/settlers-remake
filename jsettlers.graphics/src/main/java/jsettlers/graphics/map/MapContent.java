@@ -183,13 +183,18 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 	 */
 	private static final float TUTORIAL_MARGIN = 20;
 	/**
-	 * The arrow that is shown next to the tutorial text once the current task is completed.
+	 * The arrow that is shown next to the tutorial text once the current task is completed. It is drawn as a filled
+	 * triangle (the game font has no arrow glyph), with a dark outline so it stands out.
 	 */
-	private static final String TUTORIAL_ARROW = "\u2192";
+	private static final float TUTORIAL_ARROW_SIZE = 34;
 	/**
 	 * The color of the tutorial arrow (a bright gold so it stands out as clickable).
 	 */
 	private static final Color TUTORIAL_ARROW_COLOR = new Color(1, 0.85f, 0.2f, 1);
+	/**
+	 * The dark outline color of the tutorial arrow.
+	 */
+	private static final Color TUTORIAL_ARROW_OUTLINE_COLOR = new Color(0, 0, 0, 0.8f);
 	/**
 	 * How far the screen center must move (in map coordinates) before the "move the map" task counts as done.
 	 */
@@ -262,6 +267,10 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 	 * active and the current task is completed.
 	 */
 	private FloatRectangle tutorialArrowBounds;
+	/**
+	 * The GL draw handle for the tutorial arrow triangle, created lazily.
+	 */
+	private UnifiedDrawHandle tutorialArrowHandle;
 	/**
 	 * The map position under the screen center when the tutorial started, used to detect map movement.
 	 */
@@ -603,9 +612,23 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 		if (tutorialState.isCurrentTaskComplete() && !tutorialState.isFinished()) {
 			float arrowX = x + textWidth + 10;
 			float arrowY = MESSAGE_OFFSET_Y + (lines.size() * lineHeight - lineHeight) / 2;
-			drawer.drawString(arrowX, arrowY, TUTORIAL_ARROW_COLOR, TUTORIAL_ARROW);
-			tutorialArrowBounds = new FloatRectangle(arrowX, arrowY, arrowX + drawer.getWidth(TUTORIAL_ARROW), arrowY + lineHeight);
+			drawTutorialArrow(gl, arrowX, arrowY, TUTORIAL_ARROW_SIZE);
+			tutorialArrowBounds = new FloatRectangle(arrowX, arrowY, arrowX + TUTORIAL_ARROW_SIZE, arrowY + TUTORIAL_ARROW_SIZE);
 		}
+	}
+
+	/**
+	 * Draws the tutorial arrow as a filled triangle pointing to the right, with a dark outline so it stands out.
+	 */
+	private void drawTutorialArrow(GLDrawContext gl, float x, float y, float size) {
+		if (tutorialArrowHandle == null || !tutorialArrowHandle.isValid()) {
+			// With a null texture the unified format uses 2 floats per vertex (x, y only).
+			tutorialArrowHandle = gl.createUnifiedDrawCall(3, "tutorial-arrow", null, null,
+					new float[] {0, 0, 0, 1, 1, 0.5f});
+		}
+		// Dark outline: a slightly larger triangle behind the gold one.
+		tutorialArrowHandle.drawSimple(EPrimitiveType.Triangle, x - 2, y - 2, 0, size + 4, size + 4, TUTORIAL_ARROW_OUTLINE_COLOR, 1);
+		tutorialArrowHandle.drawSimple(EPrimitiveType.Triangle, x, y, 0, size, size, TUTORIAL_ARROW_COLOR, 1);
 	}
 
 	/**

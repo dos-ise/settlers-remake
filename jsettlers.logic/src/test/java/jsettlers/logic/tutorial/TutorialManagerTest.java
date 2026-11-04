@@ -16,6 +16,7 @@ package jsettlers.logic.tutorial;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Optional;
@@ -33,9 +34,11 @@ import jsettlers.integration.ai.AiTestUtils;
 import jsettlers.logic.constants.MatchConstants;
 import jsettlers.logic.map.grid.MainGrid;
 import jsettlers.logic.map.loading.MapLoader;
+import jsettlers.logic.player.InitialGameState;
 import jsettlers.logic.player.PlayerSetting;
 import jsettlers.main.JSettlersGame;
 import jsettlers.main.replay.ReplayUtils;
+import jsettlers.network.client.OfflineNetworkConnector;
 import jsettlers.testutils.TestUtils;
 import jsettlers.testutils.map.MapUtils;
 
@@ -109,6 +112,25 @@ public class TutorialManagerTest {
 
 		tutorialManager.timerEvent();
 		assertTrue("building the lumberjack should complete the task", tutorialManager.isCurrentTaskComplete());
+	}
+
+	@Test
+	public void testTutorialStateAvailableAfterGameStart() throws Exception {
+		MapLoader map = MapUtils.getMountainlake();
+		PlayerSetting[] playerSettings = AiTestUtils.getDefaultPlayerSettings(map.getMaxPlayers());
+		playerSettings[PLAYER] = new PlayerSetting(EPlayerType.HUMAN, ECivilisation.ROMAN, PLAYER);
+
+		JSettlersGame game = new JSettlersGame(map, new OfflineNetworkConnector(),
+				new InitialGameState(PLAYER, playerSettings, 1L));
+		game.setTutorial(true);
+		JSettlersGame.GameRunner runner = (JSettlersGame.GameRunner) game.start();
+		IStartedGame startedGame = ReplayUtils.waitForGameStartup(runner);
+		try {
+			assertNotNull("the tutorial state must be available as soon as the game is shown",
+					startedGame.getTutorialState());
+		} finally {
+			ReplayUtils.awaitShutdown(startedGame);
+		}
 	}
 
 	/**
