@@ -56,6 +56,14 @@ public interface IControls extends IMapInterfaceListener {
 	void resizeTo(float newWidth, float newHeight);
 
 	/**
+	 * @return The width of the control panel in pixels, or 0 if the controls do not use a fixed panel on the left.
+	 *         Used to place overlays (e.g. the tutorial text) to the right of the panel.
+	 */
+	default float getPanelWidth() {
+		return 0;
+	}
+
+	/**
 	 * Checks if a point is on the ui
 	 *
 	 * @param position

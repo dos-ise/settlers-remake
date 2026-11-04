@@ -46,6 +46,7 @@ import jsettlers.common.CommitInfo;
 import jsettlers.common.action.EActionType;
 import jsettlers.common.action.SaveAction;
 import jsettlers.common.menu.EGameError;
+import jsettlers.common.menu.EPeaceTime;
 import jsettlers.common.menu.EProgressState;
 import jsettlers.common.menu.IJoinableGame;
 import jsettlers.common.menu.IJoinPhaseMultiplayerGameConnector;
@@ -201,6 +202,11 @@ public class JSettlersFrame extends JFrame {
 				if (loader != null) {
 					showNewSinglePlayerGameMenu(loader);
 				}
+			}
+
+			@Override
+			public void startTutorial() {
+				startTutorialGame();
 			}
 
 			@Override
@@ -425,6 +431,24 @@ public class JSettlersFrame extends JFrame {
 		}, this::showSharedMainMenu);
 		showMenuContent(new MenuContent(joinGamePanel, action -> {
 		}));
+	}
+
+	/**
+	 * Starts the tutorial mission directly: the T1.map with the player as Romans and the tutorial task overlay.
+	 */
+	private void startTutorialGame() {
+		MapLoader mapLoader = MapList.getDefaultList().getMapByName("T1");
+		if (mapLoader == null) {
+			JOptionPane.showMessageDialog(this, Labels.getString("tutorial-map-not-found"), Labels.getString("errordlg-header"),
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		PlayerSetting[] playerSettings = PlayerSetting.createDefaultSettings((byte) 0, (byte) mapLoader.getMaxPlayers());
+		InitialGameState initialGameState = new InitialGameState((byte) 0, playerSettings, System.currentTimeMillis(),
+				EMapStartResources.HIGH_GOODS, EPeaceTime.WITHOUT);
+		JSettlersGame game = new JSettlersGame(mapLoader, initialGameState);
+		game.setTutorial(true);
+		showStartingGamePanel(game.start());
 	}
 
 	private static jsettlers.graphics.menu.JoinGamePlayerSlotData[] toJoinGameSlots(PlayerSetting[] playerSettings) {

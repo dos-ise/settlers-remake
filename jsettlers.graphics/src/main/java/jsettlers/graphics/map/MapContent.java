@@ -16,7 +16,9 @@ package jsettlers.graphics.map;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
 
 import go.graphics.EPrimitiveType;
 import java.util.Optional;
@@ -67,6 +69,7 @@ import jsettlers.common.mapobject.EMapObjectType;
 import jsettlers.common.mapobject.IMapObject;
 import jsettlers.common.menu.IMapInterfaceListener;
 import jsettlers.common.menu.IStartedGame;
+import jsettlers.common.menu.ITutorialState;
 import jsettlers.common.menu.UIState;
 import jsettlers.common.action.EMoveToType;
 import jsettlers.common.action.MoveToAction;
@@ -176,6 +179,22 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 	private static final long GOTO_MARK_TIME = 1500;
 	private static final long DOUBLE_CLICK_TIME = 500;
 	/**
+	 * Distance between the right edge of the control panel and the tutorial text.
+	 */
+	private static final float TUTORIAL_MARGIN = 20;
+	/**
+	 * The arrow that is shown next to the tutorial text once the current task is completed.
+	 */
+	private static final String TUTORIAL_ARROW = "\u2192";
+	/**
+	 * The color of the tutorial arrow (a bright gold so it stands out as clickable).
+	 */
+	private static final Color TUTORIAL_ARROW_COLOR = new Color(1, 0.85f, 0.2f, 1);
+	/**
+	 * How far the screen center must move (in map coordinates) before the "move the map" task counts as done.
+	 */
+	private static final float TUTORIAL_MAP_MOVE_THRESHOLD = 5;
+	/**
 	 * Sound ID when we are attacked.
 	 */
 	private static final int NOTIFY_ATTACKED_SOUND_ID = 80;
@@ -213,6 +232,11 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 
 	private final ETextDrawPosition textDrawPosition;
 
+	/**
+	 * The tutorial state of the running game, or <code>null</code> if this is not a tutorial game.
+	 */
+	private final ITutorialState tutorialState;
+
 	private volatile ITextInputProvider textInputProvider;
 
 	/**
@@ -232,6 +256,17 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 
 	private FloatRectangle oldScreen;
 	private UIPoint mousePosition = new UIPoint(0, 0);
+
+	/**
+	 * The screen-space bounds of the tutorial arrow, used to detect clicks on it. Only valid while a tutorial is
+	 * active and the current task is completed.
+	 */
+	private FloatRectangle tutorialArrowBounds;
+	/**
+	 * The map position under the screen center when the tutorial started, used to detect map movement.
+	 */
+	private ShortPoint2D tutorialStartCenter;
+	private boolean tutorialMapMovedNotified = false;
 
 	private int windowWidth = 1;
 	private int windowHeight = 1;
@@ -304,6 +339,7 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 		this.gameTimeProvider = game.getGameTimeProvider();
 		this.gamespeedCalculator = new IntervalTimeRateCalculator(50*1000*1000L, 20, this::getGameTimeNS);
 		this.textDrawPosition = textDrawPosition;
+		this.tutorialState = game.getTutorialState();
 		this.messenger = new Messenger(this.gameTimeProvider);
 		this.textDrawer = new ReplaceableTextDrawer();
 		this.context = new MapDrawContext(map);
@@ -392,6 +428,7 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 			drawSelectionHint(gl);
 			controls.drawAt(gl);
 			drawMessages(gl);
+			drawTutorial(gl);
 			drawWinStateMsg(gl);
 
 			UIPanel dialog = dialogOverlay;
@@ -536,6 +573,103 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 		}
 	}
 
+	/**
+	 * Draws the tutorial task text and the arrow to the next task. The text is placed at the bottom left, to the
+	 * right of the control panel, so it never covers the in-game menu.
+	 */
+	private void drawTutorial(GLDrawContext gl) {
+		if (tutorialState == null) {
+			return;
+		}
+		TextDrawer drawer = textDrawer.getTextDrawer(gl, EFontSize.NORMAL);
+		String text = Labels.getString(tutorialState.getCurrentText());
+		float x = controls.getPanelWidth() + TUTORIAL_MARGIN;
+		float maxWidth = windowWidth - x - TUTORIAL_MARGIN;
+		if (maxWidth <= 0) {
+			return;
+		}
+
+		List<String> lines = wrapText(drawer, text, maxWidth);
+		float lineHeight = drawer.getHeight("X") * 1.3f;
+		float y = MESSAGE_OFFSET_Y;
+		float textWidth = 0;
+		for (String line : lines) {
+			drawer.drawString(x, y, Color.WHITE, line);
+			textWidth = Math.max(textWidth, drawer.getWidth(line));
+			y += lineHeight;
+		}
+
+		tutorialArrowBounds = null;
+		if (tutorialState.isCurrentTaskComplete() && !tutorialState.isFinished()) {
+			float arrowX = x + textWidth + 10;
+			float arrowY = MESSAGE_OFFSET_Y + (lines.size() * lineHeight - lineHeight) / 2;
+			drawer.drawString(arrowX, arrowY, TUTORIAL_ARROW_COLOR, TUTORIAL_ARROW);
+			tutorialArrowBounds = new FloatRectangle(arrowX, arrowY, arrowX + drawer.getWidth(TUTORIAL_ARROW), arrowY + lineHeight);
+		}
+	}
+
+	/**
+	 * Wraps the given text into lines that fit into the given maximum width. Existing line breaks are kept.
+	 */
+	private static List<String> wrapText(TextDrawer drawer, String text, float maxWidth) {
+		List<String> lines = new ArrayList<>();
+		if (text == null || text.isEmpty()) {
+			lines.add("");
+			return lines;
+		}
+		for (String paragraph : text.split("\n")) {
+			StringBuilder line = new StringBuilder();
+			for (String word : paragraph.split(" ")) {
+				String candidate = line.length() == 0 ? word : line + " " + word;
+				if (line.length() > 0 && drawer.getWidth(candidate) > maxWidth) {
+					lines.add(line.toString());
+					line = new StringBuilder(word);
+				} else {
+					line = new StringBuilder(candidate);
+				}
+			}
+			lines.add(line.toString());
+		}
+		return lines;
+	}
+
+	/**
+	 * @param position
+	 *            The screen position of a click.
+	 * @return <code>true</code> if the click hit the tutorial arrow and the arrow was clicked (advancing the task).
+	 */
+	private boolean handleTutorialArrowClick(UIPoint position) {
+		FloatRectangle bounds = tutorialArrowBounds;
+		if (bounds == null || tutorialState == null || !tutorialState.isCurrentTaskComplete() || tutorialState.isFinished()) {
+			return false;
+		}
+		if (bounds.contains((float) position.getX(), (float) position.getY())) {
+			tutorialState.advanceToNextTask();
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Detects whether the player moved the map (used by the "move the map" tutorial task).
+	 */
+	private void checkTutorialMapMoved(FloatRectangle screen) {
+		if (tutorialState == null || tutorialMapMovedNotified) {
+			return;
+		}
+		ShortPoint2D center = context.getPositionUnder(screen.getCenterX(), screen.getCenterY());
+		if (tutorialStartCenter == null) {
+			tutorialStartCenter = center;
+			return;
+		}
+		float dx = center.x - tutorialStartCenter.x;
+		float dy = center.y - tutorialStartCenter.y;
+		if (dx * dx + dy * dy > TUTORIAL_MAP_MOVE_THRESHOLD * TUTORIAL_MAP_MOVE_THRESHOLD) {
+			tutorialState.notifyMapMoved();
+			tutorialMapMovedNotified = true;
+		}
+	}
+
 	private String getPlayername(byte sender) {
 		return PlayerStatusTexts.getName(game, sender);
 	}
@@ -544,6 +678,7 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 		FloatRectangle newScreen = context.getScreen().getPosition();
 		if (!newScreen.equals(oldScreen)) {
 			getInterfaceConnector().fireAction(new ScreenChangeAction(context.getScreenArea(), context.getPositionUnder(newScreen.getCenterX(), newScreen.getCenterY())));
+			checkTutorialMapMoved(newScreen);
 		}
 		oldScreen = newScreen;
 	}
@@ -1025,6 +1160,9 @@ public final class MapContent implements RegionContent, IMapInterfaceListener, A
 
 	private Optional<Action> getActionForCommand(GOCommandEvent commandEvent) {
 		UIPoint position = commandEvent.getCommandPosition();
+		if (commandEvent.isSelecting() && handleTutorialArrowClick(position)) {
+			return Optional.empty();
+		}
 		if (controls.containsPoint(position)) {
 			if (commandEvent.isSelecting()) {
 				return controls.getActionForSelect(position);

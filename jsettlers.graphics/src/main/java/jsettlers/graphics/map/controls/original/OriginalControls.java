@@ -212,6 +212,11 @@ public class OriginalControls implements IControls {
 		uiBase.drawAt(gl); // Frame decoration should be drawn after and over the edges of the minimap.
 	}
 
+	@Override
+	public float getPanelWidth() {
+		return uiBase.getPosition().getWidth();
+	}
+
 	private float getMinimapLeft() {
 		return layoutProperties.miniMap.MAP_LEFT * uiBase.getPosition().getWidth();
 	}

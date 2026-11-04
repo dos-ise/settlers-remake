@@ -65,6 +65,13 @@ public interface IStartedGame {
 	}
 
 	/**
+	 * @return The state of the tutorial running in this game, or <code>null</code> if this is not a tutorial game.
+	 */
+	default ITutorialState getTutorialState() {
+		return null;
+	}
+
+	/**
 	 * @param playerId
 	 *            The id of the player in the game.
 	 * @return The name of the player or null if it is not known.
