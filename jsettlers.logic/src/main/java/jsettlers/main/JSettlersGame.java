@@ -283,6 +283,13 @@ public class JSettlersGame {
 				networkConnector.setStartFinished(true);
 				waitForAllPlayersStartFinished(networkConnector);
 
+				// The tutorial manager must exist before preLoadFinished, because the MapContent (created there)
+				// reads the tutorial state in its constructor.
+				if (tutorial) {
+					tutorialManager = new TutorialManager(mainGrid, initialGameState.getPlayerId());
+					networkConnector.getGameClock().schedule(tutorialManager, (short) 1000);
+				}
+
 				final IMapInterfaceConnector connector = startingGameListener.preLoadFinished(this);
 				GuiInterface guiInterface = new GuiInterface(connector, MatchConstants.clock(), networkConnector.getTaskScheduler(),
 						mainGrid.getGuiInputGrid(), this, initialGameState.getPlayerId(), multiplayer);
@@ -291,10 +298,6 @@ public class JSettlersGame {
 
 				aiExecutor = new AiExecutor(initialGameState.getPlayerSettings(), mainGrid, networkConnector.getTaskScheduler(), replayMode);
 				networkConnector.getGameClock().schedule(aiExecutor, (short) 1000);
-				if (tutorial) {
-					tutorialManager = new TutorialManager(mainGrid, initialGameState.getPlayerId());
-					networkConnector.getGameClock().schedule(tutorialManager, (short) 1000);
-				}
 				schedulePeaceTimeNotifier();
 
 				localPlayer = mainGrid.getPartitionsGrid().getPlayer(initialGameState.getPlayerId());
