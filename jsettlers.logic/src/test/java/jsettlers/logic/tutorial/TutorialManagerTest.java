@@ -19,6 +19,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.Field;
 import java.util.Optional;
 
 import org.junit.After;
@@ -31,6 +32,7 @@ import jsettlers.common.menu.IStartedGame;
 import jsettlers.common.player.ECivilisation;
 import jsettlers.common.position.ShortPoint2D;
 import jsettlers.integration.ai.AiTestUtils;
+import jsettlers.logic.buildings.Building;
 import jsettlers.logic.constants.MatchConstants;
 import jsettlers.logic.map.grid.MainGrid;
 import jsettlers.logic.map.loading.MapLoader;
@@ -98,7 +100,7 @@ public class TutorialManagerTest {
 	}
 
 	@Test
-	public void testBuildingDetection() {
+	public void testBuildingDetection() throws Exception {
 		// advance to the "build a lumberjack" task
 		tutorialManager.timerEvent();
 		tutorialManager.advanceToNextTask(); // task 1: move the map
@@ -111,7 +113,32 @@ public class TutorialManagerTest {
 		grid.getGuiInputGrid().constructBuildingAt(position, EBuildingType.LUMBERJACK, PLAYER);
 
 		tutorialManager.timerEvent();
-		assertTrue("building the lumberjack should complete the task", tutorialManager.isCurrentTaskComplete());
+		assertFalse("a building under construction must not complete the task",
+				tutorialManager.isCurrentTaskComplete());
+
+		// finish the construction
+		Building building = Building.getAllBuildings().stream()
+				.filter(b -> b.getPlayer().playerId == PLAYER)
+				.filter(b -> b.getBuildingVariant().isVariantOf(EBuildingType.LUMBERJACK))
+				.filter(b -> !b.isDestroyed())
+				.findFirst()
+				.orElseThrow(() -> new AssertionError("lumberjack building not found"));
+		finishConstruction(building);
+
+		tutorialManager.timerEvent();
+		assertTrue("a finished building should complete the task", tutorialManager.isCurrentTaskComplete());
+	}
+
+	/**
+	 * Sets the private construction state of the building to CONSTRUCTED, as the real construction would do once all
+	 * materials are delivered.
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private static void finishConstruction(Building building) throws Exception {
+		Field stateField = Building.class.getDeclaredField("state");
+		stateField.setAccessible(true);
+		Class stateClass = Class.forName("jsettlers.logic.buildings.Building$EBuildingState");
+		stateField.set(building, Enum.valueOf(stateClass, "CONSTRUCTED"));
 	}
 
 	@Test

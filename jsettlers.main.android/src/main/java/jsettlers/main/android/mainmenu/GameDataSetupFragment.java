@@ -25,7 +25,10 @@ import org.androidannotations.annotations.ViewById;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.widget.FrameLayout;
@@ -56,6 +59,7 @@ public class GameDataSetupFragment extends Fragment implements GameDataActions {
 	private static final String HELP_URL = "https://github.com/dos-ise/settlers-remake/blob/master/README.md";
 
 	private Region goRegion;
+	private boolean pendingAllFilesAccessRequest;
 
 	@ViewById(R.id.frame_layout)
 	FrameLayout frameLayout;
@@ -94,7 +98,28 @@ public class GameDataSetupFragment extends Fragment implements GameDataActions {
 	 */
 	@Override
 	public void chooseDirectory() {
+		// Browsing /storage/emulated/0 needs all-files access on Android 11+ (scoped storage).
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+			pendingAllFilesAccessRequest = true;
+			Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+			intent.setData(Uri.parse("package:" + getActivity().getPackageName()));
+			startActivity(intent);
+			return;
+		}
 		DirectoryPickerDialog.show(getActivity(), this::onDirectoryChosen);
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		if (pendingAllFilesAccessRequest) {
+			pendingAllFilesAccessRequest = false;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && Environment.isExternalStorageManager()) {
+				DirectoryPickerDialog.show(getActivity(), this::onDirectoryChosen);
+			} else {
+				android.widget.Toast.makeText(getActivity(), R.string.invalid_settlers_folder, android.widget.Toast.LENGTH_LONG).show();
+			}
+		}
 	}
 
 	private void onDirectoryChosen(File directory) {

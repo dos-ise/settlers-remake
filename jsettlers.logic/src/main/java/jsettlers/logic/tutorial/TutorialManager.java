@@ -137,6 +137,7 @@ public class TutorialManager implements INetworkTimerable, ITutorialState {
 				.filter(building -> building.getPlayer().playerId == playerId)
 				.filter(building -> building.getBuildingVariant().isVariantOf(type))
 				.filter(building -> !building.isDestroyed())
+				.filter(Building::isConstructionFinished)
 				.count();
 	}
 
