@@ -1,4 +1,37 @@
-﻿# v0.7.0.2
+﻿# v0.7.0.3
+
+A release that adds a guided **tutorial mode** for new players, fixes a flaky crash on modern Java runtimes and improves the Android game-data folder handling.
+
+## Assets
+
+- **JSettlers.zip** – desktop game for Windows/Linux (includes the Map Editor and tools)
+- **JSettlers-0.7.0.3-windows.zip** – portable Windows build (bundled JRE, unzip and double-click `JSettlers.exe`, no installation needed)
+- **JSettlers-0.7.0.3-linux.zip** – portable Linux build (bundled JRE, unzip and run `JSettlers/bin/JSettlers`, works on any distro)
+- **JSettlers-1.7.0-macos.zip** – portable macOS build (bundled JRE, unzip and open `JSettlers.app`; macOS requires a version that does not start with 0, so 0.7.0.3 is reported as 1.7.0)
+- **JSettlers-Android.apk** – Android app
+- **DedicatedJSettlersServer.jar** – dedicated multiplayer server
+
+## Tutorial mode
+
+A new **Tutorial** button in the main menu (above "Start single player") starts a guided mission on the original **T1.map** with the Romans:
+
+- White task texts are shown at the bottom left of the screen, never over the in-game menu.
+- Once a task is completed, a gold arrow appears next to the text; clicking it advances to the next task.
+- The 15 tasks guide the player from the first lumberjack hut through the food industry, the army and the final attack.
+- Building tasks are only counted as completed once the building is **fully constructed**, not when the construction order is given.
+- The tutorial texts are translated into all supported languages (German, English, Spanish, Polish, Russian, Danish) and follow the language selected in the settings.
+
+## Stability
+
+- **LWJGL upgraded from 3.3.0 to 3.3.6**, fixing a flaky heap-corruption crash (`0xC0000374`) on JDK 21 that could occur shortly after launch.
+- Original maps without a victory condition (e.g. T1.MAP) now load correctly instead of failing with "No Victory Condition information available".
+
+## Android fixes
+
+- The folder picker now requests **"All files access"** on Android 11+ before browsing, so the Settlers 3 data folder on the device storage can actually be read (previously valid folders were rejected as invalid).
+- The GFX folder check no longer crashes on files without a dot in their name.
+
+# v0.7.0.2
 
 A maintenance release that fixes the in-app GOG download of the Settlers 3 game data on Android and brings the app up to date with Android 14+ requirements.
 
