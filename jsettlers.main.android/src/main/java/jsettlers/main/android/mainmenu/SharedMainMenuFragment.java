@@ -35,6 +35,7 @@ import go.graphics.android.GOSurfaceView;
 import go.graphics.area.Area;
 import go.graphics.region.Region;
 import jsettlers.common.menu.EProgressState;
+import jsettlers.common.menu.EPeaceTime;
 import jsettlers.common.menu.IJoinableGame;
 import jsettlers.common.menu.IJoinPhaseMultiplayerGameConnector;
 import jsettlers.common.menu.IJoiningGame;
@@ -173,6 +174,21 @@ public class SharedMainMenuFragment extends Fragment implements MainMenuActions 
 			((MainMenuNavigator) getActivity()).showGame();
 		}, this::showMainMenu);
 		showMenu(joinGamePanel);
+	}
+
+	@Override
+	public void startTutorial() {
+		MapLoader loader = gameStarter.getMapList().getMapByName("T1");
+		if (loader == null) {
+			return;
+		}
+		PlayerSetting[] playerSettings = PlayerSetting.createDefaultSettings((byte) 0, (byte) loader.getMaxPlayers());
+		InitialGameState initialGameState = new InitialGameState((byte) 0, playerSettings, System.currentTimeMillis(),
+				EMapStartResources.HIGH_GOODS, EPeaceTime.WITHOUT);
+		JSettlersGame game = new JSettlersGame(loader, initialGameState);
+		game.setTutorial(true);
+		gameStarter.setStartingGame(game.start());
+		((MainMenuNavigator) getActivity()).showGame();
 	}
 
 	private static JoinGamePlayerSlotData[] toJoinGameSlots(PlayerSetting[] playerSettings) {

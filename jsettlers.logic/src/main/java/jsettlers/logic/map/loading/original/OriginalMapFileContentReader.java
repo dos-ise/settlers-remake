@@ -695,12 +695,18 @@ class OriginalMapFileContentReader {
 	}
 
 	OriginalSinglePlayerWinCondition readWinCondition(MainGrid mainGrid) throws MapLoadException {
-		MapResourceInfo filePart = findAndDecryptFilePartSafe(EOriginalMapFilePartType.WIN_COND);
+		Optional<MapResourceInfo> filePart = findAndDecryptFilePart(EOriginalMapFilePartType.WIN_COND);
 
 		OriginalSinglePlayerWinCondition winCondition = new OriginalSinglePlayerWinCondition(mainGrid);
 
+		if (!filePart.isPresent()) {
+			// The map file has no victory condition (e.g. the original tutorial maps). The default win
+			// condition (kill all enemies) is used then.
+			return winCondition;
+		}
+
 		// - file position
-		int pos = filePart.offset;
+		int pos = filePart.get().offset;
 
 		int killWinBase = pos;
 		if(readBooleanFrom(killWinBase)) {

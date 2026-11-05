@@ -35,6 +35,11 @@ public interface MainMenuActions {
 	void startNewSinglePlayerGame(MapMenuItem map);
 
 	/**
+	 * Starts the tutorial mission (T1.map with the Romans and guided tasks).
+	 */
+	void startTutorial();
+
+	/**
 	 * Loads the given savegame.
 	 *
 	 * @param map

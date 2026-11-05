@@ -42,6 +42,7 @@ import jsettlers.common.menu.IMapInterfaceConnector;
 import jsettlers.common.menu.IStartedGame;
 import jsettlers.common.menu.IStartingGame;
 import jsettlers.common.menu.IStartingGameListener;
+import jsettlers.common.menu.ITutorialState;
 import jsettlers.common.menu.InGamePlayerStatus;
 import jsettlers.common.menu.messages.SimpleMessage;
 import jsettlers.common.player.IInGamePlayer;
@@ -66,6 +67,7 @@ import jsettlers.logic.player.PeaceTimeNotifier;
 import jsettlers.logic.player.Player;
 import jsettlers.logic.player.PlayerSetting;
 import jsettlers.logic.timer.RescheduleTimer;
+import jsettlers.logic.tutorial.TutorialManager;
 import jsettlers.main.replay.ReplayUtils;
 import jsettlers.network.client.OfflineNetworkConnector;
 import jsettlers.network.client.interfaces.INetworkConnector;
@@ -93,6 +95,9 @@ public class JSettlersGame {
 
 	private final GameRunner gameRunner;
 	private final InitialGameState initialGameState;
+
+	/** True when this game runs the tutorial mission (T1.map with guided tasks). */
+	private volatile boolean tutorial = false;
 
 	private volatile Consumer<String> chatSender;
 
@@ -187,6 +192,17 @@ public class JSettlersGame {
 	}
 
 	/**
+	 * Marks this game as a tutorial mission. Must be called before {@link #start()}. The game then runs the
+	 * {@link jsettlers.logic.tutorial.TutorialManager} which tracks the tutorial tasks.
+	 *
+	 * @param tutorial
+	 *            <code>true</code> to run the tutorial.
+	 */
+	public void setTutorial(boolean tutorial) {
+		this.tutorial = tutorial;
+	}
+
+	/**
 	 * Shows a chat message that was received from the network to the local player.
 	 *
 	 * @param senderId
@@ -219,6 +235,7 @@ public class JSettlersGame {
 		private Consumer<IStartedGame> exitListener;
 		private boolean gameRunning;
 		private AiExecutor aiExecutor;
+		private TutorialManager tutorialManager;
 		private volatile PlayerStatusController playerStatusController;
 		private volatile Player localPlayer;
 
@@ -265,6 +282,13 @@ public class JSettlersGame {
 
 				networkConnector.setStartFinished(true);
 				waitForAllPlayersStartFinished(networkConnector);
+
+				// The tutorial manager must exist before preLoadFinished, because the MapContent (created there)
+				// reads the tutorial state in its constructor.
+				if (tutorial) {
+					tutorialManager = new TutorialManager(mainGrid, initialGameState.getPlayerId());
+					networkConnector.getGameClock().schedule(tutorialManager, (short) 1000);
+				}
 
 				final IMapInterfaceConnector connector = startingGameListener.preLoadFinished(this);
 				GuiInterface guiInterface = new GuiInterface(connector, MatchConstants.clock(), networkConnector.getTaskScheduler(),
@@ -433,6 +457,11 @@ public class JSettlersGame {
 		@Override
 		public IInGamePlayer[] getAllInGamePlayers() {
 			return mainGrid.getPartitionsGrid().getPlayers();
+		}
+
+		@Override
+		public ITutorialState getTutorialState() {
+			return tutorialManager;
 		}
 
 		@Override

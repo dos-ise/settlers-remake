@@ -79,10 +79,12 @@ public final class SettlersFolderChecker {
 				});
 			} else if (FileUtils.nameEqualsIgnoringCase("GFX", currentFolder)) {
 				FileUtils.iterateChildren(currentFolder, currentFile -> {
-					String fileName = currentFile.getName();
-					String firstPartOfName = fileName.substring(0, fileName.indexOf('.'));
-					if (currentFile.isFile() && "siedler3_00".equalsIgnoreCase(firstPartOfName)) {
-						gfxFolder.object = currentFolder;
+					if (currentFile.isFile()) {
+						String fileName = currentFile.getName();
+						int dotIndex = fileName.indexOf('.');
+						if (dotIndex > 0 && "siedler3_00".equalsIgnoreCase(fileName.substring(0, dotIndex))) {
+							gfxFolder.object = currentFolder;
+						}
 					}
 				});
 			} else if (FileUtils.nameEqualsIgnoringCase("MAP", currentFolder)) {
